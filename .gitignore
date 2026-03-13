@@ -1,2 +1,3 @@
-raudha/
 venv/
+
+db.sqlite3
