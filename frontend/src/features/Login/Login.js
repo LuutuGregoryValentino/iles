@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Login.css';
 
-function Login() {
+function Login(props) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
@@ -33,6 +33,16 @@ function Login() {
                     />
                     <button type="submit">Login</button>
                 </form>
+
+                <p style={{ marginTop: '15px', fontSize: '14px' }}>
+                    Don't have an account? 
+                    <span
+                        style={{ padding:'5px', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
+                        onClick = {props.onNavigate}
+                    >
+                         Sign up
+                    </span>
+                </p>
             </div>
         </div>
     );
