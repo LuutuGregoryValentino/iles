@@ -3,7 +3,7 @@ import React, { useState } from "react"
 import '../Login/Login.css'
 import '../../App.css'
 
-function Signup() {
+function Signup(prop) {
     const [email, setEmail] = useState("");
     const [role, setRole] = useState('');
     const [password, setPassword] = useState("");
@@ -54,7 +54,16 @@ function Signup() {
 
                     <button type="submit">Register</button>
                 </form>
-            </div>
+
+                <p style={{ marginTop: '15px', fontSize: '14px' }}>
+                    Already have an Account?
+                    <span
+                        style={{ padding: '5px', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
+                        onClick={prop.loginNavigate}
+                    >
+                        Sign-in
+                    </span>
+                </p>            </div>
         </div>
     )
 }

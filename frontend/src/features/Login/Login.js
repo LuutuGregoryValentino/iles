@@ -38,7 +38,7 @@ function Login(props) {
                     Don't have an account? 
                     <span
                         style={{ padding:'5px', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
-                        onClick = {props.onNavigate}
+                        onClick = {props.loginNavigate}
                     >
                          Sign up
                     </span>
