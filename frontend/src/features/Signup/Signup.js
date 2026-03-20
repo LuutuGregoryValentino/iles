@@ -2,6 +2,7 @@
 import React, { useState } from "react"
 import '../Login/Login.css'
 import '../../App.css'
+import './Signup.css'
 
 function Signup(prop) {
     const [email, setEmail] = useState("");
@@ -11,11 +12,12 @@ function Signup(prop) {
 
     const handleSignup = (e) => {
         e.preventDefault();
+    }
 
-        if (password !== confirmPassword) {
-            alert("Passwords do not much!");
-            return;
-        }
+    const getPasswordClass = () => {
+        if (confirmPassword.length === 0) return ""; //nto yet typed, no class needed
+        if (confirmPassword === password) return "input-success"; //samepassword;
+        return "input-error"; //password mismath or any other error
     }
 
     console.log(`Creating account for ${email} as ${role}`);
@@ -41,12 +43,16 @@ function Signup(prop) {
 
                     <input
                         type="password"
+                        value={password}
+                        className={getPasswordClass()}
                         placeholder="Create a password"
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
                     <input
                         type="password"
+                        className={getPasswordClass()}
+                        value={confirmPassword}
                         placeholder="Confirm password"
                         onChange={(e) => setconfirmPassword(e.target.value)}
                         required
