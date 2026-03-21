@@ -15,4 +15,6 @@ def student_list(request):
      serializer =studentSrialiser(Students,many=True)
      return Response(serializer.data)
 
+def student_list(request):
+    return render(request, 'student_list.html')
 # Create your views here.
