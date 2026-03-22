@@ -1,23 +1,22 @@
 import logo from './logo.svg';
+import React, {useState} from 'react';
 import './App.css';
+import Signup from "./features/Signup/Signup"
+import Login from './features/Login/Login';
 
 function App() {
+
+  const [screen,setScreen] = useState("login");
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className='App'>
+      {screen === "login" && (
+        <Login onNavigate={()=> setScreen("signup")} />
+      )}
+
+      {screen === 'signup' && (
+        <Signup onNavigate ={() => setScreen('login')} />
+      )}
     </div>
   );
 }
