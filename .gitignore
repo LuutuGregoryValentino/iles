@@ -1,17 +1,13 @@
 node_modules/
 venv/
-<<<<<<< HEAD
+
 #Ignore python cache files
 __pycache__/
 *.pyc
 
 db.sqlite3
-=======
-env/
-__pycache__/
-*.pyc
-db.sqlite3
-*.pyc
-**/__pycache__/
-uu/
->>>>>>> 9cb8103ef6321813a8762a4fbdc6767867b345f3
+
+
+
+
+
