@@ -7,6 +7,10 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
+<<<<<<< HEAD
+=======
+    "package.json": "^2.0.1",
+>>>>>>> 3be749ee887fa80dc68098377f2ae91b7aae1927
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-scripts": "5.0.1",

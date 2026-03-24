@@ -31,6 +31,7 @@ function Login(props) {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
+<<<<<<< HEAD
                     <button type="submit">Login</button>
                 </form>
 
@@ -41,6 +42,23 @@ function Login(props) {
                         onClick = {props.loginNavigate}
                     >
                          Sign up
+=======
+                    <button className='btn-primary'
+                        type="submit"
+                        disabled={password===""}
+                    >
+                        Login
+                    </button>
+                </form>
+
+                <p style={{ marginTop: '15px', fontSize: '14px' }}>
+                    Don't have an account?
+                    <span
+                        style={{ padding: '5px', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
+                        onClick={props.loginNavigate}
+                    >
+                        Sign up
+>>>>>>> 3be749ee887fa80dc68098377f2ae91b7aae1927
                     </span>
                 </p>
             </div>

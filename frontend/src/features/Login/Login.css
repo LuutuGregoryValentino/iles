@@ -22,4 +22,13 @@
 
 .auth-card button:hover {
     background-color: #0056b3;
+<<<<<<< HEAD
+=======
+}
+
+.btn-primary:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+>>>>>>> 3be749ee887fa80dc68098377f2ae91b7aae1927
 }

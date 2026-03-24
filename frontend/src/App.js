@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import './App.css';
+<<<<<<< HEAD
 import Signup from "./features/Signup/Signup"
 import Login from './features/Login/Login';
+=======
+import Signup from "./features/Signup/Signup";
+import Login from './features/Login/Login';
+import Profile from './features/Profile/ProfileForm';
+import ProfileForm from './features/Profile/ProfileForm';
+>>>>>>> 3be749ee887fa80dc68098377f2ae91b7aae1927
 
 function App() {
 
@@ -15,8 +22,16 @@ function App() {
       {screen === 'signup' && (
         <Signup loginNavigate={() => setScreen('login')} />
       )}
+<<<<<<< HEAD
     </div>
   );
+=======
+
+      {screen === "profile" && <ProfileForm/>}
+    </div>
+  );
+
+>>>>>>> 3be749ee887fa80dc68098377f2ae91b7aae1927
 }
 
 export default App;
