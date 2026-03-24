@@ -108,7 +108,10 @@ function ProfileForm(props) {
                 </select>
             </div>
 
-            <button className="btn-primary" >
+            <button 
+            className="btn-primary"
+            onClick={handleSave}
+             >
                 Save Profile
             </button>
 
