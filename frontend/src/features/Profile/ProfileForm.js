@@ -5,6 +5,12 @@ import './ProfileForm.css';
 function ProfileForm(props) {
 
     const [fullName, setFullName] = useState("");
+    const [studentID, setStudentID] = useState("");
+    const [regNum, setRegNum] = useState("");
+    const [course, setCourse] = useState("");
+    const [year, setYear] = useState('');
+    const [semester, setSesmster] = useState("")
+
 
     return (
         <div className="auth-card">
@@ -21,6 +27,71 @@ function ProfileForm(props) {
                 />
             </div>
 
+            <div className="input-group">
+                <label htmlFor="student-id">Student ID</label>
+                <input
+                    id="student-id"
+                    type="text"
+                    value={studentID}
+                    onChange={e => setStudentID(e.target.value)}
+                    placeholder="25/U/0001"
+                    readOnly={false}
+                />
+            </div>
+
+            <div className="input-group">
+                <label htmlFor="Registration-Number">Registration Number</label>
+                <input
+                    id="Registration-Number"
+                    typeof="text"
+                    value={regNum}
+                    placeholder="25000U000000"
+                    onChange={e => setRegNum(e.target.value)}
+                    readOnly={false}
+                />
+            </div>
+
+            <div className="input-group">
+                <label for="course">Course</label>
+                <select
+                    id="course"
+                    value={course}
+                    onChange={e => setCourse(e.target.value)}
+                >
+                    <option value="">Please choose a course</option>
+                    <option value="BCSC">Bacheor of Science in COmputer Science</option>
+                    <option value="BIST">Bachelor of scciene in Information Systems</option>
+                    <option value="BSSE">Bachelor of Science in Software Engineering</option>
+                </select>
+            </div>
+
+            <div className="input-group">
+                <label for="Year-of-Study">Year of Study</label>
+                <select
+                    id="Year-of-Study"
+                    onChange={e => setYear(e.target.value)}
+                    value={year}
+                >
+                    <option value="">Please choose a Year</option>
+                    <option value="1">Year 1</option>
+                    <option value="2">Year 2</option>
+                    <option value="3">Year 3</option>
+                    <option value="4">Year 4</option>
+                </select>
+            </div>
+
+            <div className="input-group">
+                <label for="Semester">Semester</label>
+                <select
+                    id="Semester"
+                    onChange={e => setSesmster(e.target.value)}
+                    value={semester}
+                ><option value="">Please choose a semester</option>
+                    <option value="Sem1">Semester 1</option>
+                    <option value="Sem2">Semester 2</option>
+                </select>
+            </div>
+
             <button className="btn-primary" >
                 Save Profile
             </button>
@@ -30,3 +101,5 @@ function ProfileForm(props) {
 }
 
 export default ProfileForm
+
+

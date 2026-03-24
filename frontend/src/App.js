@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import './App.css';
-import Signup from "./features/Signup/Signup"
+import Signup from "./features/Signup/Signup";
 import Login from './features/Login/Login';
+import Profile from './features/Profile/ProfileForm';
+import ProfileForm from './features/Profile/ProfileForm';
 
 function App() {
 
@@ -15,8 +17,11 @@ function App() {
       {screen === 'signup' && (
         <Signup loginNavigate={() => setScreen('login')} />
       )}
+
+      {screen === "profile" && <ProfileForm/>}
     </div>
   );
+
 }
 
 export default App;

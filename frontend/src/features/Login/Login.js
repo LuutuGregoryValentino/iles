@@ -31,16 +31,21 @@ function Login(props) {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
-                    <button type="submit">Login</button>
+                    <button className='btn-primary'
+                        type="submit"
+                        disabled={password===""}
+                    >
+                        Login
+                    </button>
                 </form>
 
                 <p style={{ marginTop: '15px', fontSize: '14px' }}>
-                    Don't have an account? 
+                    Don't have an account?
                     <span
-                        style={{ padding:'5px', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
-                        onClick = {props.loginNavigate}
+                        style={{ padding: '5px', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
+                        onClick={props.loginNavigate}
                     >
-                         Sign up
+                        Sign up
                     </span>
                 </p>
             </div>
