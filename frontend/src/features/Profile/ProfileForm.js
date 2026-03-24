@@ -4,13 +4,29 @@ import './ProfileForm.css';
 
 function ProfileForm(props) {
 
-    const [fullName, setFullName] = useState("");
-    const [studentID, setStudentID] = useState("");
-    const [regNum, setRegNum] = useState("");
-    const [course, setCourse] = useState("");
-    const [year, setYear] = useState('');
+    const [fullName, setFullName] = useState("Luutu Gregory Valentino");
+    const [studentID, setStudentID] = useState("25/U/0347");
+    const [regNum, setRegNum] = useState("2500700347");
+    const [course, setCourse] = useState("Bachelor of Science in Computer Science");
+    const [year, setYear] = useState('Year 1');
     const [semester, setSesmster] = useState("")
 
+    const handleSave = (e) =>{
+        e.preventDefault();
+
+        const studentData= {
+            fullName: fullName,
+            studentID :studentID,
+            regNum : regNum,
+            course:course,
+            year:year,
+            semester:semester,
+            updatedAt: new Date().toISOString()
+        };
+        console.log("READY FOR DATABASE: ",studentData);
+        alert("Profile Saved Successfully(testing!)")
+        
+    }
 
     return (
         <div className="auth-card">
