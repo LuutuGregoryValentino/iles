@@ -13,7 +13,7 @@ def home(request):
 def student_list_api(request):
     if request.method == 'GET':
         students =student.objects.all()
-        serializer =studentSrialiser(Students,many=True)
+        serializer =studentSrialiser(students,many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
         serializer = studentSrialiser(data=request.data)
