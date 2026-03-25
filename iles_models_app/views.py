@@ -1,8 +1,9 @@
 from .models import student,internship_administrator,workplace_supervisor,academic_supervisor,internship_placement,logbook_entry
-from .serializers import  studentSrialiser,internship_administratorSrialiser,workplace_supervisorSrialiser,internship_placementSrialiser,logbook_entry
+from .serializers import  studentSrialiser,internship_administratorSrialiser,workplace_supervisorSrialiser,internship_placementSrialiser,logbook_entrySrializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.shortcuts import render
+
 
 #to add a URL and view for the empty path,
 
@@ -50,3 +51,9 @@ def admin_list_api(request):
         serializer.save()
         return Response(serializer.data,status=201)
     return Response(serializer.errors,status=400)
+
+@api_view(['GET'])
+def issue_list_api(request):
+    issues = logbook_entry.objects.exclude(challenge="None").exclude(challenges="")
+    serializer = logbook_entrySrialiser(issues,many=True)
+    return Response(serializer.data)

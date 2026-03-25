@@ -59,6 +59,7 @@ class logbook_entry(models.Model):
     end_date = models.DateField()
     tasks_done =models.TextField()
     hours_worked =models.DecimalField(max_digits=5,decimal_places=2)
+    challenges =models.TextField(default="None")
     logbook_submission_status=models.CharField(max_length=50,default="Draft")
     def __str__(self):
         return f"The log for {self.placement.student.student_name} in {self.week_number}"
