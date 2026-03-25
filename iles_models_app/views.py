@@ -1,5 +1,5 @@
 from .models import student,internship_administrator,workplace_supervisor,academic_supervisor,internship_placement,logbook_entry
-from .serializers import  studentSrialiser,internship_administratorSrialiser,workplace_supervisorSrialiser,internship_placementSrialiser,logbook_entrySrializer
+from .serializers import  studentSrialiser,internship_administratorSrialiser,workplace_supervisorSrialiser,internship_placementSrialiser,logbook_entry
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.shortcuts import render
@@ -55,5 +55,5 @@ def admin_list_api(request):
 @api_view(['GET'])
 def issue_list_api(request):
     issues = logbook_entry.objects.exclude(challenge="None").exclude(challenges="")
-    serializer = logbook_entrySrialiser(issues,many=True)
+    serializer = logbook_entry(issues,many=True)
     return Response(serializer.data)

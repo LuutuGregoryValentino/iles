@@ -16,7 +16,7 @@ class internship_placementSrialiser(serializers.ModelSerializer):
             class Meta:
              modal =internship_placement
              fields ='__all__'
-class logbook_entrySrialiser(serializers.ModelSerializer):
+class logbook_entry(serializers.ModelSerializer):
             class Meta:
              modal =logbook_entry
              fields='__all__'
