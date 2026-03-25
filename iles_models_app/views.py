@@ -1,3 +1,20 @@
+from .models import student,internship_administrator,workplace_supervisor,academic_supervisor,internship_placement,logbook_entry
+from .serializers import  studentSrialiser,internship_administratorSrialiser,workplace_supervisorSrialiser,internship_placementSrialiser,logbook_entry
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
 from django.shortcuts import render
 
+#to add a URL and view for the empty path,
+
+def home(request):
+    return render(request, 'home.html')
+
+@api_view(['GET'])
+def student_list(request):
+     Students =student.objects.all()
+     serializer =studentSrialiser(Students,many=True)
+     return Response(serializer.data)
+
+def student_list(request):
+    return render(request, 'student_list.html')
 # Create your views here.
