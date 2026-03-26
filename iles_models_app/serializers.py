@@ -14,8 +14,13 @@ class workplace_supervisorSrializer(serializers.ModelSerializer):
              fields='__all__'
 class internship_placementSrializer(serializers.ModelSerializer):
             class Meta:
+<<<<<<< rahmas_models
              model =internship_placement
              fields='__all__'
+=======
+             modal =internship_placement
+             fields ='__all__'
+>>>>>>> main
 class logbook_entry(serializers.ModelSerializer):
             class Meta:
              model =logbook_entry
