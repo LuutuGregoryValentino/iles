@@ -54,6 +54,27 @@ def admin_list_api(request):
 
 @api_view(['GET'])
 def issue_list_api(request):
-    issues = logbook_entry.objects.exclude(challenge="None").exclude(challenges="")
+    issues = logbook_entry.objects.exclude(challenge__isnull=True)   
     serializer = logbook_entrySerializer(issues,many=True)
     return Response(serializer.data)
+
+@api_view(['GET','POST'])
+def logbook_list_api(request):
+    if request.method == 'GET':
+        return Response({"message":"Fetching all logbooks"})
+    
+    elif request.method == 'POST':
+        serializer = logbook_entrySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        return Response({"message":"Log book created"},status=201)
+    
+@api_view(['GET','POST'])
+def evaluation_list_api(request):
+    if request.method == 'GET':
+        return Response({"Message":"fetching evaluations"})
+    
+    elif request.method == 'POST':
+        return Response({"message":"Evaluation submitted"},status=201)
+    
+
