@@ -1,5 +1,5 @@
-from .models import student, workplace_supervisor, academic_supervisor, internship_placement, logbook_entry,internship_administrator
-from .serializers import  studentSerializer,internship_administratorSerializer,workplace_supervisorSerializer, internship_placementSerializer, logbook_entrySerializer,internship_administratorSerializer,academic_supervisorSeriazer
+from .models import student, workplace_supervisor, academic_supervisor, internship_placement, logbook_entry,internship_administrator,evaluation
+from .serializers import  studentSerializer,internship_administratorSerializer,workplace_supervisorSerializer, internship_placementSerializer, logbook_entrySerializer,internship_administratorSerializer,academic_supervisorSerializer,evaluationSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.shortcuts import render
@@ -58,23 +58,20 @@ def issue_list_api(request):
     serializer = logbook_entrySerializer(issues,many=True)
     return Response(serializer.data)
 
-@api_view(['GET','POST'])
+@api_view(['GET'])
 def logbook_list_api(request):
-    if request.method == 'GET':
-        return Response({"message":"Fetching all logbooks"})
+        # get logbook entries from the database
+        logbooks = logbook_entry.objects.all()
+        #pass through the serializer
+        serializer = logbook_entrySerializer(logbooks,many=True)
+        #Returning the real data to the front end
+        return Response(serializer.data)
     
-    elif request.method == 'POST':
-        serializer = logbook_entrySerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-        return Response({"message":"Log book created"},status=201)
-    
-@api_view(['GET','POST'])
+@api_view(['GET'])
 def evaluation_list_api(request):
-    if request.method == 'GET':
-        return Response({"Message":"fetching evaluations"})
-    
-    elif request.method == 'POST':
-        return Response({"message":"Evaluation submitted"},status=201)
+        evaluations = evaluation.objects.all()
+        serializer = evaluationSerializer(evaluations,many=True)
+        return Response(serializer.data)
+
     
 
