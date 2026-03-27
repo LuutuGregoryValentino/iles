@@ -1,31 +1,26 @@
 from .models import student,internship_administrator,workplace_supervisor, academic_supervisor, internship_placement,logbook_entry,evaluation
 from rest_framework import serializers
-class studentSrializer(serializers.ModelSerializer):
+class studentSerializer(serializers.ModelSerializer):
        class Meta:
             model =student
             fields='__all__'
-class internship_administratorSrializer(serializers.ModelSerializer):
+class internship_administratorSerializer(serializers.ModelSerializer):
         class Meta:
              model = internship_administrator
              fields='__all__'
-class workplace_supervisorSrializer(serializers.ModelSerializer):
+class workplace_supervisorSerializer(serializers.ModelSerializer):
             class Meta:
              model =workplace_supervisor
              fields='__all__'
-class internship_placementSrializer(serializers.ModelSerializer):
+class internship_placementSerializer(serializers.ModelSerializer):
             class Meta:
-<<<<<<< rahmas_models
              model =internship_placement
              fields='__all__'
-=======
-             modal =internship_placement
-             fields ='__all__'
->>>>>>> main
-class logbook_entry(serializers.ModelSerializer):
+class logbook_entrySerializer(serializers.ModelSerializer):
             class Meta:
              model =logbook_entry
              fields='__all__'
-class academic_supervisorSeriazer(serializers.ModelSerializer):
+class academic_supervisorSerializer(serializers.ModelSerializer):
       class Meta:
           model =academic_supervisor
           fields='__all__'
