@@ -6,7 +6,7 @@ from .models import (
     academic_supervisor, 
     internship_placement, 
     logbook_entry, 
-    evaluation
+    evaluation,issue
 )
 
 # This makes your models visible in the Admin panel
@@ -17,5 +17,5 @@ admin.site.register(academic_supervisor)
 admin.site.register(internship_placement)
 admin.site.register(logbook_entry)
 admin.site.register(evaluation)
-
+admin.site.register(issue)
 

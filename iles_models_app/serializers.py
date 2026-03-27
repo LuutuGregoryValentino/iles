@@ -1,4 +1,4 @@
-from .models import student,internship_administrator,workplace_supervisor, academic_supervisor, internship_placement,logbook_entry,evaluation
+from .models import student,internship_administrator,workplace_supervisor, academic_supervisor, internship_placement,logbook_entry,evaluation,issue
 from rest_framework import serializers
 class studentSerializer(serializers.ModelSerializer):
        class Meta:
@@ -29,3 +29,7 @@ class evaluationSerializer(serializers.ModelSerializer):
             model =evaluation
             fields='__all__'
            
+class issueSerializer(serializers.ModelSerializer):
+      class Meta:
+            model = issue
+            fields = '__all__'

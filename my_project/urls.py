@@ -21,12 +21,8 @@ from iles_models_app import views
 
 urlpatterns =[
     path('admin/', admin.site.urls),
-    path('',include('iles_models_app.urls'))
+    path('',include('iles_models_app.urls')),
+    path('issues/', views.issue_list_api,name='issue-list'),
 ]
 
-
-urlpatterns = [
-    path('admin/', admin.site.urls),              # admin panel
-    path('', include('iles_models_app.urls')),    # everything else handled by app
-]
 
