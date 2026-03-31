@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Submit Report</title>
+</head>
+<body>
+
+<h2>Submit Internship Report</h2>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <label>Date:</label><br>
+    <input type="date" name="date"><br><br>
+
+    <label>What did you do?</label><br>
+    <textarea name="activities" rows="5"></textarea><br><br>
+
+    <label>Challenges:</label><br>
+    <textarea name="challenges" rows="3"></textarea><br><br>
+
+    <button type="submit">Submit Report</button>
+</form>
+
+</body>
+</html>
