@@ -8,7 +8,7 @@ import Dashboard from './features/Dashboard/Dashboard';
 
 function App() {
 
-  const [screen, setScreen] = useState("profile"); //use of state and conditional rendering to swithch between the logina nd signup pages, 
+  const [screen, setScreen] = useState("Dashboard"); //use of state and conditional rendering to swithch between the logina nd signup pages, 
   return (
     <div className='App'>
       {screen === "login" && ( //if my state is login, load <Login /> set teh loginNavigate to swtich to signup upon click call
