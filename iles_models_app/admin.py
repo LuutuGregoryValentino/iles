@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    student, 
+   User, student, 
     internship_administrator, 
     workplace_supervisor, 
     academic_supervisor, 
@@ -10,6 +10,7 @@ from .models import (
 )
 
 # This makes your models visible in the Admin panel
+admin.site.register(User)
 admin.site.register(student)
 admin.site.register(internship_administrator)
 admin.site.register(workplace_supervisor)
