@@ -1,8 +1,9 @@
 from .models import student, workplace_supervisor, academic_supervisor, internship_placement, logbook_entry,internship_administrator,evaluation
 from .serializers import  studentSerializer,internship_administratorSerializer,workplace_supervisorSerializer, internship_placementSerializer, logbook_entrySerializer,internship_administratorSerializer,academic_supervisorSerializer,evaluationSerializer,issueSerializer
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from django.shortcuts import render
+from rest_framework.permissions import IsAuthenticated
 
 
 #to add a URL and view for the empty path,
@@ -11,6 +12,7 @@ def home(request):
     return render(request, 'home.html')
 
 @api_view(['GET','POST'])
+@permission_classes([IsAuthenticated])
 def student_list_api(request):
     if request.method == 'GET':
         students =student.objects.all()

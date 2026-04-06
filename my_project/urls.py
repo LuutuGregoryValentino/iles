@@ -16,13 +16,14 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include #Make sure include is here
 from iles_models_app import views 
 
 urlpatterns =[
     path('admin/', admin.site.urls),
-    path('',include('iles_models_app.urls')),
+    path('api/',include('iles_models_app.urls')),
     path('issues/', views.issue_list_api,name='issue-list'),
+    path('accounts/',include('django.contrib.auth.urls'))
 ]
 
 
