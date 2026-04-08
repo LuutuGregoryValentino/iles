@@ -1,0 +1,15 @@
+node_modules/
+venv/
+
+#Ignore python cache files
+__pycache__/
+*.pyc
+
+db.sqlite3
+
+venv/
+*.sqlite3
+__pycache__/
+
+
+
