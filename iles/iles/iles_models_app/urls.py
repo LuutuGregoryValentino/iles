@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import(
 )
 
 urlpatterns = [
-    path('', views.home, name='home'),          # homepage
+       # homepage
 
     # Existing paths for students, supervisors and Admins
     path('student/', views.student_list_api, name='student-list'),
@@ -14,7 +14,7 @@ urlpatterns = [
     path('admins/', views.admin_list_api, name='admin-list'),
     path('logbooks/', views.logbook_list_api, name='logbook-list'),
     path('evaluations/', views.evaluation_list_api, name='evaluation-list'),
-    path('issues/', views.issue_list_api, name='issue-list'),
+
 
 
     # JWT Authentication paths
