@@ -1,0 +1,27 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home Page</title>
+</head>
+<body>
+    <h1>Welcome to ILES Project!</h1>
+</body>
+</html>
+
+<h1>Welcome to ILES Project!</h1>
+<p>This is a test homepage for Django.</p>
+
+<!-- adding a list of students -->
+<ul>
+  <li>Student 1</li>
+  <li>Student 2</li>
+  <li>Student 3</li>
+</ul>
+
+<!-- adding a link to the students page -->
+<a href="{% url 'student_list' %}">View Students</a>
+</body>
+</html> '''

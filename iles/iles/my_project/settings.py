@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core',
+    'iles_models_app',
+    'rest_framework',
+    'rest_framework_simplejwt',
 ]
 
 AUTH_USER_MODEL = 'iles_models_app.User'
@@ -131,3 +133,27 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
 }
+"""
+this is to tell Django to use JWT as the primary way to check who a user is.
+"""
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+"""
+THIS IS TO ENSURE THAT JWT TOKEN IS REFRESHED AFTER A CERTAIN PERIOD OF TIME
+"""
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
+"""
+THIS IS TO MAKE SURE DJANGO USES OR CUSTOM USER MODEL INSTEAD OF THE DEFAULT ONE
+"""
+AUTH_USER_MODEL = 'iles_models_app.User'
+          
