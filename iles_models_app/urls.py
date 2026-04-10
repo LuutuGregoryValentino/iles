@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = 'iles_models_app'
+
 urlpatterns = [
     path('', views.home, name='home'),          # homepage
 

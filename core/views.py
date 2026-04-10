@@ -9,9 +9,12 @@ def dashboard_view(request):
 def report_view(request):
     if request.method == 'POST':
         date = request.POST.get('date')
-        activities = request.POST.get('activities')
+        description = request.POST.get('description')
+        hours = request.POST.get('hours')
         challenges = request.POST.get('challenges')
+        attachment = request.FILES.get('attachment')
 
-        print(date, activities, challenges)  # temporary (we’ll save later)
+
+        print(date, description, hours, challenges, attachment)  # temporary (we’ll save later)
 
     return render(request, 'report.html')
