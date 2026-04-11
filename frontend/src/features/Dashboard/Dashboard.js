@@ -1,33 +1,45 @@
-
 import React, { useState } from 'react';
 import './Dashboard.css';
-import ProfileForm from '../Profile/ProfileForm'; // Reuse your form!
 
 function Dashboard() {
-  const [activeTab, setActiveTab] = useState("home");
+    // This state controls which "Page" is showing inside the dashboard
+    const [view, setView] = useState("stats"); 
 
-  return (
-    <div className="dashboard-wrapper">
-      <aside className="sidebar">
-        <h2>Internship Portal</h2>
-        <ul>
-          <li onClick={() => setActiveTab("home")}>Dashboard Home</li>
-          <li onClick={() => setActiveTab("profile")}>My Profile</li>
-          <li onClick={() => setActiveTab("internships")}>Find Internships</li>
-        </ul>
-      </aside>
+    return (
+        <div className="dashboard-container">
+            <nav className="side-nav">
+                <h3>Internship Hub</h3>
+                <button onClick={() => setView("stats")}>Home</button>
+                <button onClick={() => setView("profile")}>Profile</button>
+                <button onClick={() => setView("tasks")}>My Tasks</button>
+            </nav>
 
-      <header className="topbar">
-        <span>Welcome, Student!</span>
-      </header>
+            <div className="main-section">
+                <header className="top-header">
+                    <span>Logged in as: <strong>Student</strong></span>
+                    <button className="logout-btn">Logout</button>
+                </header>
 
-      <main className="main-content">
-        {activeTab === "home" && <h3>Overview coming soon...</h3>}
-        {activeTab === "profile" && <ProfileForm />}
-        {activeTab === "internships" && <h3>Internship listings coming soon...</h3>}
-      </main>
-    </div>
-  );
+                <div className="content-area">
+                    {/* The Switchboard */}
+                    {view === "stats" && <StatsOverview />}
+                    {view === "profile" && <div>(Your ProfileForm Component goes here)</div>}
+                    {view === "tasks" && <div>(Task Table coming soon)</div>}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// A small "Sub-Component" for the home view
+function StatsOverview() {
+    return (
+        <div className="stats-grid">
+            <div className="card"><h4>Tasks Done</h4><p>12</p></div>
+            <div className="card"><h4>Days Remaining</h4><p>24</p></div>
+            <div className="card"><h4>Supervisor Status</h4><p>Active</p></div>
+        </div>
+    );
 }
 
 export default Dashboard;
