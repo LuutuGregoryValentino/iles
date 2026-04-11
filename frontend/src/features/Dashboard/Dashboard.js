@@ -2,44 +2,73 @@ import React, { useState } from 'react';
 import './Dashboard.css';
 
 function Dashboard() {
-    // This state controls which "Page" is showing inside the dashboard
-    const [view, setView] = useState("stats"); 
+    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [view, setView] = useState("ecommerce"); // Default view
+
+    const toggleTheme = () => {
+        setIsDarkMode(!isDarkMode);
+        // This tells the CSS to switch to the dark variables
+        document.documentElement.setAttribute('data-theme', isDarkMode ? 'light' : 'dark');
+    };
 
     return (
         <div className="dashboard-container">
-            <nav className="side-nav">
-                <h3>Internship Hub</h3>
-                <button onClick={() => setView("stats")}>Home</button>
-                <button onClick={() => setView("profile")}>Profile</button>
-                <button onClick={() => setView("tasks")}>My Tasks</button>
-            </nav>
+            {/* 1. SIDEBAR */}
+            <aside className="sidebar">
+              <div className="logo">TailAdmin</div>
+              <ul className="nav-links">
+                <li className={view === "ecommerce" ? "active" : ""} onClick={() => setView("ecommerce")}>Dashboard</li>
+                <li onClick={() => setView("profile")}>User Profile</li>
+                <li onClick={() => setView("task")}>Task</li>
+                <li onClick={() => setView("forms")}>Forms</li>
+              </ul>
+            </aside>
 
-            <div className="main-section">
-                <header className="top-header">
-                    <span>Logged in as: <strong>Student</strong></span>
-                    <button className="logout-btn">Logout</button>
+            {/* 2. MAIN CONTENT AREA */}
+            <main className="main-content">
+                <header className="topbar">
+                    <div className="search-bar">
+                      <input type="text" placeholder="Search or type command..." />
+                    </div>
+                    <div className="topbar-actions">
+                      <button onClick={toggleTheme}>
+                        {isDarkMode ? '☀️' : '🌙'}
+                      </button>
+                      <div className="user-profile">
+                        <span>Emirhan Boruch</span>
+                      </div>
+                    </div>
                 </header>
 
-                <div className="content-area">
-                    {/* The Switchboard */}
-                    {view === "stats" && <StatsOverview />}
-                    {view === "profile" && <div>(Your ProfileForm Component goes here)</div>}
-                    {view === "tasks" && <div>(Task Table coming soon)</div>}
+                <div className="content">
+                    {view === "ecommerce" && <EcommerceStats />}
+                    {/* Other views go here */}
                 </div>
-            </div>
+            </main>
         </div>
     );
 }
 
-// A small "Sub-Component" for the home view
-function StatsOverview() {
-    return (
-        <div className="stats-grid">
-            <div className="card"><h4>Tasks Done</h4><p>12</p></div>
-            <div className="card"><h4>Days Remaining</h4><p>24</p></div>
-            <div className="card"><h4>Supervisor Status</h4><p>Active</p></div>
-        </div>
-    );
+// The "Cards" part of your image
+function EcommerceStats() {
+  return (
+    <div className="stats-grid">
+      <StatCard title="Total Views" value="3.456" growth="+0.43%" />
+      <StatCard title="Total Profit" value="$45.2K" growth="+4.35%" />
+      <StatCard title="Total Product" value="2.450" growth="+2.59%" />
+      <StatCard title="Total Users" value="3.456" growth="+0.95%" />
+    </div>
+  )
+}
+
+function StatCard({ title, value, growth }) {
+  return (
+    <div className="card">
+      <div className="card-header">{title}</div>
+      <div className="card-value">{value}</div>
+      <div className="card-growth">{growth}</div>
+    </div>
+  );
 }
 
 export default Dashboard;

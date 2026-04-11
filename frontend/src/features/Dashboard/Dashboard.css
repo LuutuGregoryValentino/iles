@@ -1,48 +1,73 @@
+:root {
+  /* Light Mode Colors */
+  --bg-main: #f4f7f6;
+  --bg-card: #ffffff;
+  --text-primary: #1a1a2e;
+  --sidebar-bg: #ffffff;
+  --accent: #3c50e0;
+  /* That nice blue in your image */
+}
+
+[data-theme='dark'] {
+  /* Dark Mode Colors */
+  --bg-main: #1a222c;
+  --bg-card: #24303f;
+  --text-primary: #eff4fb;
+  --sidebar-bg: #1c2434;
+}
+
+
 .dashboard-container {
-    display: flex; /* Side-by-side layout */
-    height: 100vh;
+  display: flex;
+  /* Side-by-side layout */
+  height: 100vh;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
 }
 
 .side-nav {
-    width: 250px;
-    background-color: #1a1a2e;
-    color: white;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  width: 250px;
+  background-color: #1a1a2e;
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .main-section {
-    flex-grow: 1; /* Take up the rest of the screen */
-    display: flex;
-    flex-direction: column;
+  flex-grow: 1;
+  /* Take up the rest of the screen */
+  display: flex;
+  flex-direction: column;
 }
 
 .top-header {
-    height: 60px;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
+  height: 60px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
 }
 
 .content-area {
-    padding: 20px;
-    background-color: #f4f7f6;
-    flex-grow: 1;
+  padding: 20px;
+  background-color: #f4f7f6;
+  flex-grow: 1;
 }
 
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
-    gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  /* 3 equal columns */
+  gap: 20px;
 }
 
 .card {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-card);
 }

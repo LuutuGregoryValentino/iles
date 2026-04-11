@@ -20,7 +20,7 @@ function App() {
       )}
 
       {screen === "profile" && <ProfileForm/>}
-      {screen === "dashboard" && <Dashboard/>}
+      {screen === "Dashboard" && <Dashboard/>}
     </div>
   );
 
