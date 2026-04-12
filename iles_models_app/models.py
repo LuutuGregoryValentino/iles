@@ -72,7 +72,7 @@ class internship_placement(models.Model):
     end_date =models.DateField()
     placement_status =models.CharField(max_length=100)
 
-    student = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name="placements")
+    student = models.ForeignKey('student',on_delete=models.CASCADE,related_name="placements")
     internship_administrator=models.ForeignKey(internship_administrator,on_delete=models.SET_NULL,null=True,blank=True)
     workplace_supervisor=models.ForeignKey(workplace_supervisor, on_delete =models.SET_NULL,null=True,blank=True)
     academic_supervisor =models.ForeignKey(academic_supervisor,on_delete=models.SET_NULL,null=True,blank=True)
