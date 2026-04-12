@@ -7,7 +7,7 @@ function Login(props) {
 
     const handleLogin = (e) => {
         e.preventDefault();
-        alert(`Logging in with: ${email}`);
+        authAPI.login(`Logging in with: ${email}`);
     };
 
     return (
