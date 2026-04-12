@@ -5,9 +5,10 @@ function Login(props) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        authAPI.login(`Logging in with: ${email}`);
+        const res = await authAPI.login({ email, password}); // calls Django
+        onAuthSuccess(res.data.user, res.data.access, res.data.refresh);
     };
 
     return (
