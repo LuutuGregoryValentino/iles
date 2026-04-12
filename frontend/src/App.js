@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import './App.css';
-import Signup from "./features/Signup/Signup";
-import Login from './features/Login/Login';
+import Login       from './features/Login/Login';
+import Signup      from './features/Signup/Signup';
 import ProfileForm from './features/Profile/ProfileForm';
-import Dashboard from './features/Dashboard/Dashboard';
+import Dashboard   from './features/Dashboard/Dashboard';
 
 function App() {
-
-  const [screen, setScreen] = useState(
-    () => localStorage.getItem('access_token') ? 'dashboard' : 'login'
+  const [screen, setScreen] = useState(() =>
+    localStorage.getItem('access_token') ? 'dashboard' : 'login'
   );
 
   const [currentUser, setCurrentUser] = useState(() => {
@@ -17,7 +16,7 @@ function App() {
   });
 
   const handleAuthSuccess = (user, access, refresh) => {
-    localStorage.setItem('access_token', access);
+    localStorage.setItem('access_token',  access);
     localStorage.setItem('refresh_token', refresh);
     localStorage.setItem('user', JSON.stringify(user));
     setCurrentUser(user);
@@ -31,37 +30,19 @@ function App() {
   };
 
   return (
-    <div className='App'>
-
+    <div className="App">
       {screen === 'login' && (
-        <Login
-          onAuthSuccess={handleAuthSuccess}
-          goToSignup={() => setScreen('signup')}
-        />
+        <Login onAuthSuccess={handleAuthSuccess} goToSignup={() => setScreen('signup')} />
       )}
-
       {screen === 'signup' && (
-        <Signup
-          onAuthSuccess={handleAuthSuccess}
-          goToLogin={() => setScreen('login')}
-        />
+        <Signup onAuthSuccess={handleAuthSuccess} goToLogin={() => setScreen('login')} />
       )}
-
       {screen === 'profile' && (
-        <ProfileForm
-          currentUser={currentUser}
-          onSaved={() => setScreen('dashboard')}
-        />
+        <ProfileForm currentUser={currentUser} onSaved={() => setScreen('dashboard')} />
       )}
-
       {screen === 'dashboard' && (
-        <Dashboard
-          currentUser={currentUser}
-          onLogout={handleLogout}
-          goToProfile={() => setScreen('profile')}
-        />
+        <Dashboard currentUser={currentUser} onLogout={handleLogout} goToProfile={() => setScreen('profile')} />
       )}
-
     </div>
   );
 }
