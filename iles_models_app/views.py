@@ -1,4 +1,4 @@
-from .models import student, workplace_supervisor, academic_supervisor, internship_placement, logbook_entry,internship_administrator,evaluation
+from .models import issue, student, workplace_supervisor, academic_supervisor, internship_placement, logbook_entry,internship_administrator,evaluation
 from .serializers import  studentSerializer,internship_administratorSerializer,workplace_supervisorSerializer, internship_placementSerializer, logbook_entrySerializer,internship_administratorSerializer,academic_supervisorSerializer,evaluationSerializer,issueSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -51,14 +51,14 @@ def admin_list_api(request):
         return Response(serializer.data)
     elif request.method == 'POST':
         serializer = internship_administratorSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data,status=201)
-    return Response(serializer.errors,status=400)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
 
 @api_view(['GET'])
 def issue_list_api(request):
-    issues = logbook_entry.objects.exclude(challenge__isnull=True)   
+    issues = issue.objects.all()   
     serializer = logbook_entrySerializer(issues,many=True)
     return Response(serializer.data)
 
