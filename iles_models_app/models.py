@@ -55,7 +55,7 @@ class workplace_supervisor(models.Model):
         return self.supervisor_name
     
 class academic_supervisor(models.Model):
-    user=models.OneToOneField(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
+    user=models.OneToOneField('iles_models_app.User',on_delete=models.CASCADE)
     staff_id =models.CharField(max_length =20,unique=True)
     lecturers_name =models.CharField(max_length =100)
     college_dept =models.CharField (max_length =100)
