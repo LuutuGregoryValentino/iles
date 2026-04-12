@@ -1,9 +1,15 @@
 node_modules/
 venv/
-env/
+
+#Ignore python cache files
 __pycache__/
 *.pyc
+
 db.sqlite3
-*.pyc
-**/__pycache__/
-uu/
+
+venv/
+*.sqlite3
+__pycache__/
+
+
+
