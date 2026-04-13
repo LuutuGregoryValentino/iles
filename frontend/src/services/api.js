@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const API = axios.create({
-    baseURL: 'http://localhost:8000/api/', // Django API URL
-    headers: { 'Content-Type': 'application/json'},
+    baseURL: 'http://localhost:8000/api',
+    headers: { 'Content-Type': 'application/json' },
 });
 
 API.interceptors.request.use((config) => {
@@ -37,13 +37,13 @@ API.interceptors.response.use(
 );
 
 export const authAPI = {
-    register: (data) => API.post('/auth/register//', data),
+    register: (data) => API.post('/auth/register/', data),
     login:    (data) => API.post('/auth/login/', data),
     logout:   (data) => API.post('/auth/logout/', data),
     me:       ()     => API.get('/auth/me/'),
 };
 
-export const studentAPI ={
+export const studentsAPI = {
     list:   ()         => API.get('/students/'),
     get:    (id)       => API.get(`/students/${id}/`),
     create: (data)     => API.post('/students/', data),
@@ -51,23 +51,23 @@ export const studentAPI ={
 };
 
 export const logbooksAPI = {
-  list:   ()     => API.get('/logbooks/'),
-  create: (data) => API.post('/logbooks/', data),
+    list:   ()     => API.get('/logbooks/'),
+    create: (data) => API.post('/logbooks/', data),
 };
 
 export const evaluationsAPI = {
-  list:   ()     => API.get('/evaluations/'),
-  create: (data) => API.post('/evaluations/', data),
+    list:   ()     => API.get('/evaluations/'),
+    create: (data) => API.post('/evaluations/', data),
 };
 
 export const placementsAPI = {
-    list:   ()      => API.get('/placements/'),
-    create: (data)  => API.post('/placements/', data),
+    list:   ()     => API.get('/placements/'),
+    create: (data) => API.post('/placements/', data),
 };
 
 export const issuesAPI = {
-  list:   () => API.get('/issues/'),
-  create: (data) => API.post('/issues/', data),
+    list:   ()     => API.get('/issues/'),
+    create: (data) => API.post('/issues/', data),
 };
 
 export default API;
