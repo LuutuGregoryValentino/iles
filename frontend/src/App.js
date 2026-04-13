@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import './App.css';
-import Login       from './features/Login/Login';
-import Signup      from './features/Signup/Signup';
+import Login from './features/Login/Login';
+import Signup from './features/Signup/Signup';
 import ProfileForm from './features/Profile/ProfileForm';
-import Dashboard   from './features/Dashboard/Dashboard';
+import Dashboard from './features/Dashboard/Dashboard';
 
 function App() {
   const [screen, setScreen] = useState(() =>
@@ -16,7 +16,7 @@ function App() {
   });
 
   const handleAuthSuccess = (user, access, refresh) => {
-    localStorage.setItem('access_token',  access);
+    localStorage.setItem('access_token', access);
     localStorage.setItem('refresh_token', refresh);
     localStorage.setItem('user', JSON.stringify(user));
     setCurrentUser(user);
@@ -31,6 +31,19 @@ function App() {
 
   return (
     <div className="App">
+      
+      {process.env.NODE_ENV === 'development' && (
+        <nav style={{ background: '#eee', padding: '10px', display: 'flex', gap: '10px' }}>
+          <button onClick={() => setScreen('login')}>Mock Login Screen</button>
+          <button onClick={() => setScreen('signup')}>Mock Signup Screen</button>
+          <button onClick={() => {
+            setCurrentUser({ name: 'Dev User', email: 'dev@test.com' });
+            setScreen('profile');
+          }}>Mock Profile (Authed)</button>
+          <button onClick={() => setScreen('dashboard')}>Mock Dashboard</button>
+        </nav>
+      )}
+
       {screen === 'login' && (
         <Login onAuthSuccess={handleAuthSuccess} goToSignup={() => setScreen('signup')} />
       )}
