@@ -21,7 +21,7 @@ from iles_models_app import views
 
 urlpatterns =[
     path('admin/', admin.site.urls),
-    path('api/',include('iles_models_app.urls', namespace='api')),
+    path('api/',include(('iles_models_app.urls','iles_models_app'), namespace='api')),
     path('issues/', views.issue_list_api,name='issue-list'),
     path('accounts/',include('django.contrib.auth.urls'))
 ]

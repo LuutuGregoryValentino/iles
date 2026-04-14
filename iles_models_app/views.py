@@ -3,9 +3,7 @@ from .serializers import  studentSerializer,internship_administratorSerializer,w
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from django.shortcuts import render
-
 from rest_framework.permissions import IsAuthenticated
-
 
 #to add a URL and view for the empty path,
 
