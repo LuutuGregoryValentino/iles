@@ -55,7 +55,7 @@ class workplace_supervisor(models.Model):
         return self.supervisor_name
     
 class academic_supervisor(models.Model):
-    user=models.OneToOneField(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
+    user=models.OneToOneField('iles_models_app.User',on_delete=models.CASCADE)
     staff_id =models.CharField(max_length =20,unique=True)
     lecturers_name =models.CharField(max_length =100)
     college_dept =models.CharField (max_length =100)
@@ -72,7 +72,7 @@ class internship_placement(models.Model):
     end_date =models.DateField()
     placement_status =models.CharField(max_length=100)
 
-    student = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name="placements")
+    student = models.ForeignKey('student',on_delete=models.CASCADE,related_name="placements")
     internship_administrator=models.ForeignKey(internship_administrator,on_delete=models.SET_NULL,null=True,blank=True)
     workplace_supervisor=models.ForeignKey(workplace_supervisor, on_delete =models.SET_NULL,null=True,blank=True)
     academic_supervisor =models.ForeignKey(academic_supervisor,on_delete=models.SET_NULL,null=True,blank=True)
