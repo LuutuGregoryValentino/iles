@@ -110,6 +110,9 @@ class issue(models.Model):
     description = models.TextField()
     status = models.CharField(max_length=20,default='Pending')
     week_number = models.PositiveIntegerField(default=1)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    supervisor_feedback = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
