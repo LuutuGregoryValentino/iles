@@ -1,15 +1,37 @@
-node_modules/
-venv/
-
-#Ignore python cache files
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
 
+# Django
+*.log
+local_settings.py
 db.sqlite3
+media/
 
+# Virtual environment
+.venv/
 venv/
-*.sqlite3
-__pycache__/
+env/
 
+# Environment variables
+.env
+.env.local
+.env.production
 
+# React / Node
+node_modules/
+frontend/build/
+npm-debug.log*
 
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

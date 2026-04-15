@@ -11,10 +11,9 @@ function Signup({ onAuthSuccess, goToLogin }) {
   const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
 
-  const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+  const set = field => e => setForm({ ...form, [field]: e.target.value });
 
-  const passwordMatch = form.confirmPassword.length === 0
-    ? ''
+  const passwordClass = form.confirmPassword.length === 0 ? ''
     : form.password === form.confirmPassword ? 'input-success' : 'input-error';
 
   const handleSignup = async (e) => {
@@ -27,20 +26,13 @@ function Signup({ onAuthSuccess, goToLogin }) {
     setLoading(true);
     try {
       const res = await authAPI.register({
-        email:         form.email,
-        username:      form.username,
-        university_id: form.university_id,
-        role:          form.role,
-        password:      form.password,
+        email: form.email, username: form.username,
+        university_id: form.university_id, role: form.role, password: form.password,
       });
-      const { user, access, refresh } = res.data;
-      onAuthSuccess(user, access, refresh);
+      onAuthSuccess(res.data.user, res.data.access, res.data.refresh);
     } catch (err) {
       const data = err.response?.data;
-      const msg = typeof data === 'object'
-        ? Object.values(data).flat().join(' ')
-        : 'Registration failed.';
-      setError(msg);
+      setError(typeof data === 'object' ? Object.values(data).flat().join(' ') : 'Registration failed.');
     } finally {
       setLoading(false);
     }
@@ -50,50 +42,29 @@ function Signup({ onAuthSuccess, goToLogin }) {
     <div className="auth-container">
       <div className="auth-card">
         <h2>Create Account</h2>
-
         {error && <p style={{ color: 'red', fontSize: '14px' }}>{error}</p>}
-
         <form onSubmit={handleSignup}>
-          <input type="email"  placeholder="Email Address"  value={form.email}        onChange={set('email')}        required />
-          <input type="text"   placeholder="Username"        value={form.username}      onChange={set('username')}      required />
-          <input type="text"   placeholder="University ID"   value={form.university_id} onChange={set('university_id')} required />
-
+          <input type="email" placeholder="Email address" value={form.email} onChange={set('email')} required />
+          <input type="text" placeholder="Username" value={form.username} onChange={set('username')} required />
+          <input type="text" placeholder="University ID" value={form.university_id} onChange={set('university_id')} required />
           <select value={form.role} onChange={set('role')}>
             <option value="student">Student</option>
             <option value="workplace_supervisor">Workplace Supervisor</option>
             <option value="academic_supervisor">Academic Supervisor</option>
+            <option value="administrator">Administrator</option>
           </select>
-
-          <input
-            type="password"
-            placeholder="Create a password (min 8 chars)"
-            value={form.password}
-            className={passwordMatch}
-            onChange={set('password')}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Confirm password"
-            value={form.confirmPassword}
-            className={passwordMatch}
-            onChange={set('confirmPassword')}
-            required
-          />
-
+          <input type="password" placeholder="Password (min 8 characters)"
+            value={form.password} className={passwordClass} onChange={set('password')} required />
+          <input type="password" placeholder="Confirm password"
+            value={form.confirmPassword} className={passwordClass} onChange={set('confirmPassword')} required />
           <button type="submit" disabled={loading}>
-            {loading ? 'Registering...' : 'Register'}
+            {loading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
-
         <p style={{ marginTop: '15px', fontSize: '14px' }}>
           Already have an account?{' '}
-          <span
-            style={{ color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
-            onClick={goToLogin}
-          >
-            Sign in
-          </span>
+          <span style={{ color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
+            onClick={goToLogin}>Sign in</span>
         </p>
       </div>
     </div>
