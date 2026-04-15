@@ -335,9 +335,9 @@ def evaluation_list_api(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  ISSUES
-# ─────────────────────────────────────────────────────────────────────────────
+
+  #ISSUES
+
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])

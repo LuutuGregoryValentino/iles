@@ -19,36 +19,36 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'username', 'university_id', 'role']
-class studentSerializer(serializers.ModelSerializer):
+class StudentSerializer(serializers.ModelSerializer):
        class Meta:
             model =student
             fields='__all__'
-class internship_administratorSerializer(serializers.ModelSerializer):
+class Internship_administratorSerializer(serializers.ModelSerializer):
         class Meta:
              model = internship_administrator
              fields='__all__'
-class workplace_supervisorSerializer(serializers.ModelSerializer):
+class Workplace_supervisorSerializer(serializers.ModelSerializer):
             class Meta:
              model =workplace_supervisor
              fields='__all__'
-class internship_placementSerializer(serializers.ModelSerializer):
+class Internship_placementSerializer(serializers.ModelSerializer):
             class Meta:
              model =internship_placement
              fields='__all__'
-class logbook_entrySerializer(serializers.ModelSerializer):
+class Logbook_entrySerializer(serializers.ModelSerializer):
             class Meta:
              model =logbook_entry
              fields='__all__'
-class academic_supervisorSerializer(serializers.ModelSerializer):
+class Academic_supervisorSerializer(serializers.ModelSerializer):
       class Meta:
           model =academic_supervisor
           fields='__all__'
-class evaluationSerializer(serializers.ModelSerializer):
+class EvaluationSerializer(serializers.ModelSerializer):
       class Meta:
             model =evaluation
             fields='__all__'
            
-class issueSerializer(serializers.ModelSerializer):
+class IssueSerializer(serializers.ModelSerializer):
       class Meta:
             model = issue
             fields = '__all__'

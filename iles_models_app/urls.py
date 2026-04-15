@@ -17,4 +17,5 @@ urlpatterns = [
 
     # Special view for Displaying issues
     path('issues/', views.issue_list_api, name='issue-list'),
+    
 ]
