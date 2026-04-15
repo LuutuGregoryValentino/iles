@@ -114,6 +114,6 @@ class issue(models.Model):
     end_date = models.DateField(null=True, blank=True)
     supervisor_feedback = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
         return self.title
