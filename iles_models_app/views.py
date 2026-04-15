@@ -1,63 +1,36 @@
-from django.shortcuts import render
 from django.contrib.auth import get_user_model, authenticate
+from django.utils import timezone
 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-from django.shortcuts import render
-from rest_framework.permissions import IsAuthenticated
-
-#to add a URL and view for the empty path,
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import (
-    student, workplace_supervisor, academic_supervisor,
-    internship_placement, logbook_entry,
-    internship_administrator, evaluation, issue
+    Student, WorkplaceSupervisor, AcademicSupervisor,
+    InternshipPlacement, LogbookEntry,
+    InternshipAdministrator, Evaluation, Issue, LogStatus
 )
 from .serializers import (
-    studentSerializer,
-    internship_administratorSerializer,
-    workplace_supervisorSerializer,
-    internship_placementSerializer,
-    logbook_entrySerializer,
-    academic_supervisorSerializer,
-    evaluationSerializer,
-    issueSerializer,
-    RegisterSerializer,
-    UserSerializer,
+    StudentSerializer, InternshipAdministratorSerializer,
+    WorkplaceSupervisorSerializer, InternshipPlacementSerializer,
+    LogbookEntrySerializer, AcademicSupervisorSerializer,
+    EvaluationSerializer, IssueSerializer,
+    RegisterSerializer, UserSerializer,
 )
 
 User = get_user_model()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  TEMPLATE VIEWS (kept for Django admin navigation)
-# ─────────────────────────────────────────────────────────────────────────────
-
-def home(request):
-    return render(request, 'home.html')
-
-def student_list(request):
-    return render(request, 'student_list.html')
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  AUTH  —  register / login / logout / me / token-refresh
-# ─────────────────────────────────────────────────────────────────────────────
+# ─── AUTH ─────────────────────────────────────────────────────────────────────
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register(request):
-    """
-    POST /api/auth/register/
-    Body: { email, username, university_id, role, password }
-    Returns: user info + access + refresh tokens
-    """
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
-        user = serializer.save()
+        user    = serializer.save()
         refresh = RefreshToken.for_user(user)
         return Response({
             'user':    UserSerializer(user).data,
@@ -70,313 +43,216 @@ def register(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_api(request):
-    """
-    POST /api/auth/login/
-    Body: { email, password }
-    Returns: user info + access + refresh tokens
-    """
     email    = request.data.get('email', '').strip()
     password = request.data.get('password', '')
-
     if not email or not password:
-        return Response(
-            {'error': 'Email and password are required.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    # Django's authenticate() uses username field internally;
-    # our custom User model has USERNAME_FIELD = 'email'
+        return Response({'error': 'Email and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
     user = authenticate(request, username=email, password=password)
-
     if user is None:
-        return Response(
-            {'error': 'Invalid email or password.'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-
+        return Response({'error': 'Invalid email or password.'}, status=status.HTTP_401_UNAUTHORIZED)
     refresh = RefreshToken.for_user(user)
     return Response({
         'user':    UserSerializer(user).data,
         'access':  str(refresh.access_token),
         'refresh': str(refresh),
-    }, status=status.HTTP_200_OK)
+    })
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout_api(request):
-    """
-    POST /api/auth/logout/
-    Body: { refresh }
-    Blacklists the refresh token so it can no longer be used.
-    """
     try:
-        refresh_token = request.data.get('refresh')
-        token = RefreshToken(refresh_token)
+        token = RefreshToken(request.data.get('refresh'))
         token.blacklist()
-        return Response(
-            {'message': 'Logged out successfully.'},
-            status=status.HTTP_200_OK
-        )
+        return Response({'message': 'Logged out successfully.'})
     except Exception:
-        return Response(
-            {'error': 'Invalid or missing refresh token.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response({'error': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def current_user(request):
-    """
-    GET /api/auth/me/
-    Returns the currently logged-in user's info.
-    """
     return Response(UserSerializer(request.user).data)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  STUDENTS
-# ─────────────────────────────────────────────────────────────────────────────
+# ─── STUDENTS ────────────────────────────────────────────────────────────────
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
-def student_list_api(request):
-    """
-    GET  /api/students/  — list all students
-    POST /api/students/  — create a new student profile
-    """
+def student_list(request):
     if request.method == 'GET':
-        students = student.objects.all()
-        serializer = studentSerializer(students, many=True)
-        return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = studentSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(StudentSerializer(Student.objects.all(), many=True).data)
+    s = StudentSerializer(data=request.data)
+    if s.is_valid():
+        s.save()
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
-def student_detail_api(request, pk):
-    """
-    GET    /api/students/<pk>/  — retrieve one student
-    PUT    /api/students/<pk>/  — update a student (partial allowed)
-    DELETE /api/students/<pk>/  — delete a student
-    """
+def student_detail(request, pk):
     try:
-        obj = student.objects.get(pk=pk)
-    except student.DoesNotExist:
+        obj = Student.objects.get(pk=pk)
+    except Student.DoesNotExist:
         return Response({'error': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
-
     if request.method == 'GET':
-        return Response(studentSerializer(obj).data)
-
-    elif request.method == 'PUT':
-        serializer = studentSerializer(obj, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    elif request.method == 'DELETE':
-        obj.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(StudentSerializer(obj).data)
+    if request.method == 'PUT':
+        s = StudentSerializer(obj, data=request.data, partial=True)
+        if s.is_valid():
+            s.save()
+            return Response(s.data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+    obj.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  WORKPLACE SUPERVISORS
-# ─────────────────────────────────────────────────────────────────────────────
+# ─── SUPERVISORS & ADMINS ────────────────────────────────────────────────────
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
-def supervisor_list_api(request):
-    """
-    GET  /api/supervisors/  — list all workplace supervisors
-    POST /api/supervisors/  — create a new workplace supervisor
-    """
+def supervisor_list(request):
     if request.method == 'GET':
-        supervisors = workplace_supervisor.objects.all()
-        serializer = workplace_supervisorSerializer(supervisors, many=True)
-        return Response(serializer.data)
+        return Response(WorkplaceSupervisorSerializer(WorkplaceSupervisor.objects.all(), many=True).data)
+    s = WorkplaceSupervisorSerializer(data=request.data)
+    if s.is_valid():
+        s.save()
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'POST':
-        serializer = workplace_supervisorSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  INTERNSHIP ADMINISTRATORS
-# ─────────────────────────────────────────────────────────────────────────────
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
-def admin_list_api(request):
-    """
-    GET  /api/admins/  — list all internship administrators
-    POST /api/admins/  — create a new administrator record
-    """
+def admin_list(request):
     if request.method == 'GET':
-        admins = internship_administrator.objects.all()
-        serializer = internship_administratorSerializer(admins, many=True)
-        return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = internship_administratorSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(InternshipAdministratorSerializer(InternshipAdministrator.objects.all(), many=True).data)
+    s = InternshipAdministratorSerializer(data=request.data)
+    if s.is_valid():
+        s.save()
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  INTERNSHIP PLACEMENTS
-# ─────────────────────────────────────────────────────────────────────────────
+# ─── PLACEMENTS ──────────────────────────────────────────────────────────────
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
-def placement_list_api(request):
-    """
-    GET  /api/placements/  — list all placements
-    POST /api/placements/  — create a new placement
-    """
+def placement_list(request):
     if request.method == 'GET':
-        placements = internship_placement.objects.all()
-        serializer = internship_placementSerializer(placements, many=True)
-        return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = internship_placementSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(InternshipPlacementSerializer(InternshipPlacement.objects.all(), many=True).data)
+    s = InternshipPlacementSerializer(data=request.data)
+    if s.is_valid():
+        s.save()
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
-def placement_detail_api(request, pk):
-    """
-    GET    /api/placements/<pk>/  — retrieve one placement
-    PUT    /api/placements/<pk>/  — update a placement
-    DELETE /api/placements/<pk>/  — delete a placement
-    """
+def placement_detail(request, pk):
     try:
-        obj = internship_placement.objects.get(pk=pk)
-    except internship_placement.DoesNotExist:
+        obj = InternshipPlacement.objects.get(pk=pk)
+    except InternshipPlacement.DoesNotExist:
         return Response({'error': 'Placement not found.'}, status=status.HTTP_404_NOT_FOUND)
-
     if request.method == 'GET':
-        return Response(internship_placementSerializer(obj).data)
-
-    elif request.method == 'PUT':
-        serializer = internship_placementSerializer(obj, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    elif request.method == 'DELETE':
-        obj.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(InternshipPlacementSerializer(obj).data)
+    if request.method == 'PUT':
+        s = InternshipPlacementSerializer(obj, data=request.data, partial=True)
+        if s.is_valid():
+            s.save()
+            return Response(s.data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+    obj.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  LOGBOOK ENTRIES
-# ─────────────────────────────────────────────────────────────────────────────
+# ─── LOGBOOKS ────────────────────────────────────────────────────────────────
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
-def logbook_list_api(request):
-    """
-    GET  /api/logbooks/  — list all logbook entries
-    POST /api/logbooks/  — submit a new weekly logbook entry
-    """
+def logbook_list(request):
     if request.method == 'GET':
-        logbooks = logbook_entry.objects.all()
-        serializer = logbook_entrySerializer(logbooks, many=True)
-        return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = logbook_entrySerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  EVALUATIONS
-# ─────────────────────────────────────────────────────────────────────────────
-
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def evaluation_list_api(request):
-    """
-    GET  /api/evaluations/  — list all evaluations
-    POST /api/evaluations/  — submit a new evaluation
-    """
-    if request.method == 'GET':
-        evaluations = evaluation.objects.all()
-        serializer = evaluationSerializer(evaluations, many=True)
-        return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = evaluationSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-  #ISSUES
-
-
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def issue_list_api(request):
-    """
-    GET  /api/issues/  — list all issues
-    POST /api/issues/  — report a new issue (student auto-set from token)
-    """
-    if request.method == 'GET':
-        issues = issue.objects.all()
-        serializer = issueSerializer(issues, many=True)
-        return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = issueSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(student=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(LogbookEntrySerializer(LogbookEntry.objects.all(), many=True).data)
+    s = LogbookEntrySerializer(data=request.data)
+    if s.is_valid():
+        s.save()
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
-def issue_detail_api(request, pk):
-    """
-    GET   /api/issues/<pk>/  — retrieve one issue
-    PATCH /api/issues/<pk>/  — update issue status (admin use)
-    """
+def logbook_detail(request, pk):
     try:
-        obj = issue.objects.get(pk=pk)
-    except issue.DoesNotExist:
-        return Response({'error': 'Issue not found.'}, status=status.HTTP_404_NOT_FOUND)
-
+        obj = LogbookEntry.objects.get(pk=pk)
+    except LogbookEntry.DoesNotExist:
+        return Response({'error': 'Logbook entry not found.'}, status=status.HTTP_404_NOT_FOUND)
     if request.method == 'GET':
-        return Response(issueSerializer(obj).data)
+        return Response(LogbookEntrySerializer(obj).data)
+    # Prevent editing an approved logbook
+    if obj.submission_status == LogStatus.APPROVED:
+        return Response({'error': 'Approved logbook entries cannot be edited.'}, status=status.HTTP_403_FORBIDDEN)
+    s = LogbookEntrySerializer(obj, data=request.data, partial=True)
+    if s.is_valid():
+        # Auto-set submitted_at when status changes to Submitted
+        if request.data.get('submission_status') == LogStatus.SUBMITTED and not obj.submitted_at:
+            s.save(submitted_at=timezone.now())
+        else:
+            s.save()
+        return Response(s.data)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'PATCH':
-        serializer = issueSerializer(obj, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# ─── EVALUATIONS ─────────────────────────────────────────────────────────────
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def evaluation_list(request):
+    if request.method == 'GET':
+        return Response(EvaluationSerializer(Evaluation.objects.all(), many=True).data)
+    s = EvaluationSerializer(data=request.data)
+    if s.is_valid():
+        s.save(supervisor=request.user)
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def evaluation_detail(request, pk):
+    try:
+        obj = Evaluation.objects.get(pk=pk)
+    except Evaluation.DoesNotExist:
+        return Response({'error': 'Evaluation not found.'}, status=status.HTTP_404_NOT_FOUND)
+    return Response(EvaluationSerializer(obj).data)
+
+
+# ─── ISSUES ──────────────────────────────────────────────────────────────────
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def issue_list(request):
+    if request.method == 'GET':
+        return Response(IssueSerializer(Issue.objects.all(), many=True).data)
+    s = IssueSerializer(data=request.data)
+    if s.is_valid():
+        s.save(student=request.user)
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def issue_detail(request, pk):
+    try:
+        obj = Issue.objects.get(pk=pk)
+    except Issue.DoesNotExist:
+        return Response({'error': 'Issue not found.'}, status=status.HTTP_404_NOT_FOUND)
+    if request.method == 'GET':
+        return Response(IssueSerializer(obj).data)
+    s = IssueSerializer(obj, data=request.data, partial=True)
+    if s.is_valid():
+        s.save()
+        return Response(s.data)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
