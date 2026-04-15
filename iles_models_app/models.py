@@ -157,15 +157,20 @@ class Evaluation(models.Model):
     @property
     def total_score(self):
         """Weighted: 40% workplace + 30% academic + 30% logbook"""
-        return round((self.workplace_score * 0.4) + (self.academic_score * 0.3) + (self.logbook_score * 0.3), 2)
+        w_score =(self.workplace_score or 0)*0.4
+        a_score =(self.academic_score or 0)*0.3
+        l_score =(self.logbook_score or 0)*0.3
+        return round(w_score +a_score +l_score,2)
+        
 
     @property
     def grade(self):
-        t = self.total_score
-        if t >= 80: return 'A'
-        if t >= 70: return 'B'
-        if t >= 60: return 'C'
-        if t >= 50: return 'D'
+        """Calculates grade-based on total score"""
+        score= self.total_score
+        if score >= 80: return 'A'
+        if score >= 70: return 'B'
+        if score >= 60: return 'C'
+        if score>= 50: return 'D'
         return 'F'
 
     def __str__(self):
