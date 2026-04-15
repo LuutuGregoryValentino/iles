@@ -197,3 +197,13 @@ class Issue(models.Model):
 
     def __str__(self):
         return f"{self.title} — {self.student.email}"
+    
+    class Meta:
+        verbose_name ="Student Issue"
+        verbose_name_plural ="Student Issues"
+        ordering =['-created_at']
+
+    def __str__(self):
+        return f"{self.get_status_display()}-{self.title} ({self.student.email})"
+
+    
