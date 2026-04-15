@@ -61,7 +61,7 @@ class WorkplaceSupervisor(models.Model):
     supervisor_id    = models.CharField(max_length=20, unique=True)
     supervisor_name  = models.CharField(max_length=100)
     job_title        = models.CharField(max_length=100)
-    phone_number     = models.CharField(validators=[phone_regex], max_length=13, unique=True)
+    phone_number     = models.CharField(validators=[phone_regex], max_length=13, unique=True,help_text="Enter format:+256700000000")
     department       = models.CharField(max_length=100)
 
     def __str__(self):
@@ -73,7 +73,7 @@ class AcademicSupervisor(models.Model):
     staff_id       = models.CharField(max_length=20, unique=True)
     lecturer_name  = models.CharField(max_length=100)
     college_dept   = models.CharField(max_length=100)
-    phone_number   = models.CharField(validators=[phone_regex], max_length=13, unique=True)
+    phone_number   = models.CharField(validators=[phone_regex], max_length=13, unique=True,help_text="Enter format:+256700000000")
 
     def __str__(self):
         return self.lecturer_name
