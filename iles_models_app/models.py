@@ -20,8 +20,8 @@ class User(AbstractUser):
         ('administrator',        'Administrator'),
     )
     email         = models.EmailField(unique=True)
-    role          = models.CharField(max_length=30, choices=ROLE_CHOICES)
-    university_id = models.CharField(max_length=50, unique=True)
+    role          = models.CharField(max_length=30, choices=ROLE_CHOICES,default='administrator')
+    university_id = models.CharField(max_length=50, unique=True,default='0000')
     groups        = models.ManyToManyField('auth.Group',related_name='iles_users', blank=True)
     user_permissions = models.ManyToManyField('auth.Permission', related_name='iles_users_permissions', blank=True)
 
