@@ -78,8 +78,12 @@ def current_user(request):
 # ─── STUDENTS ────────────────────────────────────────────────────────────────
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def student_list(request):
+@permission_classes([AllowAny])
+def student_list_api(request):
+    """
+    GET  /api/students/  — list all students
+    POST /api/students/  — create a new student profile
+    """
     if request.method == 'GET':
         return Response(StudentSerializer(Student.objects.all(), many=True).data)
     s = StudentSerializer(data=request.data)
@@ -90,8 +94,14 @@ def student_list(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def student_detail(request, pk):
+@permission_classes([AllowAny])
+# @permission_classes([IsAuthenticated])
+def student_detail_api(request, pk):
+    """
+    GET    /api/students/<pk>/  — retrieve one student
+    PUT    /api/students/<pk>/  — update a student (partial allowed)
+    DELETE /api/students/<pk>/  — delete a student
+    """
     try:
         obj = Student.objects.get(pk=pk)
     except Student.DoesNotExist:
