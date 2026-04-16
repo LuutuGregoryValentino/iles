@@ -62,6 +62,7 @@ class AcademicSupervisorSerializer(serializers.ModelSerializer):
 # ─── PLACEMENT ───────────────────────────────────────────────────────────────
 
 class InternshipPlacementSerializer(serializers.ModelSerializer):
+    student = StudentSerializer(read_only=True)(read_only=True)#this makes sure that S can not change information thru this serializer when creating or updating placement
     class Meta:
         model  = InternshipPlacement
         fields = '__all__'
