@@ -266,3 +266,41 @@ def issue_detail(request, pk):
         s.save()
         return Response(s.data)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# ─── ADMIN DASHBOARD ─────────────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_dashboard_api(request):
+    if request.user.role != 'administrator':
+        return Response({'error': 'Access denied'}, status=403)
+
+    data = {
+        # System stats
+        'students_count': Student.objects.count(),
+        'placements_total': InternshipPlacement.objects.count(),
+        'active_placements': InternshipPlacement.objects.filter(
+            placement_status='Active'
+        ).count(),
+        'pending_issues': Issue.objects.filter(status='Pending').count(),
+
+        # Recent placements
+        'recent_placements': InternshipPlacementSerializer(
+            InternshipPlacement.objects.select_related('student')[:5],
+            many=True
+        ).data,
+
+        # Recent issues
+        'recent_issues': IssueSerializer(
+            Issue.objects.select_related('student')[:5],
+            many=True
+        ).data,
+
+        # Recent evaluations
+        'recent_evaluations': EvaluationSerializer(
+            Evaluation.objects.all()[:5],
+            many=True
+        ).data,
+    }
+
+    return Response(data)
