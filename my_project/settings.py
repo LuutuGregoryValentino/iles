@@ -4,9 +4,9 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-z@$_&)_fq^v9ck6n3nett7_a2nccc=b5q5m!yrdc-8sidi46eq'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-z@$_&)_fq^v9ck6n3nett7_a2nccc=b5q5m!yrdc-8sidi46eq')
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
