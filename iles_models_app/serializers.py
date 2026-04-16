@@ -32,9 +32,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', 'username', 'university_id', 'role']
 
 
-# ─── PROFILES ────────────────────────────────────────────────────────────────
+#  PROFILES 
 
 class StudentSerializer(serializers.ModelSerializer):
+    user =UserSerializer(read_only=True)# to use userserializer to formate student info #readonly to make sure when creating or updating u cant change student info thru dis serializer
     class Meta:
         model  = Student
         fields = '__all__'
