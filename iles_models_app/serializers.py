@@ -42,12 +42,14 @@ class StudentSerializer(serializers.ModelSerializer):
 
 
 class InternshipAdministratorSerializer(serializers.ModelSerializer):
+    student = StudentSerializer(read_only=True)(read_only=True)#this makes sure that Student can not change information thru this serializer when creating or updating placement
     class Meta:
         model  = InternshipAdministrator
         fields = '__all__'
 
 
 class WorkplaceSupervisorSerializer(serializers.ModelSerializer):
+    Cuser =UserSerializer(read_only=True)# to use userserializer to formate student info #readonly to make sure when creating or updating u cant change student info thru dis serializer
     class Meta:
         model  = WorkplaceSupervisor
         fields = '__all__'
