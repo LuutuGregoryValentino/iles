@@ -105,9 +105,11 @@ class EvaluationSerializer(serializers.ModelSerializer):
         return data
 
 
-# ─── ISSUE ───────────────────────────────────────────────────────────────────
+#  ISSUE
 
 class IssueSerializer(serializers.ModelSerializer):
+    student = StudentSerializer(read_only=True)
+
     class Meta:
         model  = Issue
         fields = '__all__'
