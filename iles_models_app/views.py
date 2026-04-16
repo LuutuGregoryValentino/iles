@@ -78,7 +78,7 @@ def current_user(request):
 # ─── STUDENTS ────────────────────────────────────────────────────────────────
 
 @api_view(['GET', 'POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def student_list_api(request):
     """
     GET  /api/students/  — list all students
@@ -88,14 +88,14 @@ def student_list_api(request):
         return Response(StudentSerializer(Student.objects.all(), many=True).data)
     s = StudentSerializer(data=request.data)
     if s.is_valid():
-        s.save()
+        s.save(user=request.user)
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([AllowAny])
-# @permission_classes([IsAuthenticated])
+# @permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def student_detail_api(request, pk):
     """
     GET    /api/students/<pk>/  — retrieve one student
