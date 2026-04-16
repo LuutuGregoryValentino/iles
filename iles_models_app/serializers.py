@@ -54,15 +54,16 @@ class WorkplaceSupervisorSerializer(serializers.ModelSerializer):
 
 
 class AcademicSupervisorSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
     class Meta:
         model  = AcademicSupervisor
         fields = '__all__'
 
 
-# ─── PLACEMENT ───────────────────────────────────────────────────────────────
+#  PLACEMENT 
 
 class InternshipPlacementSerializer(serializers.ModelSerializer):
-    student = StudentSerializer(read_only=True)(read_only=True)#this makes sure that S can not change information thru this serializer when creating or updating placement
+    student = StudentSerializer(read_only=True)(read_only=True)#this makes sure that Student can not change information thru this serializer when creating or updating placement
     class Meta:
         model  = InternshipPlacement
         fields = '__all__'
@@ -75,16 +76,17 @@ class InternshipPlacementSerializer(serializers.ModelSerializer):
         return data
 
 
-# ─── LOGBOOK ─────────────────────────────────────────────────────────────────
+# LOGBOOK 
 
 class LogbookEntrySerializer(serializers.ModelSerializer):
+    student = StudentSerializer(read_only=True)#this makes sure that Student can not change information thru this serializer when creating or updating 
     class Meta:
         model  = LogbookEntry
         fields = '__all__'
         read_only_fields = ['submitted_at']
 
 
-# ─── EVALUATION ──────────────────────────────────────────────────────────────
+# EVALUATION
 
 class EvaluationSerializer(serializers.ModelSerializer):
     total_score = serializers.ReadOnlyField()
