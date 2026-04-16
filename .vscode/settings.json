@@ -1,9 +1,12 @@
 {
-    "python-envs.pythonProjects": [
-        {
-            "path": "manage.py",
-            "envManager": "ms-python.python:venv",
-            "packageManager": "ms-python.python:pip"
-        }
-    ]
+  "python-envs.pythonProjects": [
+    {
+      "path": "manage.py",
+      "envManager": "ms-python.python:venv",
+      "packageManager": "ms-python.python:pip"
+    }
+  ],
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/render-oss/render-openapi/main/schemas/render.yaml": "render.yaml"
+  }
 }
