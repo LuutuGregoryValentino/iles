@@ -30,10 +30,17 @@ function Signup({ onAuthSuccess, goToLogin }) {
     setLoading(true);
     try {
       const res = await authAPI.register({
-        email: form.email, username: form.username,
-        university_id: form.university_id, role: form.role, password: form.password,
+        email: form.email,
+        username: form.username,
+        university_id: form.university_id,
+        role: form.role, 
+        password: form.password,
       });
-      onAuthSuccess(res.data.user, res.data.access, res.data.refresh);
+      onAuthSuccess(
+        res.data.user, 
+        res.data.access, 
+        res.data.refresh
+      );
     } catch (err) {
       const data = err.response?.data;
       setError(typeof data === 'object' ? Object.values(data).flat().join(' ') : 'Registration failed.');
