@@ -9,14 +9,22 @@ from .models import (
 User = get_user_model()
 
 
-# ─── AUTH ─────────────────────────────────────────────────────────────────────
-
-class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=8)
-
+class RegisterSerializer(serializer.ModelSerializer):
+      password =serializer.CharField(write_only=True)
     class Meta:
          model= User
          fields =[ 'id','email','university_id','role','password']
+         
+         def validate_email(self,value):
+               if User.Objects.filter(email=value).exist():
+                     raise serialisers.ValidationError("Email already exists")
+               return value
+         def create(self,Validated_date):
+               password =validated_date.pop('password')
+               user =User(**Validated_date)
+               user.set_password(password)
+               user.save()
+               return user
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
