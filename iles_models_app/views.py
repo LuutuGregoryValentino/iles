@@ -284,7 +284,6 @@ def admin_dashboard_api(request):
         ).count(),
         'pending_issues': Issue.objects.filter(status='Pending').count(),
 
-        # Recent placements
         'recent_placements': InternshipPlacementSerializer(
             InternshipPlacement.objects.select_related('student')[:5],
             many=True
