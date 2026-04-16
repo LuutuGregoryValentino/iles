@@ -8,17 +8,21 @@ function Signup({ onAuthSuccess, goToLogin }) {
     email: '', username: '', university_id: '', role: 'student',
     password: '', confirmPassword: '',
   });
-  const [error, setError]     = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const set = field => e => setForm({ ...form, [field]: e.target.value });
 
-  const passwordClass = form.confirmPassword.length === 0 ? ''
+  const confirmClass = form.confirmPassword.length === 0 ? ''
     : form.password === form.confirmPassword ? 'input-success' : 'input-error';
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.');
       return;
@@ -45,21 +49,28 @@ function Signup({ onAuthSuccess, goToLogin }) {
         {error && <p style={{ color: 'red', fontSize: '14px' }}>{error}</p>}
         <form onSubmit={handleSignup}>
           <input type="email" placeholder="Email address" value={form.email} onChange={set('email')} required />
+
           <input type="text" placeholder="Username" value={form.username} onChange={set('username')} required />
+
           <input type="text" placeholder="University ID" value={form.university_id} onChange={set('university_id')} required />
+
           <select value={form.role} onChange={set('role')}>
             <option value="student">Student</option>
             <option value="workplace_supervisor">Workplace Supervisor</option>
             <option value="academic_supervisor">Academic Supervisor</option>
             <option value="administrator">Administrator</option>
           </select>
+
           <input type="password" placeholder="Password (min 8 characters)"
-            value={form.password} className={passwordClass} onChange={set('password')} required />
+            value={form.password} onChange={set('password')} required />
+
           <input type="password" placeholder="Confirm password"
-            value={form.confirmPassword} className={passwordClass} onChange={set('confirmPassword')} required />
+            value={form.confirmPassword} className={confirmClass} onChange={set('confirmPassword')} required />
+
           <button type="submit" disabled={loading}>
             {loading ? 'Creating account...' : 'Create account'}
           </button>
+
         </form>
         <p style={{ marginTop: '15px', fontSize: '14px' }}>
           Already have an account?{' '}
