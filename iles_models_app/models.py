@@ -84,7 +84,7 @@ class AcademicSupervisor(models.Model):
 class PlacementStatus(models.TextChoices):
     PENDING  = 'Pending',  'Pending'
     ACTIVE   = 'Active',   'Active'
-    COMPLETE = 'Complete', 'Complete'
+    
 
 
 class InternshipPlacement(models.Model):

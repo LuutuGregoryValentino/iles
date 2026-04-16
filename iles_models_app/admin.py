@@ -9,3 +9,8 @@ admin.site.register(InternshipPlacement)
 admin.site.register(LogbookEntry)
 admin.site.register(Evaluation)
 admin.site.register(Issue)
+admin.site.register(Project)
+admin.site.register(UserProfile)
+
+
+
