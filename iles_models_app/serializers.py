@@ -42,7 +42,7 @@ class StudentSerializer(serializers.ModelSerializer):
 
 
 class InternshipAdministratorSerializer(serializers.ModelSerializer):
-    student = StudentSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     #this makes sure that Student can not change information thru this serializer when creating or updating placement
     class Meta:
         model  = InternshipAdministrator
@@ -66,7 +66,7 @@ class AcademicSupervisorSerializer(serializers.ModelSerializer):
 #  PLACEMENT 
 
 class InternshipPlacementSerializer(serializers.ModelSerializer):
-    student = StudentSerializer(read_only=True)#this makes sure that Student can not change information thru this serializer when creating or updating placement
+    student = StudentSerializer(read_only=True)#read_only=True means they can not change information thru this serializer when creating or updating 
     class Meta:
         model  = InternshipPlacement
         fields = '__all__'
@@ -82,7 +82,7 @@ class InternshipPlacementSerializer(serializers.ModelSerializer):
 # LOGBOOK 
 
 class LogbookEntrySerializer(serializers.ModelSerializer):
-    student = StudentSerializer(read_only=True)#this makes sure that Student can not change information thru this serializer when creating or updating 
+    placement= InternshipPlacementSerializer(read_only=True)#read_only=True means they can not change information thru this serializer when creating or updating 
     class Meta:
         model  = LogbookEntry
         fields = '__all__'
