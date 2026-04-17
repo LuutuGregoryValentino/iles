@@ -123,8 +123,9 @@ class InternshipPlacementViewSet(ModelViewSet):
     queryset = InternshipPlacement.objects.all()
     serializer_class = InternshipPlacementSerializer
     permission_classes =[IsAuthenticated]
-
-   
+    
+    def get_queryset(self):
+        return InternshipPlacement.objects.filter(student__user=self.request.user) 
 
 
 
