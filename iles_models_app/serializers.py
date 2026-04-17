@@ -86,7 +86,7 @@ class LogbookEntrySerializer(serializers.ModelSerializer):
     student  =  StudentSerializer(read_only=True)#this makes sure that Student can not change information thru this serializer when creating or updating 
     class Meta:
         model  = LogbookEntry
-        fields = "__all__"
+        fields = '__all__'
         read_only_fields = ['submitted_at']
 
 
