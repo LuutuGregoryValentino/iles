@@ -117,40 +117,18 @@ def admin_list(request):
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ─── PLACEMENTS ──────────────────────────────────────────────────────────────
+# PLACEMENTS 
 
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def placement_list(request):
-    if request.method == 'GET':
-        return Response(InternshipPlacementSerializer(InternshipPlacement.objects.all(), many=True).data)
-    s = InternshipPlacementSerializer(data=request.data)
-    if s.is_valid():
-        s.save()
-        return Response(s.data, status=status.HTTP_201_CREATED)
-    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+class InternshipPlacementViewSet(ModelViewSet):
+    queryset = InternshipPlacement.objects.all()
+    serializer_class = InternshipPlacementSerializer
+    permission_classes =[IsAuthenticated]
+
+   
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def placement_detail(request, pk):
-    try:
-        obj = InternshipPlacement.objects.get(pk=pk)
-    except InternshipPlacement.DoesNotExist:
-        return Response({'error': 'Placement not found.'}, status=status.HTTP_404_NOT_FOUND)
-    if request.method == 'GET':
-        return Response(InternshipPlacementSerializer(obj).data)
-    if request.method == 'PUT':
-        s = InternshipPlacementSerializer(obj, data=request.data, partial=True)
-        if s.is_valid():
-            s.save()
-            return Response(s.data)
-        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-    obj.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
 
-
-# ─── LOGBOOKS ────────────────────────────────────────────────────────────────
+# LOGBOOKS
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -187,7 +165,7 @@ def logbook_detail(request, pk):
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ─── EVALUATIONS ─────────────────────────────────────────────────────────────
+#  EVALUATIONS 
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -211,7 +189,7 @@ def evaluation_detail(request, pk):
     return Response(EvaluationSerializer(obj).data)
 
 
-# ─── ISSUES ──────────────────────────────────────────────────────────────────
+#  ISSUES 
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
