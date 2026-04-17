@@ -9,7 +9,7 @@ User = get_user_model()
 def create_user(email='test@test.com', password='testpass123', role='student',
                 university_id='25/U/0001', username='testuser'):
     return User.objects.create_user(
-        email = email, password=password, role=role,
+        email=email, password=password, role=role,
         university_id=university_id, username=username
     )
 
