@@ -14,7 +14,7 @@ urlpatterns = [
 
     # ── Students ──────────────────────────────────────────────────────────────
     path('students/',          views.student_list,   name='student-list'),
-    path('students/<int:pk>/', views.student_detail, name='student-detail'),
+    path('students/<int:pk>/', views.student_detail_api, name='student-detail'),
 
     # ── Supervisors & admins ──────────────────────────────────────────────────
     path('supervisors/', views.supervisor_list, name='supervisor-list'),
