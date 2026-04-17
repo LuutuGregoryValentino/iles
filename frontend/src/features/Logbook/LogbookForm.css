@@ -1,0 +1,116 @@
+/* ── LogbookForm.css ─────────────────────────────────────────────────────── */
+
+.logbook-wrapper {
+  max-width: 800px;
+}
+
+/* ── Page header ── */
+.logbook-header {
+  margin-bottom: 24px;
+}
+
+.logbook-title {
+  font-size:   22px;
+  font-weight: 700;
+  color:       var(--text);
+  margin:      0 0 6px;
+}
+
+.logbook-subtitle {
+  font-size: 14px;
+  color:     var(--text-muted);
+  margin:    0;
+}
+
+/* ── Card ── */
+.logbook-card {
+  background:    var(--card-bg);
+  border-radius: var(--radius-lg);
+  border:        1px solid var(--border);
+  box-shadow:    var(--shadow);
+  overflow:      hidden;
+}
+
+/* ── Sections inside the card ── */
+.logbook-section {
+  padding:     24px 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logbook-section:last-of-type {
+  border-bottom: none;
+}
+
+.logbook-section-title {
+  font-size:     13px;
+  font-weight:   700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color:         var(--text-muted);
+  margin:        0 0 18px;
+}
+
+/* ── Two-column grid inside sections ── */
+.logbook-grid {
+  display:               grid;
+  grid-template-columns: 1fr 1fr;
+  gap:                   18px;
+}
+
+/* Full-width fields */
+.logbook-field--full {
+  grid-column: span 2;
+}
+
+/* ── Textareas ── */
+.logbook-textarea {
+  resize:     vertical;
+  min-height: 90px;
+}
+
+.logbook-textarea--tall {
+  min-height: 120px;
+}
+
+/* ── Hint text below a field ── */
+.logbook-field-hint {
+  display:   block;
+  font-size: 12px;
+  color:     var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── Label helpers ── */
+.required { color: var(--danger); margin-left: 2px; }
+.optional  { color: var(--text-muted); font-weight: 400; font-size: 12px; }
+
+/* ── Footer ── */
+.logbook-footer {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  flex-wrap:       wrap;
+  gap:             12px;
+  padding:         20px 28px;
+  background:      #fafafa;
+  border-top:      1px solid var(--border);
+}
+
+.logbook-hint {
+  font-size: 12px;
+  color:     var(--text-muted);
+  margin:    0;
+}
+
+.logbook-submit-btn {
+  width: auto;  /* override full-width default */
+  white-space: nowrap;
+}
+
+/* ── Responsive ── */
+@media (max-width: 560px) {
+  .logbook-grid      { grid-template-columns: 1fr; }
+  .logbook-field--full { grid-column: span 1; }
+  .logbook-section   { padding: 20px 16px; }
+  .logbook-footer    { padding: 16px; }
+}
