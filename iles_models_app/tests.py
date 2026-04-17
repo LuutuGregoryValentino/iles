@@ -75,7 +75,7 @@ class StudentTests(TestCase):
         res = self.client.post('/api/students/', {
             'user': self.user.id, 'student_id': '25/U/001',
             'student_name': 'Test Student', 'course': 'BSc Computer Science',
-            'year_of_study': 2, 'semester': 1,
+            'year_of_study': 2, 'semester': 1
         })
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
