@@ -1,31 +1,84 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ProfileForm.css';
 import { studentsAPI } from '../../services/api';
 
 function ProfileForm({ currentUser, onSaved }) {
   const [form, setForm] = useState({
     student_name: currentUser?.username || '',
-    student_id: '', course: '', year_of_study: '', semester: '',
+    student_id: '',
+    course: '',
+    year_of_study: '',
+    semester: '',
   });
-  const [saving, setSaving] = useState(false);
-  const [error, setError]   = useState('');
+  const [saving, setSaving]         = useState(false);
+  const [error, setError]           = useState('');
+  const [existingId, setExistingId] = useState(null); // track existing profile ID
 
-  const set = field => e => setForm({ ...form, [field]: e.target.value });
+  // On mount, check if a student profile already exists for this user
+  useEffect(() => {
+    const fetchExisting = async () => {
+      try {
+        const res = await studentsAPI.list();
+        const profiles = res.data;
+        // Find a profile belonging to the current user
+        const mine = profiles.find(
+          (p) => p.user === currentUser?.id || p.user?.id === currentUser?.id
+        );
+        if (mine) {
+          setExistingId(mine.id);
+          setForm({
+            student_name:  mine.student_name  || currentUser?.username || '',
+            student_id:    mine.student_id    || '',
+            course:        mine.course        || '',
+            year_of_study: String(mine.year_of_study || ''),
+            semester:      String(mine.semester      || ''),
+          });
+        }
+      } catch {
+        // No existing profile found — that's fine, we'll create one
+      }
+    };
+
+    if (currentUser?.id) fetchExisting();
+  }, [currentUser]);
+
+  const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
   const handleSave = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Guard: ensure we have a valid user ID before submitting
+    if (!currentUser?.id) {
+      setError('User session is invalid. Please log out and sign in again.');
+      return;
+    }
+
     setSaving(true);
+    const payload = {
+      ...form,
+      user:          currentUser.id,
+      year_of_study: parseInt(form.year_of_study),
+      semester:      parseInt(form.semester),
+    };
+
     try {
-      await studentsAPI.create({
-        ...form, user: currentUser.id,
-        year_of_study: parseInt(form.year_of_study),
-        semester:      parseInt(form.semester),
-      });
+      if (existingId) {
+        // Profile already exists — update it
+        await studentsAPI.update(existingId, payload);
+      } else {
+        // No profile yet — create one
+        const res = await studentsAPI.create(payload);
+        setExistingId(res.data.id); // store the new profile's ID
+      }
       onSaved();
     } catch (err) {
       const data = err.response?.data;
-      setError(typeof data === 'object' ? Object.values(data).flat().join(' ') : 'Could not save profile.');
+      setError(
+        typeof data === 'object'
+          ? Object.values(data).flat().join(' ')
+          : 'Could not save profile. Please try again.'
+      );
     } finally {
       setSaving(false);
     }
@@ -38,11 +91,22 @@ function ProfileForm({ currentUser, onSaved }) {
       <form onSubmit={handleSave}>
         <div className="input-group">
           <label>Full Name</label>
-          <input type="text" value={form.student_name} onChange={set('student_name')} required />
+          <input
+            type="text"
+            value={form.student_name}
+            onChange={set('student_name')}
+            required
+          />
         </div>
         <div className="input-group">
           <label>Student ID</label>
-          <input type="text" value={form.student_id} onChange={set('student_id')} placeholder="25/U/0001" required />
+          <input
+            type="text"
+            value={form.student_id}
+            onChange={set('student_id')}
+            placeholder="25/U/0001"
+            required
+          />
         </div>
         <div className="input-group">
           <label>Course</label>
