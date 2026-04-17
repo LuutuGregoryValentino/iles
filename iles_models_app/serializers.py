@@ -51,7 +51,7 @@ class InternshipAdministratorSerializer(serializers.ModelSerializer):
 
 
 class WorkplaceSupervisorSerializer(serializers.ModelSerializer):
-    user =UserSerializer(read_only=True)# to use userserializer to formate student info #readonly to make sure when creating or updating u cant change student info thru dis serializer
+    user = UserSerializer(read_only=True)# to use userserializer to formate student info #readonly to make sure when creating or updating u cant change student info thru dis serializer
     class Meta:
         model  = WorkplaceSupervisor
         fields = '__all__'
