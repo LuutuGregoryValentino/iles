@@ -141,6 +141,16 @@ class LogbookEntry(models.Model):
 
     def __str__(self):
         return f"Week {self.week_number} — {self.placement.student.student_name}"
+    
+    def clean(self):
+        if self.hours_worked > 120:
+            raise ValidationError({'hours_worked': 'Please enter realistic hours (max 120).'})
+        if self.hours_worked < 0:
+            raise ValidationError({'hours_worked': 'Hours worked cannot be negative.'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 # ─── EVALUATION ──────────────────────────────────────────────────────────────
