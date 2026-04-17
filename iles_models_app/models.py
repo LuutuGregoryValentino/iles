@@ -137,7 +137,7 @@ class LogbookEntry(models.Model):
 
     class Meta:
         unique_together = ('placement', 'week_number')
-        ordering = ['week_number']
+        ordering  =  ['week_number']
 
     def __str__(self):
         return f"Week {self.week_number} — {self.placement.student.student_name}"
