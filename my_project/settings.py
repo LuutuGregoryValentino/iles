@@ -1,7 +1,8 @@
 import os
+import dj_database_url
 from pathlib import Path
 from datetime import timedelta
-
+from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-...')
@@ -85,10 +86,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'my_project.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=True
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
