@@ -83,7 +83,7 @@ class InternshipPlacementSerializer(serializers.ModelSerializer):
 # LOGBOOK 
 
 class LogbookEntrySerializer(serializers.ModelSerializer):
-    student = StudentSerializer(read_only=True)#this makes sure that Student can not change information thru this serializer when creating or updating 
+    student  =  StudentSerializer(read_only=True)#this makes sure that Student can not change information thru this serializer when creating or updating 
     class Meta:
         model  = LogbookEntry
         fields = '__all__'
