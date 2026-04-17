@@ -126,6 +126,10 @@ class InternshipPlacementViewSet(ModelViewSet):
     
     def get_queryset(self):
         return InternshipPlacement.objects.filter(student__user=self.request.user) 
+    
+    def perform_create(self, serializer):
+        student = Student.objects.get(user=self.request.user)
+        serializer.save(student=student)
 
 
 
