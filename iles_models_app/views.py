@@ -84,6 +84,13 @@ class StudentViewSet(ModelViewSet):
     serializer_class =StudentSerializer
     permission_classes =[IsAuthenticated]
 
+    def get_queryset(self):
+        return Student.objects.filter(user=self.request.user)
+    #to make sure we only get the user
+
+    def perform_create(self,serializer):
+        serializer.save(user=self.request.user)
+        
 # SUPERVISORS & ADMINS 
 
 @api_view(['GET', 'POST'])
