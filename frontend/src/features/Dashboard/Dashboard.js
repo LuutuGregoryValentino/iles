@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 import { studentsAPI, logbooksAPI, evaluationsAPI, placementsAPI, issuesAPI } from '../../services/api';
-import LogbookForm    from '../Logbook/LogbookForm';
-import IssueForm      from '../Issues/IssueForm';
+import LogbookForm      from '../Logbook/LogbookForm';
+import IssueForm        from '../Issues/IssueForm';
 import SupervisorReview from '../Supervisor/SupervisorReview';
+import EvaluationForm   from '../Evaluation/EvaluationForm';
+import ScoreCard        from '../Evaluation/ScoreCard';
 
 function Dashboard({ currentUser, onLogout, goToProfile }) {
   const [view, setView]         = useState('overview');
@@ -50,27 +52,30 @@ function Dashboard({ currentUser, onLogout, goToProfile }) {
     load();
   }, []);
 
-  // ── NAV ITEMS per role ───────────────────────────────────────────────────
-  const navItems = [
-    { key: 'overview', label: 'Dashboard',        roles: ['student', 'academic_supervisor', 'workplace_supervisor', 'administrator'] },
-    { key: 'logbook',  label: 'Submit Logbook',   roles: ['student'] },
-    { key: 'issues',   label: 'Report an Issue',  roles: ['student'] },
-    { key: 'review',   label: 'Review Logbooks',  roles: ['academic_supervisor', 'workplace_supervisor'] },
-    { key: 'review',   label: 'Manage Logbooks',  roles: ['administrator'] },
-    { key: 'profile',  label: 'My Profile',       roles: ['student'] },
+  // ── NAV ITEMS per role ────────────────────────────────────────────────────
+  const allNavItems = [
+    { key:'overview',    label:'Dashboard',          roles:['student','academic_supervisor','workplace_supervisor','administrator'] },
+    { key:'logbook',     label:'Submit Logbook',     roles:['student'] },
+    { key:'score',       label:'My Score',           roles:['student'] },
+    { key:'issues',      label:'Report an Issue',    roles:['student'] },
+    { key:'review',      label:'Review Logbooks',    roles:['academic_supervisor','workplace_supervisor','administrator'] },
+    { key:'evaluate',    label:'Submit Evaluation',  roles:['academic_supervisor','workplace_supervisor'] },
+    { key:'profile',     label:'My Profile',         roles:['student'] },
   ];
 
-  // Remove duplicate 'review' entries
-  const uniqueNav = navItems.filter((item, index, self) =>
-    item.roles.includes(role) && index === self.findIndex(n => n.key === item.key && n.roles.includes(role))
-  );
+  const navItems = allNavItems.filter(n => n.roles.includes(role));
 
-  const statusColor = (s) => {
-    if (s === 'Approved')  return { background:'#d4edda', color:'#155724', padding:'2px 8px', borderRadius:'4px', fontSize:'12px' };
-    if (s === 'Submitted') return { background:'#fff3cd', color:'#856404', padding:'2px 8px', borderRadius:'4px', fontSize:'12px' };
-    if (s === 'Resolved')  return { background:'#d4edda', color:'#155724', padding:'2px 8px', borderRadius:'4px', fontSize:'12px' };
-    if (s === 'In Review') return { background:'#cce5ff', color:'#004085', padding:'2px 8px', borderRadius:'4px', fontSize:'12px' };
-    return { background:'#f8d7da', color:'#721c24', padding:'2px 8px', borderRadius:'4px', fontSize:'12px' };
+  const statusBadge = (s) => {
+    const styles = {
+      'Approved':  { background:'#d4edda', color:'#155724' },
+      'Submitted': { background:'#fff3cd', color:'#856404' },
+      'Resolved':  { background:'#d4edda', color:'#155724' },
+      'In Review': { background:'#cce5ff', color:'#004085' },
+      'Pending':   { background:'#f8d7da', color:'#721c24' },
+      'Draft':     { background:'#f8d7da', color:'#721c24' },
+    };
+    const s2 = styles[s] || { background:'#eee', color:'#333' };
+    return { ...s2, padding:'3px 10px', borderRadius:'12px', fontSize:'12px', fontWeight:'500' };
   };
 
   return (
@@ -78,8 +83,8 @@ function Dashboard({ currentUser, onLogout, goToProfile }) {
       <aside className="sidebar">
         <div className="logo">ILES Portal</div>
         <ul className="nav-links">
-          {uniqueNav.map(n => (
-            <li key={n.key + n.label}
+          {navItems.map(n => (
+            <li key={n.key}
               className={view === n.key ? 'active' : ''}
               onClick={() => n.key === 'profile' ? goToProfile() : setView(n.key)}>
               {n.label}
@@ -113,24 +118,23 @@ function Dashboard({ currentUser, onLogout, goToProfile }) {
           {!loading && view === 'overview' && (
             <>
               <h2>
-                {role === 'student'              && 'My Internship Overview'}
-                {role === 'administrator'         && 'System Overview — All Students'}
-                {role === 'academic_supervisor'   && 'Academic Supervisor Dashboard'}
-                {role === 'workplace_supervisor'  && 'Workplace Supervisor Dashboard'}
+                {role === 'student'             && 'My Internship Overview'}
+                {role === 'administrator'        && 'System Overview — All Students'}
+                {role === 'academic_supervisor'  && 'Academic Supervisor Dashboard'}
+                {role === 'workplace_supervisor' && 'Workplace Supervisor Dashboard'}
               </h2>
 
               <div className="stats-grid">
-                {/* Students card — only admins and supervisors see total students */}
                 {role !== 'student' && (
                   <StatCard title="Total Students"  value={stats.students}    color="#2E5DA6" />
                 )}
-                <StatCard title="Placements"   value={stats.placements}  color="#0F6E56" />
-                <StatCard title="Logbooks"     value={stats.logbooks}    color="#993C1D" />
-                <StatCard title="Evaluations"  value={stats.evaluations} color="#3C3489" />
-                <StatCard title="Issues"       value={stats.issues}      color="#72243E" />
+                <StatCard title="Placements"    value={stats.placements}  color="#0F6E56" />
+                <StatCard title="Logbooks"      value={stats.logbooks}    color="#993C1D" />
+                <StatCard title="Evaluations"   value={stats.evaluations} color="#3C3489" />
+                <StatCard title="Issues"        value={stats.issues}      color="#72243E" />
               </div>
 
-              {/* ── Recent logbooks ── */}
+              {/* Logbooks table */}
               <h3 style={{ marginTop:'2rem' }}>
                 {role === 'student' ? 'My Logbook Entries' : 'Recent Logbook Entries'}
               </h3>
@@ -145,8 +149,8 @@ function Dashboard({ currentUser, onLogout, goToProfile }) {
                 </thead>
                 <tbody>
                   {logbooks.length === 0 && (
-                    <tr><td colSpan="4" style={{ padding:'16px 8px', color:'#888', textAlign:'center' }}>
-                      {role === 'student' ? 'You have not submitted any logbooks yet.' : 'No logbook entries found.'}
+                    <tr><td colSpan="4" style={{ padding:'20px 8px', color:'#888', textAlign:'center' }}>
+                      {role === 'student' ? 'You have not submitted any logbooks yet. Click Submit Logbook to start.' : 'No logbook entries found.'}
                     </td></tr>
                   )}
                   {logbooks.slice(0, 8).map(lb => (
@@ -155,14 +159,14 @@ function Dashboard({ currentUser, onLogout, goToProfile }) {
                       <td style={{ padding:'10px 8px', color:'#555' }}>{lb.tasks_done?.substring(0, 60)}...</td>
                       <td style={{ padding:'10px 8px' }}>{lb.hours_worked}h</td>
                       <td style={{ padding:'10px 8px' }}>
-                        <span style={statusColor(lb.submission_status)}>{lb.submission_status}</span>
+                        <span style={statusBadge(lb.submission_status)}>{lb.submission_status}</span>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
-              {/* ── Issues table — shown to all roles ── */}
+              {/* Issues table */}
               {issues.length > 0 && (
                 <>
                   <h3 style={{ marginTop:'2rem' }}>
@@ -181,7 +185,7 @@ function Dashboard({ currentUser, onLogout, goToProfile }) {
                         <tr key={issue.id} style={{ borderBottom:'1px solid #eee' }}>
                           <td style={{ padding:'10px 8px', fontWeight:'500' }}>{issue.title}</td>
                           <td style={{ padding:'10px 8px' }}>
-                            <span style={statusColor(issue.status)}>{issue.status}</span>
+                            <span style={statusBadge(issue.status)}>{issue.status}</span>
                           </td>
                           <td style={{ padding:'10px 8px', color:'#888', fontSize:'12px' }}>
                             {new Date(issue.created_at).toLocaleDateString()}
@@ -191,6 +195,46 @@ function Dashboard({ currentUser, onLogout, goToProfile }) {
                     </tbody>
                   </table>
                 </>
+              )}
+
+              {/* Quick action buttons */}
+              {role === 'student' && (
+                <div style={{ marginTop:'2rem', display:'flex', gap:'12px', flexWrap:'wrap' }}>
+                  <button onClick={() => setView('logbook')} style={{
+                    padding:'10px 20px', background:'#2E5DA6', color:'#fff',
+                    border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'14px'
+                  }}>
+                    + Submit Logbook
+                  </button>
+                  <button onClick={() => setView('issues')} style={{
+                    padding:'10px 20px', background:'#993C1D', color:'#fff',
+                    border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'14px'
+                  }}>
+                    + Report Issue
+                  </button>
+                  <button onClick={() => setView('score')} style={{
+                    padding:'10px 20px', background:'#3C3489', color:'#fff',
+                    border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'14px'
+                  }}>
+                    View My Score
+                  </button>
+                </div>
+              )}
+              {(role === 'academic_supervisor' || role === 'workplace_supervisor') && (
+                <div style={{ marginTop:'2rem', display:'flex', gap:'12px', flexWrap:'wrap' }}>
+                  <button onClick={() => setView('review')} style={{
+                    padding:'10px 20px', background:'#0F6E56', color:'#fff',
+                    border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'14px'
+                  }}>
+                    Review Logbooks
+                  </button>
+                  <button onClick={() => setView('evaluate')} style={{
+                    padding:'10px 20px', background:'#3C3489', color:'#fff',
+                    border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'14px'
+                  }}>
+                    Submit Evaluation
+                  </button>
+                </div>
               )}
             </>
           )}
@@ -208,6 +252,16 @@ function Dashboard({ currentUser, onLogout, goToProfile }) {
           {/* ── SUPERVISOR REVIEW ── */}
           {!loading && view === 'review' && (
             <SupervisorReview currentUser={currentUser} />
+          )}
+
+          {/* ── EVALUATION FORM ── */}
+          {!loading && view === 'evaluate' && (
+            <EvaluationForm onSubmitted={() => setView('overview')} />
+          )}
+
+          {/* ── STUDENT SCORE CARD ── */}
+          {!loading && view === 'score' && (
+            <ScoreCard currentUser={currentUser} />
           )}
         </div>
       </main>
