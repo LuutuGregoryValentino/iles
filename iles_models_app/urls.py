@@ -35,11 +35,11 @@ urlpatterns = [
     path('logbooks/',          views.logbook_list,   name='logbook-list'),
     path('logbooks/<int:pk>/', views.logbook_detail, name='logbook-detail'),
 
-    # ── Evaluations ───────────────────────────────────────────────────────────
+    # ── Evaluations of performance endpoints ───────────────────────────────────────────────────────────
     path('evaluations/',          views.evaluation_list,   name='evaluation-list'),
     path('evaluations/<int:pk>/', views.evaluation_detail, name='evaluation-detail'),
 
-    # ── Issues ────────────────────────────────────────────────────────────────
+    # ── Issue Management and query tracking endpoints────────────────────────────────────────────────────────────────
     path('issues/',          views.issue_list,   name='issue-list'),
     path('issues/<int:pk>/', views.issue_detail, name='issue-detail'),
 ]
