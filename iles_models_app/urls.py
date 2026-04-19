@@ -11,6 +11,7 @@ this includes authentication, student records, placements, and logbook managemen
 app_name = 'iles_models_app'
 
 urlpatterns = [
+    #__Authentication and JWT token management
     # ── Auth ──────────────────────────────────────────────────────────────────
     path('auth/register/', views.register,     name='register'),
     path('auth/login/',    views.login_api,     name='login'),
@@ -18,7 +19,7 @@ urlpatterns = [
     path('auth/me/',       views.current_user,  name='current-user'),
     path('auth/refresh/',  TokenRefreshView.as_view(), name='token-refresh'),
 
-    # ── Students ──────────────────────────────────────────────────────────────
+    # ── Students Profile and listig endpoints──────────────────────────────────────────────────────────────
     path('students/',          views.student_list_api,   name='student-list'),
     path('students/<int:pk>/', views.student_detail_api, name='student-detail'),
 
