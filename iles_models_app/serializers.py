@@ -9,22 +9,37 @@ from .models import (
 User = get_user_model()
 
 
+# ── AUTH ──────────────────────────────────────────────────────────────────────
+
 class RegisterSerializer(serializers.ModelSerializer):
-    password =serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, min_length=8)
+
     class Meta:
-         model= User
-         fields =[ 'id','email','university_id','role','password']
-         
-         def validate_email(self,value):
-               if User.Objects.filter(email=value).exist():
-                     raise serializers.ValidationError("Email already exists")
-               return value
-         def create(self,Validated_date):
-               password =Validated_date.pop('password')
-               user =User(**Validated_date)
-               user.set_password(password)
-               user.save()
-               return user
+        model  = User
+        fields = ['id', 'email', 'username', 'university_id', 'role', 'password']
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("A user with this username already exists.")
+        return value
+
+    def validate_university_id(self, value):
+        if User.objects.filter(university_id=value).exists():
+            raise serializers.ValidationError("A user with this university ID already exists.")
+        return value
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user     = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,41 +47,35 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', 'username', 'university_id', 'role']
 
 
-#  PROFILES 
+# ── PROFILES ──────────────────────────────────────────────────────────────────
 
 class StudentSerializer(serializers.ModelSerializer):
-    user =UserSerializer(read_only=True)# to use userserializer to formate student info #readonly to make sure when creating or updating u cant change student info thru dis serializer
     class Meta:
         model  = Student
         fields = '__all__'
 
 
 class InternshipAdministratorSerializer(serializers.ModelSerializer):
-    student = StudentSerializer(read_only=True)
-    #this makes sure that Student can not change information thru this serializer when creating or updating placement
     class Meta:
         model  = InternshipAdministrator
         fields = '__all__'
 
 
 class WorkplaceSupervisorSerializer(serializers.ModelSerializer):
-    user =UserSerializer(read_only=True)# to use userserializer to formate student info #readonly to make sure when creating or updating u cant change student info thru dis serializer
     class Meta:
         model  = WorkplaceSupervisor
         fields = '__all__'
 
 
 class AcademicSupervisorSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
     class Meta:
         model  = AcademicSupervisor
         fields = '__all__'
 
 
-#  PLACEMENT 
+# ── PLACEMENT ─────────────────────────────────────────────────────────────────
 
 class InternshipPlacementSerializer(serializers.ModelSerializer):
-    student = StudentSerializer(read_only=True)#this makes sure that Student can not change information thru this serializer when creating or updating placement
     class Meta:
         model  = InternshipPlacement
         fields = '__all__'
@@ -79,17 +88,16 @@ class InternshipPlacementSerializer(serializers.ModelSerializer):
         return data
 
 
-# LOGBOOK 
+# ── LOGBOOK ───────────────────────────────────────────────────────────────────
 
 class LogbookEntrySerializer(serializers.ModelSerializer):
-    student = StudentSerializer(read_only=True)#this makes sure that Student can not change information thru this serializer when creating or updating 
     class Meta:
         model  = LogbookEntry
         fields = '__all__'
         read_only_fields = ['submitted_at']
 
 
-# EVALUATION
+# ── EVALUATION ────────────────────────────────────────────────────────────────
 
 class EvaluationSerializer(serializers.ModelSerializer):
     total_score = serializers.ReadOnlyField()
@@ -101,16 +109,16 @@ class EvaluationSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         placement = data.get('placement') or (self.instance.placement if self.instance else None)
-        if placement and Evaluation.objects.filter(placement=placement).exclude(pk=self.instance.pk if self.instance else None).exists():
+        if placement and Evaluation.objects.filter(placement=placement).exclude(
+            pk=self.instance.pk if self.instance else None
+        ).exists():
             raise serializers.ValidationError("An evaluation already exists for this placement.")
         return data
 
 
-#  ISSUE
+# ── ISSUE ─────────────────────────────────────────────────────────────────────
 
 class IssueSerializer(serializers.ModelSerializer):
-    student = StudentSerializer(read_only=True)
-
     class Meta:
         model  = Issue
         fields = '__all__'
