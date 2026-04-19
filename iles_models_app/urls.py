@@ -2,6 +2,12 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
 
+"""
+THE URL CONFIGURATION FOR ILES
+This module defines the API endpoints for the INnternship LOgging and Evaluation System(ILES)
+this includes authentication, student records, placements, and logbook management
+"""
+
 app_name = 'iles_models_app'
 
 urlpatterns = [
