@@ -31,7 +31,7 @@ urlpatterns = [
     path('placements/',            views.placement_list,   name='placement-list'),
     path('placements/<int:pk>/',   views.placement_detail, name='placement-detail'),
 
-    # ── Logbooks ──────────────────────────────────────────────────────────────
+    # ── Logbooks Entry and Tracking endpoits──────────────────────────────────────────────────────────────
     path('logbooks/',          views.logbook_list,   name='logbook-list'),
     path('logbooks/<int:pk>/', views.logbook_detail, name='logbook-detail'),
 
