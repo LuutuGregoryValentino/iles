@@ -91,6 +91,7 @@ def current_user(request):
 
 class StudentViewSet(ModelViewSet):
     serializer_class = StudentSerializer
+    permission_classes =[IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
