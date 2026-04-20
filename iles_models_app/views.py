@@ -91,6 +91,14 @@ def current_user(request):
 class StudentViewSet(ModelViewSet):
     serializer_class = StudentSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'student':
+            return Student.objects.filter(user=user)
+        return Student.objects.all()
+   
+    
+
 
 
 # ── SUPERVISORS & ADMINS ──────────────────────────────────────────────────────
