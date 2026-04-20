@@ -96,12 +96,15 @@ class StudentViewSet(ModelViewSet):
         if user.role == 'student':
             return Student.objects.filter(user=user)
         return Student.objects.all()
+    def perform_create(self,serializer):
+        serializer.save(user=self.request.user)
+        
    
     
 
 
 
-# ── SUPERVISORS & ADMINS ──────────────────────────────────────────────────────
+# SUPERVISORS & ADMINS 
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
