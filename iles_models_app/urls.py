@@ -1,6 +1,11 @@
-from django.urls import path
+from django.urls import path,include
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
+from rest_framework.routers import DefaultRouter
+from .views import StudentViewSet
+
+router = DefaultRouter()
+router.register(r'students', StudentViewSet, basename='student')
 
 app_name = 'iles_models_app'
 
@@ -12,9 +17,10 @@ urlpatterns = [
     path('auth/me/',       views.current_user,  name='current-user'),
     path('auth/refresh/',  TokenRefreshView.as_view(), name='token-refresh'),
 
-    # ── Students ──────────────────────────────────────────────────────────────
-    path('students/',          views.student_list_api,   name='student-list'),
-    path('students/<int:pk>/', views.student_detail_api, name='student-detail'),
+    # Students 
+    
+    path('',include(router.urls)),
+   
 
     # ── Supervisors & admins ──────────────────────────────────────────────────
     path('supervisors/', views.supervisor_list, name='supervisor-list'),
