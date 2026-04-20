@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError,PermissionDenied
 
 
 from .models import (
@@ -26,7 +26,7 @@ from .serializers import (
 User = get_user_model()
 
 
-# ── HELPERS ───────────────────────────────────────────────────────────────────
+#  HELPERS
 
 def is_admin_or_supervisor(user):
     return user.role in ('administrator', 'academic_supervisor', 'workplace_supervisor')
@@ -35,7 +35,7 @@ def is_student(user):
     return user.role == 'student'
 
 
-# ── AUTH ──────────────────────────────────────────────────────────────────────
+# AUTH 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -100,9 +100,13 @@ class StudentViewSet(ModelViewSet):
         return Student.objects.all()
     def perform_create(self,serializer):
         if hasattr(self.request.user,'student_profile'):
-            raise ValidationError("you already have astudent profile")
+            raise ValidationError("you already have astudent profile")# make sure student dont create duplicate accounts
         serializer.save(user=self.request.user)
-
+    def perform_destroy(self,instance):
+        if self.request.user.role != 'administrator':
+            raise PermissionDenied("only admins can delete student records")
+        instance.delete()
+    
 
 
    
