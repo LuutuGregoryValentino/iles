@@ -6,6 +6,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.viewsets import ModelViewSet
+
 
 from .models import (
     Student, WorkplaceSupervisor, AcademicSupervisor,
@@ -86,45 +88,9 @@ def current_user(request):
 
 # ── STUDENTS ──────────────────────────────────────────────────────────────────
 
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def student_list_api(request):
-    if request.method == 'GET':
-        if is_student(request.user):
-            students = Student.objects.filter(user=request.user)
-        else:
-            students = Student.objects.all()
-        return Response(StudentSerializer(students, many=True).data)
+class StudentViewSet(ModelViewSet):
+    serializer_class = StudentSerializer
 
-    s = StudentSerializer(data=request.data)
-    if s.is_valid():
-        s.save(user=request.user)
-        return Response(s.data, status=status.HTTP_201_CREATED)
-    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def student_detail_api(request, pk):
-    try:
-        obj = Student.objects.get(pk=pk)
-    except Student.DoesNotExist:
-        return Response({'error': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        return Response(StudentSerializer(obj).data)
-
-    if request.method == 'PUT':
-        s = StudentSerializer(obj, data=request.data, partial=True)
-        if s.is_valid():
-            s.save()
-            return Response(s.data)
-        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    if not is_admin_or_supervisor(request.user):
-        return Response({'error': 'Only administrators can delete student records.'}, status=status.HTTP_403_FORBIDDEN)
-    obj.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # ── SUPERVISORS & ADMINS ──────────────────────────────────────────────────────
