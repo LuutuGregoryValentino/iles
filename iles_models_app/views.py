@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.exceptions import ValidationError
 
 
 from .models import (
@@ -86,7 +87,7 @@ def current_user(request):
     return Response(UserSerializer(request.user).data)
 
 
-# ── STUDENTS ──────────────────────────────────────────────────────────────────
+# STUDENTS 
 
 class StudentViewSet(ModelViewSet):
     serializer_class = StudentSerializer
@@ -97,8 +98,12 @@ class StudentViewSet(ModelViewSet):
             return Student.objects.filter(user=user)
         return Student.objects.all()
     def perform_create(self,serializer):
+        if hasattr(self.request.user,'student_profile'):
+            raise ValidationError("you already have astudent profile")
         serializer.save(user=self.request.user)
-        
+
+
+
    
     
 
