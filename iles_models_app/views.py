@@ -144,8 +144,11 @@ def admin_list(request):
 # PLACEMENTS 
 
 class PlacementViewSet(ModelViewSet):
-    serializer_class =InternshipPlacementSerializer
+    serializer_class = InternshipPlacementSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_querryset(self):
+        user = self.request.user
 
 
 
