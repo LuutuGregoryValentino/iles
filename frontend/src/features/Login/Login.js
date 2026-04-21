@@ -14,7 +14,11 @@ function Login({ onAuthSuccess, goToSignup }) {
     setLoading(true);
     try {
       const res = await authAPI.login({ email, password });
-      onAuthSuccess(res.data.user, res.data.access, res.data.refresh);
+      onAuthSuccess(
+        res.data.user, 
+        res.data.access, 
+        res.data.refresh
+      );
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed. Please try again.');
     } finally {
