@@ -151,7 +151,7 @@ class PlacementViewSet(ModelViewSet):
         user = self.request.user
 
         if user.role == "sudent":
-            return InternshipPlacement.objects.all()
+            return InternshipPlacement.objects.filter(student__user =user)
         return InternshipPlacement.objects.all()
 
     
