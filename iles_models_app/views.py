@@ -10,6 +10,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import ValidationError,PermissionDenied
 
 
+
 from .models import (
     Student, WorkplaceSupervisor, AcademicSupervisor,
     InternshipPlacement, LogbookEntry,
@@ -140,54 +141,15 @@ def admin_list(request):
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ── PLACEMENTS ────────────────────────────────────────────────────────────────
+# PLACEMENTS 
 
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def placement_list(request):
-    if request.method == 'GET':
-        if is_student(request.user):
-            placements = InternshipPlacement.objects.filter(student__user=request.user)
-        else:
-            placements = InternshipPlacement.objects.all()
-        return Response(InternshipPlacementSerializer(placements, many=True).data)
-
-    if is_student(request.user):
-        return Response({'error': 'Only administrators can create placements.'}, status=status.HTTP_403_FORBIDDEN)
-    s = InternshipPlacementSerializer(data=request.data)
-    if s.is_valid():
-        s.save()
-        return Response(s.data, status=status.HTTP_201_CREATED)
-    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+class PlacementViewSet(ModelViewSet):
+    serializer_class =InternshipPlacementSerializer
+    permission_classes = [IsAuthenticated]
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def placement_detail(request, pk):
-    try:
-        obj = InternshipPlacement.objects.get(pk=pk)
-    except InternshipPlacement.DoesNotExist:
-        return Response({'error': 'Placement not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-    if request.method == 'GET':
-        return Response(InternshipPlacementSerializer(obj).data)
-
-    if request.method == 'PUT':
-        if is_student(request.user):
-            return Response({'error': 'Students cannot edit placements.'}, status=status.HTTP_403_FORBIDDEN)
-        s = InternshipPlacementSerializer(obj, data=request.data, partial=True)
-        if s.is_valid():
-            s.save()
-            return Response(s.data)
-        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    if request.user.role != 'administrator':
-        return Response({'error': 'Only administrators can delete placements.'}, status=status.HTTP_403_FORBIDDEN)
-    obj.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-# ── LOGBOOKS ──────────────────────────────────────────────────────────────────
+#  LOGBOOk
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
