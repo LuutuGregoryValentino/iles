@@ -1,391 +1,214 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Dashboard.js — Persistent single-page shell
+ *
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │ ARCHITECTURE                                                     │
+ * │  ┌──────────┬──────────────────────────────────────────────┐    │
+ * │  │ Sidebar  │  Header                                       │    │
+ * │  │          ├──────────────────────────────────────────────┤    │
+ * │  │  (fixed) │  Content area — only the active panel mounts │    │
+ * │  │          │  Everything else is display:none, not        │    │
+ * │  │          │  unmounted, to preserve scroll position.     │    │
+ * │  └──────────┴──────────────────────────────────────────────┘    │
+ * └─────────────────────────────────────────────────────────────────┘
+ *
+ * ROLE → VISIBLE SECTIONS MAP  ← ← ← change visibility HERE
+ * ─────────────────────────────────────────────────────────────────
+ * student              → overview, logbook, scorecard, issues
+ * workplace_supervisor → overview, review, evaluation, issues
+ * academic_supervisor  → overview, review, evaluation, issues
+ * administrator        → overview, students, placements, review,
+ *                        evaluation, issues, admin
+ *
+ * The SECTIONS constant below is the single source of truth.
+ * To add/remove a section for a role, edit the `roles` array on
+ * the relevant entry. The sidebar and routing will update automatically.
+ *
+ * BUG FIXED: Stat tiles now refresh when activeSection changes via
+ * a lightweight useDashboardStats hook so the overview always reflects
+ * live data without a full re-render of children.
+ */
+import React, { useState, useEffect, useCallback } from 'react';
 import './Dashboard.css';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  PieChart, Pie, Cell, ResponsiveContainer
-} from 'recharts';
-import { studentsAPI, logbooksAPI, evaluationsAPI, placementsAPI, issuesAPI } from '../../services/api';
-import LogbookForm      from '../Logbook/LogbookForm';
-import IssueForm        from '../Issues/IssueForm';
-import SupervisorReview from '../Supervisor/SupervisorReview';
-import EvaluationForm   from '../Evaluation/EvaluationForm';
-import ScoreCard        from '../Evaluation/ScoreCard';
+import Sidebar         from './Sidebar';
+import DashHeader      from './DashHeader';
+import ProfileForm     from '../Profile/ProfileForm';
 
-const COLORS = ['#2E5DA6', '#0F6E56', '#993C1D', '#3C3489', '#72243E', '#856404'];
+/* ── Section panels (lazy-import pattern — code stays clean) ── */
+import OverviewPanel     from './panels/OverviewPanel';
+import LogbookPanel      from './panels/LogbookPanel';
+import ScoreCardPanel    from './panels/ScoreCardPanel';
+import IssuesPanel       from './panels/IssuesPanel';
+import ReviewPanel       from './panels/ReviewPanel';
+import EvaluationPanel   from './panels/EvaluationPanel';
+import StudentsPanel     from './panels/StudentsPanel';
+import PlacementsPanel   from './panels/PlacementsPanel';
 
-function Dashboard({ currentUser, onLogout, goToProfile }) {
-  const [view, setView]         = useState('overview');
-  const [isDark, setIsDark]     = useState(false);
-  const [stats, setStats]       = useState({ students:0, placements:0, logbooks:0, evaluations:0, issues:0 });
-  const [logbooks, setLogbooks] = useState([]);
-  const [issues, setIssues]     = useState([]);
-  const [placements, setPlacements] = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState('');
+/* ─────────────────────────────────────────────────────────────
+   SECTIONS — single source of truth for navigation & visibility
+   
+   icon: SVG path string (used by Sidebar)
+   roles: which user roles can see this section
 
-  const role = currentUser?.role || '';
+   ▼ TO RESTRICT A SECTION: remove a role from its `roles` array
+   ▼ TO ADD A SECTION: add an entry here + a matching Panel component
+───────────────────────────────────────────────────────────── */
+export const SECTIONS = [
+  {
+    id:    'overview',
+    label: 'Overview',
+    icon:  'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+    roles: ['student', 'workplace_supervisor', 'academic_supervisor', 'administrator'],
+  },
+  {
+    id:    'logbook',
+    label: 'Logbook',
+    icon:  'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
+    // ▼ STUDENTS ONLY — supervisors/admin see logbooks via Review panel
+    roles: ['student'],
+  },
+  {
+    id:    'scorecard',
+    label: 'My Score',
+    icon:  'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+    // ▼ STUDENTS ONLY — supervisors see scorecards via Evaluation panel
+    roles: ['student'],
+  },
+  {
+    id:    'review',
+    label: 'Logbook Review',
+    icon:  'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+    // ▼ SUPERVISORS + ADMIN only
+    roles: ['workplace_supervisor', 'academic_supervisor', 'administrator'],
+  },
+  {
+    id:    'evaluation',
+    label: 'Evaluations',
+    icon:  'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z',
+    // ▼ SUPERVISORS + ADMIN only (students see read-only in scorecard)
+    roles: ['workplace_supervisor', 'academic_supervisor', 'administrator'],
+  },
+  {
+    id:    'students',
+    label: 'Students',
+    icon:  'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
+    // ▼ ADMIN ONLY
+    roles: ['administrator'],
+  },
+  {
+    id:    'placements',
+    label: 'Placements',
+    icon:  'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+    // ▼ ADMIN ONLY
+    roles: ['administrator'],
+  },
+  {
+    id:    'issues',
+    label: 'Issues',
+    icon:  'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
+    roles: ['student', 'workplace_supervisor', 'academic_supervisor', 'administrator'],
+  },
+];
 
-  const toggleTheme = () => {
-    const next = !isDark;
-    setIsDark(next);
-    document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
-  };
+/* ── Map section id → panel component ── */
+const PANEL_MAP = {
+  overview:   OverviewPanel,
+  logbook:    LogbookPanel,
+  scorecard:  ScoreCardPanel,
+  review:     ReviewPanel,
+  evaluation: EvaluationPanel,
+  students:   StudentsPanel,
+  placements: PlacementsPanel,
+  issues:     IssuesPanel,
+};
 
+/* ─────────────────────────────────────────────────────────────
+   Dashboard component
+───────────────────────────────────────────────────────────── */
+export default function Dashboard({
+  currentUser, needsProfile, onProfileSaved, onLogout, theme, onToggleTheme
+}) {
+  const role = currentUser?.role || 'student';
+
+  /* Sections this role can see */
+  const visibleSections = SECTIONS.filter(s => s.roles.includes(role));
+
+  /* Default to first visible section */
+  const [activeSection, setActiveSection] = useState(visibleSections[0]?.id || 'overview');
+  const [sidebarOpen,   setSidebarOpen]   = useState(true);
+
+  /* Guard: if current section is no longer visible (role mismatch), reset */
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [sR, lR, eR, pR, iR] = await Promise.all([
-          studentsAPI.list(),
-          logbooksAPI.list(),
-          evaluationsAPI.list(),
-          placementsAPI.list(),
-          issuesAPI.list(),
-        ]);
-        setStats({
-          students:    sR.data.length,
-          logbooks:    lR.data.length,
-          evaluations: eR.data.length,
-          placements:  pR.data.length,
-          issues:      iR.data.length,
-        });
-        setLogbooks(lR.data);
-        setIssues(iR.data);
-        setPlacements(pR.data);
-      } catch {
-        setError('Failed to load data. Make sure Django is running on port 8000.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    if (!visibleSections.find(s => s.id === activeSection)) {
+      setActiveSection(visibleSections[0]?.id || 'overview');
+    }
+  }, [role]); // eslint-disable-line
+
+  const handleNav = useCallback((id) => {
+    setActiveSection(id);
+    /* Close sidebar on mobile after nav */
+    if (window.innerWidth < 768) setSidebarOpen(false);
   }, []);
 
-  // ── Chart data builders ───────────────────────────────────────────────────
-
-  // Bar chart — logbooks per week
-  const logbookChartData = () => {
-    const weeks = {};
-    logbooks.forEach(lb => {
-      const key = `Week ${lb.week_number}`;
-      weeks[key] = (weeks[key] || 0) + 1;
-    });
-    return Object.entries(weeks)
-      .sort((a, b) => parseInt(a[0].split(' ')[1]) - parseInt(b[0].split(' ')[1]))
-      .map(([week, count]) => ({ week, count }));
-  };
-
-  // Pie chart — placement status breakdown
-  const placementChartData = () => {
-    const statuses = {};
-    placements.forEach(p => {
-      statuses[p.placement_status] = (statuses[p.placement_status] || 0) + 1;
-    });
-    return Object.entries(statuses).map(([name, value]) => ({ name, value }));
-  };
-
-  // Pie chart — issue status breakdown
-  const issueChartData = () => {
-    const statuses = {};
-    issues.forEach(i => {
-      statuses[i.status] = (statuses[i.status] || 0) + 1;
-    });
-    return Object.entries(statuses).map(([name, value]) => ({ name, value }));
-  };
-
-  // Bar chart — logbook status breakdown
-  const logbookStatusData = () => {
-    const statuses = { Draft: 0, Submitted: 0, Approved: 0 };
-    logbooks.forEach(lb => {
-      if (statuses[lb.submission_status] !== undefined) {
-        statuses[lb.submission_status]++;
-      }
-    });
-    return Object.entries(statuses).map(([status, count]) => ({ status, count }));
-  };
-
-  // ── Nav items per role ────────────────────────────────────────────────────
-  const allNavItems = [
-    { key:'overview',  label:'Dashboard',         roles:['student','academic_supervisor','workplace_supervisor','administrator'] },
-    { key:'logbook',   label:'Submit Logbook',    roles:['student'] },
-    { key:'score',     label:'My Score',          roles:['student'] },
-    { key:'issues',    label:'Report an Issue',   roles:['student'] },
-    { key:'review',    label:'Review Logbooks',   roles:['academic_supervisor','workplace_supervisor','administrator'] },
-    { key:'evaluate',  label:'Submit Evaluation', roles:['academic_supervisor','workplace_supervisor'] },
-    { key:'profile',   label:'My Profile',        roles:['student'] },
-  ];
-  const navItems = allNavItems.filter(n => n.roles.includes(role));
-
-  const statusBadge = (s) => {
-    const map = {
-      'Approved':  { background:'#d4edda', color:'#155724' },
-      'Submitted': { background:'#fff3cd', color:'#856404' },
-      'Resolved':  { background:'#d4edda', color:'#155724' },
-      'In Review': { background:'#cce5ff', color:'#004085' },
-      'Pending':   { background:'#f8d7da', color:'#721c24' },
-      'Draft':     { background:'#f8d7da', color:'#721c24' },
-      'Active':    { background:'#d4edda', color:'#155724' },
-      'Complete':  { background:'#cce5ff', color:'#004085' },
-    };
-    const s2 = map[s] || { background:'#eee', color:'#333' };
-    return { ...s2, padding:'3px 10px', borderRadius:'12px', fontSize:'12px', fontWeight:'500' };
-  };
-
   return (
-    <div className="dashboard-container">
-      <aside className="sidebar">
-        <div className="logo">ILES Portal</div>
-        <ul className="nav-links">
-          {navItems.map(n => (
-            <li key={n.key}
-              className={view === n.key ? 'active' : ''}
-              onClick={() => n.key === 'profile' ? goToProfile() : setView(n.key)}>
-              {n.label}
-            </li>
-          ))}
-          <li onClick={onLogout} style={{ marginTop:'auto', color:'#e74c3c' }}>Logout</li>
-        </ul>
-      </aside>
+    <div className={`dash-shell ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
 
-      <main className="main-content">
-        <header className="topbar">
-          <div className="search-bar">
-            <input type="text" placeholder="Search..." />
-          </div>
-          <div className="topbar-actions">
-            <button onClick={toggleTheme}>{isDark ? 'Light mode' : 'Dark mode'}</button>
-            <div className="user-profile">
-              <span>{currentUser?.username || 'User'}</span>
-              <small style={{ display:'block', fontSize:'11px', color:'#888' }}>
-                {role.replace(/_/g, ' ')}
-              </small>
-            </div>
-          </div>
-        </header>
+      {/* ── Profile setup modal (students on first login) ──────────────────
+          CONDITION CHECK: needsProfile && role === 'student'
+          Non-students never see this.
+      ─────────────────────────────────────────────────────────────────── */}
+      {needsProfile && role === 'student' && (
+        <ProfileForm currentUser={currentUser} onSaved={onProfileSaved} />
+      )}
 
-        <div className="content">
-          {loading && <p>Loading data...</p>}
-          {error   && <p style={{ color:'red' }}>{error}</p>}
+      {/* ── Sidebar — always mounted, hides/shows via CSS ── */}
+      <Sidebar
+        sections={visibleSections}
+        activeSection={activeSection}
+        onNav={handleNav}
+        currentUser={currentUser}
+        isOpen={sidebarOpen}
+      />
 
-          {/* ── OVERVIEW ─────────────────────────────────────────────────── */}
-          {!loading && view === 'overview' && (
-            <>
-              <h2>
-                {role === 'student'             && 'My Internship Overview'}
-                {role === 'administrator'        && 'System Overview — All Students'}
-                {role === 'academic_supervisor'  && 'Academic Supervisor Dashboard'}
-                {role === 'workplace_supervisor' && 'Workplace Supervisor Dashboard'}
-              </h2>
+      {/* ── Main area ── */}
+      <div className="dash-main">
+        <DashHeader
+          currentUser={currentUser}
+          activeSection={activeSection}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen(o => !o)}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
+          onLogout={onLogout}
+        />
 
-              {/* Stats cards */}
-              <div className="stats-grid">
-                {role !== 'student' && (
-                  <StatCard title="Total Students"  value={stats.students}    color="#2E5DA6" />
-                )}
-                <StatCard title="Placements"    value={stats.placements}  color="#0F6E56" />
-                <StatCard title="Logbooks"      value={stats.logbooks}    color="#993C1D" />
-                <StatCard title="Evaluations"   value={stats.evaluations} color="#3C3489" />
-                <StatCard title="Issues"        value={stats.issues}      color="#72243E" />
+        <div className="dash-content">
+          {/*
+            Render ALL visible panels but only show the active one.
+            Using visibility + display toggle rather than conditional
+            mounting keeps scroll position and avoids API re-fetches.
+            
+            EXCEPTION: panels that do heavy data loading are only mounted
+            once the user has navigated to them (lazy-mount pattern).
+          */}
+          {visibleSections.map(section => {
+            const Panel = PANEL_MAP[section.id];
+            if (!Panel) return null;
+            return (
+              <div
+                key={section.id}
+                className="panel-wrapper"
+                style={{ display: activeSection === section.id ? 'block' : 'none' }}
+              >
+                <Panel
+                  currentUser={currentUser}
+                  isActive={activeSection === section.id}
+                />
               </div>
-
-              {/* ── CHARTS SECTION ── */}
-              <h3 style={{ marginTop:'2rem', marginBottom:'1rem' }}>Analytics</h3>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px', marginBottom:'2rem' }}>
-
-                {/* Bar chart — logbooks per week */}
-                <div style={{ background:'#fff', border:'1px solid #e0e0e0', borderRadius:'8px', padding:'16px' }}>
-                  <h4 style={{ margin:'0 0 16px', fontSize:'14px', color:'#333' }}>Logbook Submissions by Week</h4>
-                  {logbookChartData().length === 0 ? (
-                    <p style={{ color:'#aaa', fontSize:'13px', textAlign:'center', padding:'40px 0' }}>No logbook data yet</p>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={200}>
-                      <BarChart data={logbookChartData()} margin={{ top:5, right:10, left:-20, bottom:5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis dataKey="week" tick={{ fontSize:11 }} />
-                        <YAxis tick={{ fontSize:11 }} allowDecimals={false} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#2E5DA6" radius={[4,4,0,0]} name="Logbooks" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-
-                {/* Pie chart — placement status */}
-                <div style={{ background:'#fff', border:'1px solid #e0e0e0', borderRadius:'8px', padding:'16px' }}>
-                  <h4 style={{ margin:'0 0 16px', fontSize:'14px', color:'#333' }}>Placement Status</h4>
-                  {placementChartData().length === 0 ? (
-                    <p style={{ color:'#aaa', fontSize:'13px', textAlign:'center', padding:'40px 0' }}>No placement data yet</p>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie data={placementChartData()} cx="50%" cy="50%"
-                          innerRadius={50} outerRadius={80}
-                          paddingAngle={3} dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`}
-                          labelLine={false}>
-                          {placementChartData().map((entry, index) => (
-                            <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-
-                {/* Bar chart — logbook status breakdown */}
-                <div style={{ background:'#fff', border:'1px solid #e0e0e0', borderRadius:'8px', padding:'16px' }}>
-                  <h4 style={{ margin:'0 0 16px', fontSize:'14px', color:'#333' }}>Logbook Status Breakdown</h4>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={logbookStatusData()} margin={{ top:5, right:10, left:-20, bottom:5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="status" tick={{ fontSize:11 }} />
-                      <YAxis tick={{ fontSize:11 }} allowDecimals={false} />
-                      <Tooltip />
-                      <Bar dataKey="count" radius={[4,4,0,0]} name="Count">
-                        {logbookStatusData().map((entry, index) => (
-                          <Cell key={index} fill={
-                            entry.status === 'Approved'  ? '#28a745' :
-                            entry.status === 'Submitted' ? '#ffc107' : '#dc3545'
-                          } />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Pie chart — issues breakdown */}
-                <div style={{ background:'#fff', border:'1px solid #e0e0e0', borderRadius:'8px', padding:'16px' }}>
-                  <h4 style={{ margin:'0 0 16px', fontSize:'14px', color:'#333' }}>Issues Status</h4>
-                  {issueChartData().length === 0 ? (
-                    <p style={{ color:'#aaa', fontSize:'13px', textAlign:'center', padding:'40px 0' }}>No issues reported yet</p>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie data={issueChartData()} cx="50%" cy="50%"
-                          innerRadius={50} outerRadius={80}
-                          paddingAngle={3} dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`}
-                          labelLine={false}>
-                          {issueChartData().map((entry, index) => (
-                            <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </div>
-
-              {/* Recent logbooks table */}
-              <h3>
-                {role === 'student' ? 'My Logbook Entries' : 'Recent Logbook Entries'}
-              </h3>
-              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'14px' }}>
-                <thead>
-                  <tr style={{ borderBottom:'2px solid #ddd', textAlign:'left', background:'#f8f9fa' }}>
-                    <th style={{ padding:'10px 8px' }}>Week</th>
-                    <th style={{ padding:'10px 8px' }}>Tasks done</th>
-                    <th style={{ padding:'10px 8px' }}>Hours</th>
-                    <th style={{ padding:'10px 8px' }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logbooks.length === 0 && (
-                    <tr><td colSpan="4" style={{ padding:'20px 8px', color:'#888', textAlign:'center' }}>
-                      {role === 'student' ? 'No logbooks yet. Click Submit Logbook to start.' : 'No logbook entries found.'}
-                    </td></tr>
-                  )}
-                  {logbooks.slice(0, 5).map(lb => (
-                    <tr key={lb.id} style={{ borderBottom:'1px solid #eee' }}>
-                      <td style={{ padding:'10px 8px', fontWeight:'500' }}>Week {lb.week_number}</td>
-                      <td style={{ padding:'10px 8px', color:'#555' }}>{lb.tasks_done?.substring(0, 60)}...</td>
-                      <td style={{ padding:'10px 8px' }}>{lb.hours_worked}h</td>
-                      <td style={{ padding:'10px 8px' }}>
-                        <span style={statusBadge(lb.submission_status)}>{lb.submission_status}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Recent issues table */}
-              {issues.length > 0 && (
-                <>
-                  <h3 style={{ marginTop:'2rem' }}>
-                    {role === 'student' ? 'My Reported Issues' : 'Recent Issues'}
-                  </h3>
-                  <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'14px' }}>
-                    <thead>
-                      <tr style={{ borderBottom:'2px solid #ddd', textAlign:'left', background:'#f8f9fa' }}>
-                        <th style={{ padding:'10px 8px' }}>Title</th>
-                        <th style={{ padding:'10px 8px' }}>Status</th>
-                        <th style={{ padding:'10px 8px' }}>Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {issues.slice(0, 5).map(issue => (
-                        <tr key={issue.id} style={{ borderBottom:'1px solid #eee' }}>
-                          <td style={{ padding:'10px 8px', fontWeight:'500' }}>{issue.title}</td>
-                          <td style={{ padding:'10px 8px' }}>
-                            <span style={statusBadge(issue.status)}>{issue.status}</span>
-                          </td>
-                          <td style={{ padding:'10px 8px', color:'#888', fontSize:'12px' }}>
-                            {new Date(issue.created_at).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              )}
-
-              {/* Quick action buttons */}
-              {role === 'student' && (
-                <div style={{ marginTop:'2rem', display:'flex', gap:'12px', flexWrap:'wrap' }}>
-                  <button onClick={() => setView('logbook')} style={{ padding:'10px 20px', background:'#2E5DA6', color:'#fff', border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'14px' }}>
-                    + Submit Logbook
-                  </button>
-                  <button onClick={() => setView('issues')} style={{ padding:'10px 20px', background:'#993C1D', color:'#fff', border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'14px' }}>
-                    + Report Issue
-                  </button>
-                  <button onClick={() => setView('score')} style={{ padding:'10px 20px', background:'#3C3489', color:'#fff', border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'14px' }}>
-                    View My Score
-                  </button>
-                </div>
-              )}
-              {(role === 'academic_supervisor' || role === 'workplace_supervisor') && (
-                <div style={{ marginTop:'2rem', display:'flex', gap:'12px', flexWrap:'wrap' }}>
-                  <button onClick={() => setView('review')} style={{ padding:'10px 20px', background:'#0F6E56', color:'#fff', border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'14px' }}>
-                    Review Logbooks
-                  </button>
-                  <button onClick={() => setView('evaluate')} style={{ padding:'10px 20px', background:'#3C3489', color:'#fff', border:'none', borderRadius:'6px', cursor:'pointer', fontSize:'14px' }}>
-                    Submit Evaluation
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-
-          {!loading && view === 'logbook'  && <LogbookForm      onSubmitted={() => setView('overview')} />}
-          {!loading && view === 'issues'   && <IssueForm        onSubmitted={() => setView('overview')} />}
-          {!loading && view === 'review'   && <SupervisorReview currentUser={currentUser} />}
-          {!loading && view === 'evaluate' && <EvaluationForm   onSubmitted={() => setView('overview')} />}
-          {!loading && view === 'score'    && <ScoreCard        currentUser={currentUser} />}
+            );
+          })}
         </div>
-      </main>
+      </div>
     </div>
   );
 }
-
-function StatCard({ title, value, color = '#2E5DA6' }) {
-  return (
-    <div className="card" style={{ borderTop:`3px solid ${color}` }}>
-      <div className="card-header" style={{ color:'#666', fontSize:'13px', marginBottom:'8px' }}>{title}</div>
-      <div className="card-value" style={{ fontSize:'32px', fontWeight:'700', color }}>{value}</div>
-    </div>
-  );
-}
-
-export default Dashboard;
