@@ -173,3 +173,24 @@ class StudentAdmin(admin.ModelAdmin):
             'fields': ('course', 'year_of_study', 'semester')
         }),
     )
+
+#___________ Add autocomplete (pro feature)_________#
+    @admin.register(InternshipPlacement)
+class InternshipPlacementAdmin(admin.ModelAdmin):
+    autocomplete_fields = ['student', 'academic_supervisor', 'workplace_supervisor']
+
+
+#___________Add list_select_related (performance)_______#
+    class InternshipPlacementAdmin(admin.ModelAdmin):
+    list_select_related = ('student', 'academic_supervisor')
+
+    ordering = ('-created_at',)
+
+    readonly_fields = ('created_at', 'updated_at')
+
+    search_fields = (
+    'placement__student__student_name',
+    'placement__organization_name'
+)
+    
+    
