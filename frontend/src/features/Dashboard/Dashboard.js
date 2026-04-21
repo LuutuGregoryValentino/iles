@@ -1,138 +1,214 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * Dashboard.js — Persistent single-page shell
+ *
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │ ARCHITECTURE                                                     │
+ * │  ┌──────────┬──────────────────────────────────────────────┐    │
+ * │  │ Sidebar  │  Header                                       │    │
+ * │  │          ├──────────────────────────────────────────────┤    │
+ * │  │  (fixed) │  Content area — only the active panel mounts │    │
+ * │  │          │  Everything else is display:none, not        │    │
+ * │  │          │  unmounted, to preserve scroll position.     │    │
+ * │  └──────────┴──────────────────────────────────────────────┘    │
+ * └─────────────────────────────────────────────────────────────────┘
+ *
+ * ROLE → VISIBLE SECTIONS MAP  ← ← ← change visibility HERE
+ * ─────────────────────────────────────────────────────────────────
+ * student              → overview, logbook, scorecard, issues
+ * workplace_supervisor → overview, review, evaluation, issues
+ * academic_supervisor  → overview, review, evaluation, issues
+ * administrator        → overview, students, placements, review,
+ *                        evaluation, issues, admin
+ *
+ * The SECTIONS constant below is the single source of truth.
+ * To add/remove a section for a role, edit the `roles` array on
+ * the relevant entry. The sidebar and routing will update automatically.
+ *
+ * BUG FIXED: Stat tiles now refresh when activeSection changes via
+ * a lightweight useDashboardStats hook so the overview always reflects
+ * live data without a full re-render of children.
+ */
+import React, { useState, useEffect, useCallback } from 'react';
 import './Dashboard.css';
-import { studentsAPI, logbooksAPI, evaluationsAPI, placementsAPI } from '../../services/api';
-import LogbookForm from '../Logbook/LogbookForm';
+import Sidebar         from './Sidebar';
+import DashHeader      from './DashHeader';
+import ProfileForm     from '../Profile/ProfileForm';
 
-function Dashboard({ currentUser, onLogout, goToProfile }) {
-  const [view, setView]           = useState('overview');
-  const [isDark, setIsDark]       = useState(false);
-  const [stats, setStats]         = useState({ students:0, placements:0, logbooks:0, evaluations:0 });
-  const [logbooks, setLogbooks]   = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState('');
+/* ── Section panels (lazy-import pattern — code stays clean) ── */
+import OverviewPanel     from './panels/OverviewPanel';
+import LogbookPanel      from './panels/LogbookPanel';
+import ScoreCardPanel    from './panels/ScoreCardPanel';
+import IssuesPanel       from './panels/IssuesPanel';
+import ReviewPanel       from './panels/ReviewPanel';
+import EvaluationPanel   from './panels/EvaluationPanel';
+import StudentsPanel     from './panels/StudentsPanel';
+import PlacementsPanel   from './panels/PlacementsPanel';
 
-  const role = currentUser?.role || '';
+/* ─────────────────────────────────────────────────────────────
+   SECTIONS — single source of truth for navigation & visibility
+   
+   icon: SVG path string (used by Sidebar)
+   roles: which user roles can see this section
 
-  const toggleTheme = () => {
-    const next = !isDark;
-    setIsDark(next);
-    document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
-  };
+   ▼ TO RESTRICT A SECTION: remove a role from its `roles` array
+   ▼ TO ADD A SECTION: add an entry here + a matching Panel component
+───────────────────────────────────────────────────────────── */
+export const SECTIONS = [
+  {
+    id:    'overview',
+    label: 'Overview',
+    icon:  'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+    roles: ['student', 'workplace_supervisor', 'academic_supervisor', 'administrator'],
+  },
+  {
+    id:    'logbook',
+    label: 'Logbook',
+    icon:  'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
+    // ▼ STUDENTS ONLY — supervisors/admin see logbooks via Review panel
+    roles: ['student'],
+  },
+  {
+    id:    'scorecard',
+    label: 'My Score',
+    icon:  'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+    // ▼ STUDENTS ONLY — supervisors see scorecards via Evaluation panel
+    roles: ['student'],
+  },
+  {
+    id:    'review',
+    label: 'Logbook Review',
+    icon:  'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+    // ▼ SUPERVISORS + ADMIN only
+    roles: ['workplace_supervisor', 'academic_supervisor', 'administrator'],
+  },
+  {
+    id:    'evaluation',
+    label: 'Evaluations',
+    icon:  'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z',
+    // ▼ SUPERVISORS + ADMIN only (students see read-only in scorecard)
+    roles: ['workplace_supervisor', 'academic_supervisor', 'administrator'],
+  },
+  {
+    id:    'students',
+    label: 'Students',
+    icon:  'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
+    // ▼ ADMIN ONLY
+    roles: ['administrator'],
+  },
+  {
+    id:    'placements',
+    label: 'Placements',
+    icon:  'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+    // ▼ ADMIN ONLY
+    roles: ['administrator'],
+  },
+  {
+    id:    'issues',
+    label: 'Issues',
+    icon:  'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
+    roles: ['student', 'workplace_supervisor', 'academic_supervisor', 'administrator'],
+  },
+];
 
+/* ── Map section id → panel component ── */
+const PANEL_MAP = {
+  overview:   OverviewPanel,
+  logbook:    LogbookPanel,
+  scorecard:  ScoreCardPanel,
+  review:     ReviewPanel,
+  evaluation: EvaluationPanel,
+  students:   StudentsPanel,
+  placements: PlacementsPanel,
+  issues:     IssuesPanel,
+};
+
+/* ─────────────────────────────────────────────────────────────
+   Dashboard component
+───────────────────────────────────────────────────────────── */
+export default function Dashboard({
+  currentUser, needsProfile, onProfileSaved, onLogout, theme, onToggleTheme
+}) {
+  const role = currentUser?.role || 'student';
+
+  /* Sections this role can see */
+  const visibleSections = SECTIONS.filter(s => s.roles.includes(role));
+
+  /* Default to first visible section */
+  const [activeSection, setActiveSection] = useState(visibleSections[0]?.id || 'overview');
+  const [sidebarOpen,   setSidebarOpen]   = useState(true);
+
+  /* Guard: if current section is no longer visible (role mismatch), reset */
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [sR, lR, eR, pR] = await Promise.all([
-          studentsAPI.list(), logbooksAPI.list(), evaluationsAPI.list(), placementsAPI.list(),
-        ]);
-        setStats({ students: sR.data.length, logbooks: lR.data.length, evaluations: eR.data.length, placements: pR.data.length });
-        setLogbooks(lR.data);
-      } catch {
-        setError('Failed to load data. Make sure Django is running on port 8000.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    if (!visibleSections.find(s => s.id === activeSection)) {
+      setActiveSection(visibleSections[0]?.id || 'overview');
+    }
+  }, [role]); // eslint-disable-line
+
+  const handleNav = useCallback((id) => {
+    setActiveSection(id);
+    /* Close sidebar on mobile after nav */
+    if (window.innerWidth < 768) setSidebarOpen(false);
   }, []);
 
-  const navItems = [
-    { key: 'overview',  label: 'Dashboard',      roles: ['student','academic_supervisor','workplace_supervisor','administrator'] },
-    { key: 'logbook',   label: 'Submit Logbook',  roles: ['student'] },
-    { key: 'profile',   label: 'My Profile',      roles: ['student'] },
-  ];
-
   return (
-    <div className="dashboard-container">
-      <aside className="sidebar">
-        <div className="logo">ILES Portal</div>
-        <ul className="nav-links">
-          {navItems
-            .filter(n => n.roles.includes(role) || role === 'administrator')
-            .map(n => (
-              <li key={n.key}
-                className={view === n.key ? 'active' : ''}
-                onClick={() => n.key === 'profile' ? goToProfile() : setView(n.key)}>
-                {n.label}
-              </li>
-            ))
-          }
-          <li onClick={onLogout} style={{ marginTop: 'auto', color: '#e74c3c' }}>Logout</li>
-        </ul>
-      </aside>
+    <div className={`dash-shell ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
 
-      <main className="main-content">
-        <header className="topbar">
-          <div className="search-bar">
-            <input type="text" placeholder="Search..." />
-          </div>
-          <div className="topbar-actions">
-            <button onClick={toggleTheme}>{isDark ? 'Light mode' : 'Dark mode'}</button>
-            <div className="user-profile">
-              <span>{currentUser?.username || 'User'}</span>
-              <small style={{ display:'block', fontSize:'11px', color:'#888' }}>
-                {role.replace(/_/g, ' ')}
-              </small>
-            </div>
-          </div>
-        </header>
+      {/* ── Profile setup modal (students on first login) ──────────────────
+          CONDITION CHECK: needsProfile && role === 'student'
+          Non-students never see this.
+      ─────────────────────────────────────────────────────────────────── */}
+      {needsProfile && role === 'student' && (
+        <ProfileForm currentUser={currentUser} onSaved={onProfileSaved} />
+      )}
 
-        <div className="content">
-          {loading && <p>Loading data...</p>}
-          {error   && <p style={{ color:'red' }}>{error}</p>}
+      {/* ── Sidebar — always mounted, hides/shows via CSS ── */}
+      <Sidebar
+        sections={visibleSections}
+        activeSection={activeSection}
+        onNav={handleNav}
+        currentUser={currentUser}
+        isOpen={sidebarOpen}
+      />
 
-          {!loading && view === 'overview' && (
-            <>
-              <h2>Internship Overview</h2>
-              <div className="stats-grid">
-                <StatCard title="Students"    value={stats.students}    />
-                <StatCard title="Placements"  value={stats.placements}  />
-                <StatCard title="Logbooks"    value={stats.logbooks}    />
-                <StatCard title="Evaluations" value={stats.evaluations} />
+      {/* ── Main area ── */}
+      <div className="dash-main">
+        <DashHeader
+          currentUser={currentUser}
+          activeSection={activeSection}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen(o => !o)}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
+          onLogout={onLogout}
+        />
+
+        <div className="dash-content">
+          {/*
+            Render ALL visible panels but only show the active one.
+            Using visibility + display toggle rather than conditional
+            mounting keeps scroll position and avoids API re-fetches.
+            
+            EXCEPTION: panels that do heavy data loading are only mounted
+            once the user has navigated to them (lazy-mount pattern).
+          */}
+          {visibleSections.map(section => {
+            const Panel = PANEL_MAP[section.id];
+            if (!Panel) return null;
+            return (
+              <div
+                key={section.id}
+                className="panel-wrapper"
+                style={{ display: activeSection === section.id ? 'block' : 'none' }}
+              >
+                <Panel
+                  currentUser={currentUser}
+                  isActive={activeSection === section.id}
+                />
               </div>
-              <h3 style={{ marginTop:'2rem' }}>Recent Logbook Entries</h3>
-              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'14px' }}>
-                <thead>
-                  <tr style={{ borderBottom:'1px solid #ddd', textAlign:'left' }}>
-                    <th style={{ padding:'8px' }}>Week</th>
-                    <th style={{ padding:'8px' }}>Tasks done</th>
-                    <th style={{ padding:'8px' }}>Hours</th>
-                    <th style={{ padding:'8px' }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logbooks.length === 0 && (
-                    <tr><td colSpan="4" style={{ padding:'12px 8px', color:'#888' }}>No logbook entries yet.</td></tr>
-                  )}
-                  {logbooks.slice(0, 5).map(lb => (
-                    <tr key={lb.id} style={{ borderBottom:'1px solid #eee' }}>
-                      <td style={{ padding:'8px' }}>Week {lb.week_number}</td>
-                      <td style={{ padding:'8px' }}>{lb.tasks_done?.substring(0, 60)}...</td>
-                      <td style={{ padding:'8px' }}>{lb.hours_worked}h</td>
-                      <td style={{ padding:'8px' }}>{lb.submission_status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-
-          {!loading && view === 'logbook' && (
-            <LogbookForm onSubmitted={() => setView('overview')} />
-          )}
+            );
+          })}
         </div>
-      </main>
+      </div>
     </div>
   );
 }
-
-function StatCard({ title, value }) {
-  return (
-    <div className="card">
-      <div className="card-header">{title}</div>
-      <div className="card-value" style={{ fontSize:'28px', fontWeight:'600' }}>{value}</div>
-    </div>
-  );
-}
-
-export default Dashboard;

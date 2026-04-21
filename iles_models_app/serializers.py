@@ -9,14 +9,37 @@ from .models import (
 User = get_user_model()
 
 
-# ─── AUTH ─────────────────────────────────────────────────────────────────────
+# ── AUTH ──────────────────────────────────────────────────────────────────────
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
-         model= User
-         fields =[ 'id','email','university_id','role','password']
+        model  = User
+        fields = ['id', 'email', 'username', 'university_id', 'role', 'password']
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("A user with this username already exists.")
+        return value
+
+    def validate_university_id(self, value):
+        if User.objects.filter(university_id=value).exists():
+            raise serializers.ValidationError("A user with this university ID already exists.")
+        return value
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user     = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,7 +47,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', 'username', 'university_id', 'role']
 
 
-# ─── PROFILES ────────────────────────────────────────────────────────────────
+# ── PROFILES ──────────────────────────────────────────────────────────────────
 
 class StudentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -50,7 +73,7 @@ class AcademicSupervisorSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-# ─── PLACEMENT ───────────────────────────────────────────────────────────────
+# ── PLACEMENT ─────────────────────────────────────────────────────────────────
 
 class InternshipPlacementSerializer(serializers.ModelSerializer):
     class Meta:
@@ -65,7 +88,7 @@ class InternshipPlacementSerializer(serializers.ModelSerializer):
         return data
 
 
-# ─── LOGBOOK ─────────────────────────────────────────────────────────────────
+# ── LOGBOOK ───────────────────────────────────────────────────────────────────
 
 class LogbookEntrySerializer(serializers.ModelSerializer):
     class Meta:
@@ -74,7 +97,7 @@ class LogbookEntrySerializer(serializers.ModelSerializer):
         read_only_fields = ['submitted_at']
 
 
-# ─── EVALUATION ──────────────────────────────────────────────────────────────
+# ── EVALUATION ────────────────────────────────────────────────────────────────
 
 class EvaluationSerializer(serializers.ModelSerializer):
     total_score = serializers.ReadOnlyField()
@@ -86,12 +109,14 @@ class EvaluationSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         placement = data.get('placement') or (self.instance.placement if self.instance else None)
-        if placement and Evaluation.objects.filter(placement=placement).exclude(pk=self.instance.pk if self.instance else None).exists():
+        if placement and Evaluation.objects.filter(placement=placement).exclude(
+            pk=self.instance.pk if self.instance else None
+        ).exists():
             raise serializers.ValidationError("An evaluation already exists for this placement.")
         return data
 
 
-# ─── ISSUE ───────────────────────────────────────────────────────────────────
+# ── ISSUE ─────────────────────────────────────────────────────────────────────
 
 class IssueSerializer(serializers.ModelSerializer):
     class Meta:

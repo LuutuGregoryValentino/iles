@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import *
+from django.utils.html import format_html
 
 # ───────────────── USER ADMIN ─────────────────
 
@@ -127,3 +128,30 @@ class IssueAdmin(admin.ModelAdmin):
 admin.site.site_header = "Internship Management System"
 admin.site.site_title = "IMS Admin"
 admin.site.index_title = "Welcome to IMS Dashboard"
+
+#----------------resolve isuues quickly-------------#
+def mark_as_resolved(modeladmin, request, queryset):
+    queryset.update(status='Resolved')
+
+mark_as_resolved.short_description = "Mark selected issues as Resolved"
+
+@admin.register(Issue)
+class IssueAdmin(admin.ModelAdmin):
+    ...
+    actions = [mark_as_resolved]
+
+#------------------ADD STATUS COLOR  BADGES---------------#
+
+class IssueAdmin(admin.ModelAdmin):
+    ...
+
+    def colored_status(self, obj):
+        color = {
+            'Pending': 'orange',
+            'In Review': 'blue',
+            'Resolved': 'green'
+        }.get(obj.status, 'black')
+        return format_html('<span style="color: {};">{}</span>', color, obj.status)
+
+    colored_status.short_description = "Status"
+    list_display = ('title', 'student', 'colored_status', 'created_at')

@@ -1,0 +1,81 @@
+.dash-header {
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  gap: 16px;
+}
+
+.dh-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dh-toggle { flex-shrink: 0; }
+
+.dh-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+.dh-bc-parent { color: var(--text-muted); }
+.dh-bc-sep    { color: var(--text-muted); }
+.dh-bc-current {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dh-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.dh-theme { flex-shrink: 0; }
+
+.dh-user-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 6px;
+  background: var(--bg-raised);
+  border-radius: 99px;
+  border: 1px solid var(--border-subtle);
+}
+.dh-user-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--brand-green);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+.dh-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dh-logout {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  .dh-user-name { display: none; }
+  .dh-logout span:not(svg) { display: none; }
+}
