@@ -150,6 +150,13 @@ class PlacementViewSet(ModelViewSet):
     def get_querryset(self):
         user = self.request.user
 
+        if user.role == "sudent":
+            return InternshipPlacement.objects.all()
+        return InternshipPlacement.objects.all()
+
+    
+
+
 
 
 #  LOGBOOk
