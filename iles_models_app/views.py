@@ -153,6 +153,13 @@ class PlacementViewSet(ModelViewSet):
         if user.role == "sudent":
             return InternshipPlacement.objects.filter(student__user =user)
         return InternshipPlacement.objects.all()
+    
+    def perform_create(self,serializer):
+        if self.request.user.role == 'student':
+            raise PermissionDenied('only administrators can create placement')
+        
+        serializer.save()
+
 
     
 
