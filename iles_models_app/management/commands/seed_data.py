@@ -27,7 +27,7 @@ class Command(BaseCommand):
         student_user, created = User.objects.get_or_create(
             email='gregory@iles.ac.ug',
             defaults=dict(
-                username='Gregory',
+                username='gregory',
                 university_id='467389',
                 role='student',
                 first_name='Gregory',
