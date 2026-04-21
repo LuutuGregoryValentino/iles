@@ -19,7 +19,10 @@ urlpatterns = [
     path('auth/me/',       views.current_user,  name='current-user'),
     path('auth/refresh/',  TokenRefreshView.as_view(), name='token-refresh'),
 
+
     # ── Students Profile and listig endpoints──────────────────────────────────────────────────────────────
+    # ── Students ──────────────────────────────────────────────────────────────
+
     path('students/',          views.student_list_api,   name='student-list'),
     path('students/<int:pk>/', views.student_detail_api, name='student-detail'),
 
