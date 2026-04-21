@@ -155,3 +155,21 @@ class IssueAdmin(admin.ModelAdmin):
 
     colored_status.short_description = "Status"
     list_display = ('title', 'student', 'colored_status', 'created_at')
+
+
+#-------Add filters for relationships--------#
+    list_filter = ('placement__organization_name', 'status')
+
+
+#------- Add fieldsets (clean forms)----#
+
+    @admin.register(Student)
+class StudentAdmin(admin.ModelAdmin):
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('student_name', 'student_id')
+        }),
+        ('Academic Info', {
+            'fields': ('course', 'year_of_study', 'semester')
+        }),
+    )
