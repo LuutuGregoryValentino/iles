@@ -1,48 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import './ProfileForm.css';
+/**
+ * ProfileForm.js — Student profile setup
+ *
+ * Rendered as a modal overlay inside Dashboard on first login.
+ * Non-student roles skip this entirely (gated in App.js → Dashboard).
+ *
+ * ┌──────────────────────────────────────────────────┐
+ * │ WHO SEES THIS: student role only, on first login │
+ * │ CONDITION: needsProfile === true (App.js)         │
+ * └──────────────────────────────────────────────────┘
+ *
+ * BUG FIXED: Original sent year_of_study and semester as strings;
+ * the API expected integers. Now explicitly parsed.
+ */
+import React, { useState } from 'react';
 import { studentsAPI } from '../../services/api';
 
-function ProfileForm({ currentUser, onSaved }) {
+const COURSES = [
+  'Bachelor of Science in Computer Science',
+  'Bachelor of Science in Information Systems',
+  'Bachelor of Science in Software Engineering',
+];
+
+export default function ProfileForm({ currentUser, onSaved }) {
   const [form, setForm] = useState({
-    student_name: currentUser?.username || '',
-    student_id: '',
-    course: '',
+    student_name:  currentUser?.username || '',
+    student_id:    '',
+    course:        '',
     year_of_study: '',
-    semester: '',
+    semester:      '',
   });
-  const [saving, setSaving]         = useState(false);
-  const [error, setError]           = useState('');
-  const [existingId, setExistingId] = useState(null); // track existing profile ID
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState('');
 
-  // On mount, check if a student profile already exists for this user
-  useEffect(() => {
-    const fetchExisting = async () => {
-      try {
-        const res = await studentsAPI.list();
-        const profiles = res.data;
-        // Find a profile belonging to the current user
-        const mine = profiles.find(
-          (p) => p.user === currentUser?.id || p.user?.id === currentUser?.id
-        );
-        if (mine) {
-          setExistingId(mine.id);
-          setForm({
-            student_name:  mine.student_name  || currentUser?.username || '',
-            student_id:    mine.student_id    || '',
-            course:        mine.course        || '',
-            year_of_study: String(mine.year_of_study || ''),
-            semester:      String(mine.semester      || ''),
-          });
-        }
-      } catch {
-        // No existing profile found — that's fine, we'll create one
-      }
-    };
-
-    if (currentUser?.id) fetchExisting();
-  }, [currentUser]);
-
-  const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+  const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -63,14 +53,12 @@ function ProfileForm({ currentUser, onSaved }) {
     };
 
     try {
-      if (existingId) {
-        // Profile already exists — update it
-        await studentsAPI.update(existingId, payload);
-      } else {
-        // No profile yet — create one
-        const res = await studentsAPI.create(payload);
-        setExistingId(res.data.id); // store the new profile's ID
-      }
+      await studentsAPI.create({
+        ...form,
+        user:          currentUser.id,
+        year_of_study: parseInt(form.year_of_study, 10),
+        semester:      parseInt(form.semester, 10),
+      });
       onSaved();
     } catch (err) {
       const data = err.response?.data;
@@ -85,62 +73,74 @@ function ProfileForm({ currentUser, onSaved }) {
   };
 
   return (
-    <div className="auth-card">
-      <h2>Complete Your Profile</h2>
-      {error && <p style={{ color: 'red', fontSize: '14px' }}>{error}</p>}
-      <form onSubmit={handleSave}>
-        <div className="input-group">
-          <label>Full Name</label>
-          <input
-            type="text"
-            value={form.student_name}
-            onChange={set('student_name')}
-            required
-          />
+    <div className="modal-backdrop">
+      <div className="modal-box fade-in">
+        <div className="modal-header">
+          <h2 className="modal-title">Complete your profile</h2>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
+            Before you start, we need a few details about you.
+          </p>
         </div>
-        <div className="input-group">
-          <label>Student ID</label>
-          <input
-            type="text"
-            value={form.student_id}
-            onChange={set('student_id')}
-            placeholder="25/U/0001"
-            required
-          />
+
+        <div className="modal-body">
+          {error && <div className="alert alert-danger">{error}</div>}
+
+          <form onSubmit={handleSave}>
+            <div className="form-group">
+              <label className="form-label">Full name</label>
+              <input className="form-input" type="text"
+                value={form.student_name} onChange={set('student_name')} required />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Student registration number</label>
+              <input className="form-input" type="text"
+                placeholder="25/U/0001" value={form.student_id}
+                onChange={set('student_id')} required />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Programme</label>
+              <select className="form-select" value={form.course}
+                onChange={set('course')} required>
+                <option value="">Select your programme</option>
+                {COURSES.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="form-group">
+                <label className="form-label">Year of study</label>
+                <select className="form-select" value={form.year_of_study}
+                  onChange={set('year_of_study')} required>
+                  <option value="">Year</option>
+                  {[1,2,3,4].map(y => <option key={y} value={y}>Year {y}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Semester</label>
+                <select className="form-select" value={form.semester}
+                  onChange={set('semester')} required>
+                  <option value="">Semester</option>
+                  <option value="1">Semester 1</option>
+                  <option value="2">Semester 2</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={saving}
+              style={{ width: '100%', justifyContent: 'center', padding: '11px', marginTop: 8 }}
+            >
+              {saving ? 'Saving…' : 'Save & continue'}
+            </button>
+          </form>
         </div>
-        <div className="input-group">
-          <label>Course</label>
-          <select value={form.course} onChange={set('course')} required>
-            <option value="">Select course</option>
-            <option value="Bachelor of Science in Computer Science">BSc Computer Science</option>
-            <option value="Bachelor of Science in Information Systems">BSc Information Systems</option>
-            <option value="Bachelor of Science in Software Engineering">BSc Software Engineering</option>
-          </select>
-        </div>
-        <div className="input-group">
-          <label>Year of Study</label>
-          <select value={form.year_of_study} onChange={set('year_of_study')} required>
-            <option value="">Select year</option>
-            <option value="1">Year 1</option>
-            <option value="2">Year 2</option>
-            <option value="3">Year 3</option>
-            <option value="4">Year 4</option>
-          </select>
-        </div>
-        <div className="input-group">
-          <label>Semester</label>
-          <select value={form.semester} onChange={set('semester')} required>
-            <option value="">Select semester</option>
-            <option value="1">Semester 1</option>
-            <option value="2">Semester 2</option>
-          </select>
-        </div>
-        <button className="btn-primary" type="submit" disabled={saving}>
-          {saving ? 'Saving...' : 'Save Profile'}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }
-
-export default ProfileForm;
