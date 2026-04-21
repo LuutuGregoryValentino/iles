@@ -18,7 +18,6 @@ import ProfileForm from './features/Profile/ProfileForm';
 <<<<<<< HEAD
     
 
->>>>>>> 3be749ee887fa80dc68098377f2ae91b7aae1927
 =======
 
 =======
@@ -39,11 +38,7 @@ import ProfileForm from './features/Profile/ProfileForm';
  * ADDED: Dark/light theme toggle stored in localStorage.
  * ADDED: Session-expired event listener from api.js interceptor.
  */
-import React, { useState, useEffect } from 'react';
-import './styles/global.css';
-import AuthShell  from './features/Auth/AuthShell';
-import Dashboard  from './features/Dashboard/Dashboard';
->>>>>>> 22329e6919a7d4f4cb527ae9d052ef97c1cf9749
+
 
 function App() {
   /* ── Theme ── */
