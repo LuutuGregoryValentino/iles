@@ -27,9 +27,7 @@ urlpatterns = [
     path('supervisors/', views.supervisor_list, name='supervisor-list'),
     path('admins/',      views.admin_list,      name='admin-list'),
 
-    # ── Placements ────────────────────────────────────────────────────────────
-    path('placements/',            views.placement_list,   name='placement-list'),
-    path('placements/<int:pk>/',   views.placement_detail, name='placement-detail'),
+
 
     # ── Logbooks ──────────────────────────────────────────────────────────────
     path('logbooks/',          views.logbook_list,   name='logbook-list'),
