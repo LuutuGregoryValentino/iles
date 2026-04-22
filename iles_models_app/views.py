@@ -159,7 +159,10 @@ class PlacementViewSet(ModelViewSet):
             raise PermissionDenied('only administrators can create placement')
         
         serializer.save()
-
+    def perform_destroy(self, instance):
+        if self.request.user.role != 'administrator':
+            raise PermissionDenied("only adninistrators can delete placement")
+        instance.delete()
 
     
 
