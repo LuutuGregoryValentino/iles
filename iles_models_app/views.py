@@ -147,7 +147,8 @@ class PlacementViewSet(ModelViewSet):
     serializer_class = InternshipPlacementSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_querryset(self):
+
+    def get_queryset(self):
         user = self.request.user
 
         if user.role == "sudent":
