@@ -37,21 +37,7 @@ export default function ProfileForm({ currentUser, onSaved }) {
   const handleSave = async (e) => {
     e.preventDefault();
     setError('');
-
-    // Guard: ensure we have a valid user ID before submitting
-    if (!currentUser?.id) {
-      setError('User session is invalid. Please log out and sign in again.');
-      return;
-    }
-
     setSaving(true);
-    const payload = {
-      ...form,
-      user:          currentUser.id,
-      year_of_study: parseInt(form.year_of_study),
-      semester:      parseInt(form.semester),
-    };
-
     try {
       await studentsAPI.create({
         ...form,
