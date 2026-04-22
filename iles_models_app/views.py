@@ -314,17 +314,13 @@ def issue_detail(request, pk):
         if 'status' in request.data:
             return Response({'error': 'Students cannot change issue status.'}, status=status.HTTP_403_FORBIDDEN)
 
-    s = IssueSerializer(obj, data=request.data, partial=True)
+    
     if s.is_valid():
         s.save()
         return Response(s.data)
-<<<<<<< HEAD
-
 
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-# ─── ADMIN DASHBOARD ─────────────────────────────────────────────────────────
 
 from django.db.models import Count, Avg
 
@@ -334,7 +330,6 @@ def admin_dashboard_api(request):
     if request.user.role != 'administrator':
         return Response({'error': 'Access denied'}, status=403)
 
-    # ── BASIC STATS ──
     students_count = Student.objects.count()
     placements_total = InternshipPlacement.objects.count()
     active_placements = InternshipPlacement.objects.filter(
@@ -347,10 +342,8 @@ def admin_dashboard_api(request):
     pending_issues = Issue.objects.filter(status='Pending').count()
     resolved_issues = Issue.objects.filter(status='Resolved').count()
 
-    # ── ANALYTICS ──
     avg_score = Evaluation.objects.aggregate(avg=Avg('workplace_score'))['avg']
 
-    # ── DISTRIBUTIONS ──
     placement_status_distribution = (
         InternshipPlacement.objects
         .values('placement_status')
@@ -363,7 +356,6 @@ def admin_dashboard_api(request):
         .annotate(count=Count('id'))
     )
 
-    # ── RECENT ACTIVITY ──
     recent_placements = InternshipPlacementSerializer(
         InternshipPlacement.objects.select_related('student')[:5],
         many=True
@@ -401,6 +393,3 @@ def admin_dashboard_api(request):
             'evaluations': recent_evaluations,
         }
     })
-=======
-    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
->>>>>>> e88e7d016bcc03b17ff7b76c66c40a42bbad4661
