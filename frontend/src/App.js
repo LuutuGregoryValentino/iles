@@ -2,6 +2,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import Signup from "./features/Signup/Signup"
 import Login from './features/Login/Login';
 =======
@@ -21,6 +22,8 @@ import ProfileForm from './features/Profile/ProfileForm';
 =======
 
 =======
+=======
+>>>>>>> e88e7d016bcc03b17ff7b76c66c40a42bbad4661
 /**
  * App.js — Root SPA shell
  *
@@ -38,7 +41,14 @@ import ProfileForm from './features/Profile/ProfileForm';
  * ADDED: Dark/light theme toggle stored in localStorage.
  * ADDED: Session-expired event listener from api.js interceptor.
  */
+<<<<<<< HEAD
 
+=======
+import React, { useState, useEffect } from 'react';
+import './styles/global.css';
+import AuthShell  from './features/Auth/AuthShell';
+import Dashboard  from './features/Dashboard/Dashboard';
+>>>>>>> e88e7d016bcc03b17ff7b76c66c40a42bbad4661
 
 function App() {
   /* ── Theme ── */

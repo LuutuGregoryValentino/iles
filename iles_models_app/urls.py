@@ -12,6 +12,7 @@ app_name = 'iles_models_app'
 
 urlpatterns = [
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     # ── AUTH ─────────────────────────────────────────────
     path('auth/register/', views.register, name='register'),
@@ -29,13 +30,15 @@ urlpatterns = [
 
     # ── SUPERVISORS & ADMINS ────────────────────────────
 =======
+=======
+>>>>>>> e88e7d016bcc03b17ff7b76c66c40a42bbad4661
     #__Authentication and JWT token management
     # ── Auth ──────────────────────────────────────────────────────────────────
-    path('auth/register/', views.register,     name='register'),
-    path('auth/login/',    views.login_api,     name='login'),
-    path('auth/logout/',   views.logout_api,    name='logout'),
-    path('auth/me/',       views.current_user,  name='current-user'),
-    path('auth/refresh/',  TokenRefreshView.as_view(), name='token-refresh'),
+    path('auth/register/', views.register,     name ='register'),
+    path('auth/login/',    views.login_api,     name ='login'),
+    path('auth/logout/',   views.logout_api,    name ='logout'),
+    path('auth/me/',       views.current_user,  name ='current-user'),
+    path('auth/refresh/',  TokenRefreshView.as_view(), name ='token-refresh'),
 
 
     # ── Students Profile and listig endpoints──────────────────────────────────────────────────────────────
@@ -45,10 +48,14 @@ urlpatterns = [
     path('students/<int:pk>/', views.student_detail_api, name='student-detail'),
 
     # ── Supervisors & admins management endpoints──────────────────────────────────────────────────
+<<<<<<< HEAD
 >>>>>>> 22329e6919a7d4f4cb527ae9d052ef97c1cf9749
+=======
+>>>>>>> e88e7d016bcc03b17ff7b76c66c40a42bbad4661
     path('supervisors/', views.supervisor_list, name='supervisor-list'),
     path('admins/', views.admin_list, name='admin-list'),
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     # ── PLACEMENTS ──────────────────────────────────────
     path('placements/', views.placement_list, name='placement-list'),
@@ -65,6 +72,8 @@ urlpatterns = [
     # ── ISSUES ──────────────────────────────────────────
     path('issues/', views.issue_list, name='issue-list'),
 =======
+=======
+>>>>>>> e88e7d016bcc03b17ff7b76c66c40a42bbad4661
     # ──Internship Placements endpoints ────────────────────────────────────────────────────────────
     path('placements/',            views.placement_list,   name='placement-list'),
     path('placements/<int:pk>/',   views.placement_detail, name='placement-detail'),

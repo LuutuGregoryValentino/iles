@@ -318,6 +318,7 @@ def issue_detail(request, pk):
     if s.is_valid():
         s.save()
         return Response(s.data)
+<<<<<<< HEAD
 
 
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -400,3 +401,6 @@ def admin_dashboard_api(request):
             'evaluations': recent_evaluations,
         }
     })
+=======
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+>>>>>>> e88e7d016bcc03b17ff7b76c66c40a42bbad4661
