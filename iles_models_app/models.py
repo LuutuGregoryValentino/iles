@@ -192,20 +192,3 @@ class IssueStatus(models.TextChoices):
     RESOLVED  = 'Resolved',  'Resolved'
 
 
-class Issue(models.Model):
-    student             = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='issues')
-    placement           = models.ForeignKey(InternshipPlacement, on_delete=models.SET_NULL, null=True, blank=True, related_name='issues')
-    title               = models.CharField(max_length=200)
-    description         = models.TextField()
-    status              = models.CharField(max_length=20, choices=IssueStatus.choices, default=IssueStatus.PENDING)
-    supervisor_feedback = models.TextField(null=True, blank=True)
-    created_at          = models.DateTimeField(auto_now_add=True)
-    updated_at          = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name        = "Student Issue"
-        verbose_name_plural = "Student Issues"
-        ordering            = ['-created_at']
-
-    def __str__(self):
-        return f"{self.get_status_display()} — {self.title} ({self.student.email})"
