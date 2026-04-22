@@ -1,15 +1,13 @@
 from pathlib import Path
 from datetime import timedelta
 import os
-import dj_database_url
+#import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 load_dotenv()
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-z@$_&)_fq^v9ck6n3nett7_a2nccc=b5q5m!yrdc-8sidi46eq')
-
+SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
@@ -24,7 +22,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',
     'iles_models_app',
 ]
 
@@ -73,7 +70,7 @@ ROOT_URLCONF = 'my_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR,'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -89,13 +86,17 @@ WSGI_APPLICATION = 'my_project.wsgi.application'
 
 # ── DATABASE — Neon PostgreSQL (reads from .env file) ────────────────────────
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        conn_health_checks=True,
-        ssl_require=True,
-    )
-}
+    'default':{
+        'ENGINE':'django.db.backends.postgresql',
+        'NAME':'neondb',
+        'USER':'neondb_owner',
+        'PASSWORD':'npg_J16UxswqlYyV',
+        'HOST':'ep-young-resonance-ampaofgy.c-5.us-east-1.aws.neon.tech',
+        'PORT':'5432',
+        'OPTIONS':{'sslmode':'require',
+                   },
+    },
+ } 
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
