@@ -2,10 +2,11 @@ from django.urls import path,include
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
 from rest_framework.routers import DefaultRouter
-from .views import StudentViewSet
+from .views import StudentViewSet,PlacementViewSet
 
 router = DefaultRouter()
 router.register(r'students', StudentViewSet, basename='student')
+router.register(r'placements',PlacementViewSet, basename ='placement')
 
 app_name = 'iles_models_app'
 
