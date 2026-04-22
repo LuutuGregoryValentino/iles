@@ -248,7 +248,7 @@ def evaluation_detail(request, pk):
     return Response(EvaluationSerializer(obj).data)
 
 
-# ── ISSUES ────────────────────────────────────────────────────────────────────
+# ── ISSUES
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
