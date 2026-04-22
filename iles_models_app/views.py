@@ -318,10 +318,14 @@ def issue_detail(request, pk):
     if s.is_valid():
         s.save()
         return Response(s.data)
-<<<<<<< HEAD
+
+
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 # ─── ADMIN DASHBOARD ─────────────────────────────────────────────────────────
+
+from django.db.models import Count, Avg
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -329,34 +333,70 @@ def admin_dashboard_api(request):
     if request.user.role != 'administrator':
         return Response({'error': 'Access denied'}, status=403)
 
-    data = {
-        # System stats
-        'students_count': Student.objects.count(),
-        'placements_total': InternshipPlacement.objects.count(),
-        'active_placements': InternshipPlacement.objects.filter(
-            placement_status='Active'
-        ).count(),
-        'pending_issues': Issue.objects.filter(status='Pending').count(),
+    # ── BASIC STATS ──
+    students_count = Student.objects.count()
+    placements_total = InternshipPlacement.objects.count()
+    active_placements = InternshipPlacement.objects.filter(
+        placement_status='Active'
+    ).count()
+    completed_placements = InternshipPlacement.objects.filter(
+        placement_status='Complete'
+    ).count()
 
-        'recent_placements': InternshipPlacementSerializer(
-            InternshipPlacement.objects.select_related('student')[:5],
-            many=True
-        ).data,
+    pending_issues = Issue.objects.filter(status='Pending').count()
+    resolved_issues = Issue.objects.filter(status='Resolved').count()
 
-        # Recent issues
-        'recent_issues': IssueSerializer(
-            Issue.objects.select_related('student')[:5],
-            many=True
-        ).data,
+    # ── ANALYTICS ──
+    avg_score = Evaluation.objects.aggregate(avg=Avg('workplace_score'))['avg']
 
-        # Recent evaluations
-        'recent_evaluations': EvaluationSerializer(
-            Evaluation.objects.all()[:5],
-            many=True
-        ).data,
-    }
+    # ── DISTRIBUTIONS ──
+    placement_status_distribution = (
+        InternshipPlacement.objects
+        .values('placement_status')
+        .annotate(count=Count('id'))
+    )
 
-    return Response(data)
-=======
-    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
->>>>>>> 22329e6919a7d4f4cb527ae9d052ef97c1cf9749
+    issue_status_distribution = (
+        Issue.objects
+        .values('status')
+        .annotate(count=Count('id'))
+    )
+
+    # ── RECENT ACTIVITY ──
+    recent_placements = InternshipPlacementSerializer(
+        InternshipPlacement.objects.select_related('student')[:5],
+        many=True
+    ).data
+
+    recent_issues = IssueSerializer(
+        Issue.objects.select_related('student')[:5],
+        many=True
+    ).data
+
+    recent_evaluations = EvaluationSerializer(
+        Evaluation.objects.all()[:5],
+        many=True
+    ).data
+
+    return Response({
+        'stats': {
+            'students': students_count,
+            'placements_total': placements_total,
+            'active_placements': active_placements,
+            'completed_placements': completed_placements,
+            'pending_issues': pending_issues,
+            'resolved_issues': resolved_issues,
+        },
+        'analytics': {
+            'average_score': avg_score,
+        },
+        'distributions': {
+            'placements': list(placement_status_distribution),
+            'issues': list(issue_status_distribution),
+        },
+        'recent': {
+            'placements': recent_placements,
+            'issues': recent_issues,
+            'evaluations': recent_evaluations,
+        }
+    })
