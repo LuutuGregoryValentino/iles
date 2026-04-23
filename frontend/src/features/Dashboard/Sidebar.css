@@ -173,14 +173,96 @@
 
 /* ── Mobile overlay ── */
 @media (max-width: 768px) {
+  /* On mobile the sidebar is always fixed-position and full height.
+     Width stays at var(--sidebar-width) — we slide it off-screen instead
+     of collapsing to 0 width, so reopening it has no layout reflow. */
   .sidebar {
     position: fixed;
     top: 0; left: 0; bottom: 0;
     z-index: 300;
+    width: var(--sidebar-width) !important; /* override the 0px closed width */
     box-shadow: var(--shadow-lg);
+    transform: translateX(0);
+    transition: transform var(--dur-med) var(--ease-out);
   }
   .sidebar.closed {
     transform: translateX(-100%);
-    width: var(--sidebar-width);
+    box-shadow: none;
   }
+}
+
+/* ── Team footer additions ── */
+.sb-footer {
+  padding: 12px 10px;
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.sb-footer-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  width: 100%;
+  text-align: left;
+  transition: all var(--dur-fast);
+  font-family: inherit;
+}
+.sb-footer-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.sb-team-panel {
+  margin-top: 10px;
+  background: var(--bg-raised);
+  border-radius: var(--r-md);
+  padding: 12px;
+  animation: fadeIn var(--dur-med) var(--ease-out) both;
+}
+.sb-team-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.sb-team-member {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.sb-team-member:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.sb-team-name  { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+.sb-team-role  { font-size: 10.5px; color: var(--text-muted); margin-top: 1px; }
+.sb-team-email {
+  font-size: 10.5px;
+  color: var(--brand-green-light);
+  text-decoration: none;
+  display: block;
+  margin-top: 2px;
+  word-break: break-all;
+}
+.sb-team-email:hover { text-decoration: underline; }
+
+.sb-version {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+.sb-version-inline {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  padding: 4px 6px;
 }
