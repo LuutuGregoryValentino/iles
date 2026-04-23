@@ -1,57 +1,44 @@
 /**
- * Dashboard.js — Persistent single-page shell
+ * Dashboard.js — Persistent single-page shell (v2.1)
  *
- * ┌─────────────────────────────────────────────────────────────────┐
- * │ ARCHITECTURE                                                     │
- * │  ┌──────────┬──────────────────────────────────────────────┐    │
- * │  │ Sidebar  │  Header                                       │    │
- * │  │          ├──────────────────────────────────────────────┤    │
- * │  │  (fixed) │  Content area — only the active panel mounts │    │
- * │  │          │  Everything else is display:none, not        │    │
- * │  │          │  unmounted, to preserve scroll position.     │    │
- * │  └──────────┴──────────────────────────────────────────────┘    │
- * └─────────────────────────────────────────────────────────────────┘
- *
- * ROLE → VISIBLE SECTIONS MAP  ← ← ← change visibility HERE
+ * FIXES vs v2:
  * ─────────────────────────────────────────────────────────────────
- * student              → overview, logbook, scorecard, issues
- * workplace_supervisor → overview, review, evaluation, issues
- * academic_supervisor  → overview, review, evaluation, issues
- * administrator        → overview, students, placements, review,
- *                        evaluation, issues, admin
+ * MOBILE RESPONSIVE:
+ *   - Added isMobile state that tracks window width < 768px
+ *   - On mobile: sidebar starts CLOSED (not open)
+ *   - Added .sb-backdrop div rendered inside dash-shell when
+ *     sidebar is open on mobile — clicking it closes sidebar
+ *   - Shell gets class 'mobile-sidebar-open' on mobile+open so
+ *     Dashboard.css can apply pointer-events:none to main content
+ *   - handleNav on mobile auto-closes sidebar after navigation
+ *   - Window resize listener updates isMobile live
  *
- * The SECTIONS constant below is the single source of truth.
- * To add/remove a section for a role, edit the `roles` array on
- * the relevant entry. The sidebar and routing will update automatically.
+ * CHARTS:
+ *   - BarChart now uses fixed 400px viewBox (fixed in OverviewPanel.js)
  *
- * BUG FIXED: Stat tiles now refresh when activeSection changes via
- * a lightweight useDashboardStats hook so the overview always reflects
- * live data without a full re-render of children.
+ * ROLE → SECTION MAP (edit roles arrays to change access)
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import './Dashboard.css';
-import Sidebar         from './Sidebar';
-import DashHeader      from './DashHeader';
-import ProfileForm     from '../Profile/ProfileForm';
+import Sidebar        from './Sidebar';
+import DashHeader     from './DashHeader';
+import ProfileModal   from '../Profile/ProfileModal';
+import { useProfileStatus } from '../../hooks/useProfileStatus';
+import { useNotifications } from '../../context/NotificationContext';
 
-/* ── Section panels (lazy-import pattern — code stays clean) ── */
-import OverviewPanel     from './panels/OverviewPanel';
-import LogbookPanel      from './panels/LogbookPanel';
-import ScoreCardPanel    from './panels/ScoreCardPanel';
-import IssuesPanel       from './panels/IssuesPanel';
-import ReviewPanel       from './panels/ReviewPanel';
-import EvaluationPanel   from './panels/EvaluationPanel';
-import StudentsPanel     from './panels/StudentsPanel';
-import PlacementsPanel   from './panels/PlacementsPanel';
+import OverviewPanel   from './panels/OverviewPanel';
+import LogbookPanel    from './panels/LogbookPanel';
+import ScoreCardPanel  from './panels/ScoreCardPanel';
+import IssuesPanel     from './panels/IssuesPanel';
+import ReviewPanel     from './panels/ReviewPanel';
+import EvaluationPanel from './panels/EvaluationPanel';
+import StudentsPanel   from './panels/StudentsPanel';
+import PlacementsPanel from './panels/PlacementsPanel';
 
 /* ─────────────────────────────────────────────────────────────
-   SECTIONS — single source of truth for navigation & visibility
-   
-   icon: SVG path string (used by Sidebar)
-   roles: which user roles can see this section
-
-   ▼ TO RESTRICT A SECTION: remove a role from its `roles` array
-   ▼ TO ADD A SECTION: add an entry here + a matching Panel component
+   SECTIONS — single source of truth for navigation + access
+   ▼ TO RESTRICT: remove a role from `roles`
+   ▼ TO ADD: add entry + matching Panel in PANEL_MAP below
 ───────────────────────────────────────────────────────────── */
 export const SECTIONS = [
   {
@@ -64,43 +51,37 @@ export const SECTIONS = [
     id:    'logbook',
     label: 'Logbook',
     icon:  'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
-    // ▼ STUDENTS ONLY — supervisors/admin see logbooks via Review panel
-    roles: ['student'],
+    roles: ['student'],  // ← students only
   },
   {
     id:    'scorecard',
     label: 'My Score',
     icon:  'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-    // ▼ STUDENTS ONLY — supervisors see scorecards via Evaluation panel
-    roles: ['student'],
+    roles: ['student'],  // ← students only
   },
   {
     id:    'review',
     label: 'Logbook Review',
     icon:  'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
-    // ▼ SUPERVISORS + ADMIN only
     roles: ['workplace_supervisor', 'academic_supervisor', 'administrator'],
   },
   {
     id:    'evaluation',
     label: 'Evaluations',
-    icon:  'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z',
-    // ▼ SUPERVISORS + ADMIN only (students see read-only in scorecard)
+    icon:  'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z',
     roles: ['workplace_supervisor', 'academic_supervisor', 'administrator'],
   },
   {
     id:    'students',
     label: 'Students',
     icon:  'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
-    // ▼ ADMIN ONLY
-    roles: ['administrator'],
+    roles: ['administrator'],  // ← admin only
   },
   {
     id:    'placements',
     label: 'Placements',
     icon:  'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
-    // ▼ ADMIN ONLY
-    roles: ['administrator'],
+    roles: ['administrator'],  // ← admin only
   },
   {
     id:    'issues',
@@ -110,7 +91,6 @@ export const SECTIONS = [
   },
 ];
 
-/* ── Map section id → panel component ── */
 const PANEL_MAP = {
   overview:   OverviewPanel,
   logbook:    LogbookPanel,
@@ -122,46 +102,111 @@ const PANEL_MAP = {
   issues:     IssuesPanel,
 };
 
-/* ─────────────────────────────────────────────────────────────
-   Dashboard component
-───────────────────────────────────────────────────────────── */
-export default function Dashboard({
-  currentUser, needsProfile, onProfileSaved, onLogout, theme, onToggleTheme
-}) {
-  const role = currentUser?.role || 'student';
+const MOBILE_BP = 768;
 
-  /* Sections this role can see */
+export default function Dashboard({ currentUser, onLogout, theme, onToggleTheme }) {
+  const role = currentUser?.role || 'student';
   const visibleSections = SECTIONS.filter(s => s.roles.includes(role));
 
-  /* Default to first visible section */
-  const [activeSection, setActiveSection] = useState(visibleSections[0]?.id || 'overview');
-  const [sidebarOpen,   setSidebarOpen]   = useState(true);
+  /* ── Detect mobile ── */
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= MOBILE_BP);
 
-  /* Guard: if current section is no longer visible (role mismatch), reset */
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= MOBILE_BP);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
+  /* ── Sidebar: open on desktop, closed on mobile ── */
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > MOBILE_BP);
+
+  /* Keep sidebar closed when resizing into mobile, open when going to desktop */
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+    else setSidebarOpen(true);
+  }, [isMobile]);
+
+  const [activeSection, setActiveSection] = useState(visibleSections[0]?.id || 'overview');
+
+  /* ── Profile status hook ── */
+  const {
+    profileComplete,
+    showProfileModal,
+    profileData,
+    openProfileModal,
+    closeProfileModal,
+    onProfileSaved,
+  } = useProfileStatus(currentUser);
+
+  /* ── Notifications ── */
+  const { push } = useNotifications();
+
+  useEffect(() => {
+    if (role === 'student' && !profileComplete) {
+      push({
+        type:  'warn',
+        title: 'Profile incomplete',
+        body:  'Some profile fields are missing. Click your avatar → Edit Profile.',
+      });
+    }
+  }, [profileComplete, role]); // eslint-disable-line
+
+  /* Guard: reset active section if role changes */
   useEffect(() => {
     if (!visibleSections.find(s => s.id === activeSection)) {
       setActiveSection(visibleSections[0]?.id || 'overview');
     }
   }, [role]); // eslint-disable-line
 
+  /* ── Navigation handler ──
+     On mobile: close sidebar after navigation so content is revealed.
+     The backdrop tap also calls closeSidebar() below.
+  ── */
   const handleNav = useCallback((id) => {
     setActiveSection(id);
-    /* Close sidebar on mobile after nav */
-    if (window.innerWidth < 768) setSidebarOpen(false);
+    if (window.innerWidth <= MOBILE_BP) {
+      setSidebarOpen(false);
+    }
   }, []);
 
-  return (
-    <div className={`dash-shell ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
 
-      {/* ── Profile setup modal (students on first login) ──────────────────
-          CONDITION CHECK: needsProfile && role === 'student'
-          Non-students never see this.
-      ─────────────────────────────────────────────────────────────────── */}
-      {needsProfile && role === 'student' && (
-        <ProfileForm currentUser={currentUser} onSaved={onProfileSaved} />
+  /* Shell class — drives CSS for mobile overlay state */
+  const shellClass = [
+    'dash-shell',
+    sidebarOpen ? 'sidebar-open' : 'sidebar-closed',
+    isMobile && sidebarOpen ? 'mobile-sidebar-open' : '',
+  ].filter(Boolean).join(' ');
+
+  return (
+    <div className={shellClass}>
+
+      {/* ── Profile modal ── */}
+      {showProfileModal && (
+        <ProfileModal
+          currentUser={currentUser}
+          prefillData={profileData}
+          onSaved={onProfileSaved}
+          onClose={closeProfileModal}
+        />
       )}
 
-      {/* ── Sidebar — always mounted, hides/shows via CSS ── */}
+      {/* ── Mobile backdrop overlay ──────────────────────────────────────────
+          Rendered when sidebar is open on mobile.
+          Clicking it calls closeSidebar() → sidebar slides out → content revealed.
+          The 'sb-backdrop' div lives INSIDE .dash-shell so it covers only the app.
+      ─────────────────────────────────────────────────────────────────────── */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="sb-backdrop"
+          onClick={closeSidebar}
+          aria-label="Close navigation"
+          role="button"
+          style={{ display: 'block' }} /* override display:none from CSS default */
+        />
+      )}
+
+      {/* ── Sidebar — persistent, slides in/out via CSS transform on mobile ── */}
       <Sidebar
         sections={visibleSections}
         activeSection={activeSection}
@@ -170,7 +215,7 @@ export default function Dashboard({
         isOpen={sidebarOpen}
       />
 
-      {/* ── Main area ── */}
+      {/* ── Main area — always rendered, stays in DOM ── */}
       <div className="dash-main">
         <DashHeader
           currentUser={currentUser}
@@ -180,17 +225,12 @@ export default function Dashboard({
           theme={theme}
           onToggleTheme={onToggleTheme}
           onLogout={onLogout}
+          profileComplete={profileComplete}
+          onOpenProfile={openProfileModal}
+          onNavigate={handleNav}
         />
 
         <div className="dash-content">
-          {/*
-            Render ALL visible panels but only show the active one.
-            Using visibility + display toggle rather than conditional
-            mounting keeps scroll position and avoids API re-fetches.
-            
-            EXCEPTION: panels that do heavy data loading are only mounted
-            once the user has navigated to them (lazy-mount pattern).
-          */}
           {visibleSections.map(section => {
             const Panel = PANEL_MAP[section.id];
             if (!Panel) return null;
@@ -203,6 +243,7 @@ export default function Dashboard({
                 <Panel
                   currentUser={currentUser}
                   isActive={activeSection === section.id}
+                  onNavigate={handleNav}
                 />
               </div>
             );
