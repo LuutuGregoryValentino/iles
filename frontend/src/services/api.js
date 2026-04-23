@@ -71,6 +71,7 @@ export const studentsAPI = {
   get:    (id)       => API.get(`/students/${id}/`),
   create: (data)     => API.post('/students/', data),
   update: (id, data) => API.put(`/students/${id}/`, data),
+  delete: (id)       => API.delete(`/students/${id}/`),    // admin only — enforced server-side
 };
 
 /* ─────────────────────────────────────────────────────────────
