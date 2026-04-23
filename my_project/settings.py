@@ -12,10 +12,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-z@$_&)_fq^v9ck6n3nett
 
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.environ.get(
-    'ALLOWED_HOSTS', 
-    'localhost,127.0.0.1', 'iles-frontend.onrender.com'
-).split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.onrender.com').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
