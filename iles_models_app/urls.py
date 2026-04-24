@@ -13,11 +13,11 @@ app_name = 'iles_models_app'
 urlpatterns = [
     #__Authentication and JWT token management
     # ── Auth ──────────────────────────────────────────────────────────────────
-    path('auth/register/', views.register,     name ='register'),
-    path('auth/login/',    views.login_api,     name ='login'),
-    path('auth/logout/',   views.logout_api,    name ='logout'),
-    path('auth/me/',       views.current_user,  name ='current-user'),
-    path('auth/refresh/',  TokenRefreshView.as_view(), name ='token-refresh'),
+    path('auth/register/', views.register,     name='register'),
+    path('auth/login/',    views.login_api,     name='login'),
+    path('auth/logout/',   views.logout_api,    name='logout'),
+    path('auth/me/',       views.current_user,  name='current-user'),
+    path('auth/refresh/',  TokenRefreshView.as_view(), name='token-refresh'),
 
     # Students 
     
