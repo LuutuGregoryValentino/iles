@@ -1,20 +1,19 @@
-/* ── Dashboard shell layout ── */
+/* ══════════════════════════════════════════════════════
+   Dashboard shell layout
+══════════════════════════════════════════════════════ */
 .dash-shell {
   display: flex;
   height: 100vh;
   overflow: hidden;
   background: var(--bg-base);
+  position: relative;
 }
-
-/* Sidebar width transitions */
-.dash-shell.sidebar-open  { --sb: var(--sidebar-width); }
-.dash-shell.sidebar-closed { --sb: 0px; }
 
 .dash-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  min-width: 0;          /* prevent flex child from overflowing */
   overflow: hidden;
 }
 
@@ -24,11 +23,12 @@
   padding: 28px 32px;
 }
 
+/* Panel fade-in on section switch */
 .panel-wrapper {
   animation: fadeIn var(--dur-slow) var(--ease-out) both;
 }
 
-/* ── Panel section titles ── */
+/* ── Section headings ── */
 .panel-title {
   font-family: 'Outfit', sans-serif;
   font-size: 22px;
@@ -45,7 +45,7 @@
 /* ── Stat grid ── */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 16px;
   margin-bottom: 28px;
 }
@@ -56,16 +56,71 @@
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
-@media (max-width: 900px) {
-  .dash-two-col { grid-template-columns: 1fr; }
-}
 
-/* ── Input OK / Error states ── */
+/* ── Form state classes ── */
 .input-ok  { border-color: var(--brand-green-light) !important; }
 .input-err { border-color: var(--brand-red-light)   !important; }
 
-/* ── Responsive ── */
+/* ══════════════════════════════════════════════════════
+   MOBILE OVERLAY BACKDROP
+   Sits between the sidebar and the main content.
+   Tapping it closes the sidebar and shows the last panel.
+══════════════════════════════════════════════════════ */
+.sb-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 200;          /* above main content, below sidebar (z:300) */
+  cursor: pointer;
+  animation: fadeIn var(--dur-med) var(--ease-out) both;
+}
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+══════════════════════════════════════════════════════ */
+
+/* ── Tablet (900px) ── */
+@media (max-width: 900px) {
+  .dash-two-col {
+    grid-template-columns: 1fr;
+  }
+  .stat-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
+
+/* ── Mobile (768px) ── */
 @media (max-width: 768px) {
-  .dash-content { padding: 16px; }
-  .dash-shell.sidebar-open .dash-main { display: none; } /* overlay pattern on mobile */
+  .dash-content {
+    padding: 16px;
+  }
+
+  /* Show the backdrop when sidebar is open on mobile */
+  .dash-shell.mobile-sidebar-open .sb-backdrop {
+    display: block;
+  }
+
+  /* On mobile with sidebar open, main content is still rendered
+     (so the last panel stays in memory) but visually obscured by the backdrop.
+     We do NOT hide it — that would cause layout flash on close. */
+  .dash-shell.mobile-sidebar-open .dash-main {
+    pointer-events: none; /* prevent interaction with content behind overlay */
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .panel-title { font-size: 18px; }
+  .panel-subtitle { font-size: 13px; margin-bottom: 16px; }
+}
+
+/* ── Small mobile (480px) ── */
+@media (max-width: 480px) {
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
 }

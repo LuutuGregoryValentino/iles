@@ -1,38 +1,34 @@
-from django.urls import path
+from django.urls import path,include
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
+from rest_framework.routers import DefaultRouter
+from .views import StudentViewSet,PlacementViewSet
 
-"""
-THE URL CONFIGURATION FOR ILES
-This module defines the API endpoints for the INnternship LOgging and Evaluation System(ILES)
-this includes authentication, student records, placements, and logbook management
-"""
+router = DefaultRouter()
+router.register(r'students', StudentViewSet, basename='student')
+router.register(r'placements',PlacementViewSet, basename ='placement')
 
 app_name = 'iles_models_app'
 
 urlpatterns = [
     #__Authentication and JWT token management
     # ── Auth ──────────────────────────────────────────────────────────────────
-    path('auth/register/', views.register,     name ='register'),
-    path('auth/login/',    views.login_api,     name ='login'),
-    path('auth/logout/',   views.logout_api,    name ='logout'),
-    path('auth/me/',       views.current_user,  name ='current-user'),
-    path('auth/refresh/',  TokenRefreshView.as_view(), name ='token-refresh'),
+    path('auth/register/', views.register,     name='register'),
+    path('auth/login/',    views.login_api,     name='login'),
+    path('auth/logout/',   views.logout_api,    name='logout'),
+    path('auth/me/',       views.current_user,  name='current-user'),
+    path('auth/refresh/',  TokenRefreshView.as_view(), name='token-refresh'),
 
-
-    # ── Students Profile and listig endpoints──────────────────────────────────────────────────────────────
-    # ── Students ──────────────────────────────────────────────────────────────
-
-    path('students/',          views.student_list_api,   name='student-list'),
-    path('students/<int:pk>/', views.student_detail_api, name='student-detail'),
+    # Students 
+    
+    path('',include(router.urls)),
+   
 
     # ── Supervisors & admins management endpoints──────────────────────────────────────────────────
     path('supervisors/', views.supervisor_list, name='supervisor-list'),
     path('admins/',      views.admin_list,      name='admin-list'),
 
-    # ──Internship Placements endpoints ────────────────────────────────────────────────────────────
-    path('placements/',            views.placement_list,   name='placement-list'),
-    path('placements/<int:pk>/',   views.placement_detail, name='placement-detail'),
+
 
     # ── Logbooks Entry and Tracking endpoits──────────────────────────────────────────────────────────────
     path('logbooks/',          views.logbook_list,   name='logbook-list'),
