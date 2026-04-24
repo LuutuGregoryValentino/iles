@@ -1,7 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
 import os
-#import dj_database_url
+import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -86,17 +86,14 @@ WSGI_APPLICATION = 'my_project.wsgi.application'
 
 # ── DATABASE — Neon PostgreSQL (reads from .env file) ────────────────────────
 DATABASES = {
-    'default':{
-        'ENGINE':'django.db.backends.postgresql',
-        'NAME':'neondb',
-        'USER':'neondb_owner',
-        'PASSWORD':'npg_J16UxswqlYyV',
-        'HOST':'ep-young-resonance-ampaofgy.c-5.us-east-1.aws.neon.tech',
-        'PORT':'5432',
-        'OPTIONS':{'sslmode':'require',
-                   },
-    },
- } 
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require = True,
+    )
+
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -116,3 +113,10 @@ MEDIA_ROOT  = BASE_DIR / 'media'
 
 STATIC_ROOT         = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+EMAIL_BACKEND = 'django.core,mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = '587'
+EMAIL_USE_TLS = True 
+EMAIL_HOST_USER = os.environ.get('rahmaluutun@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('blcscaeaagrpykwh')

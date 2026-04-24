@@ -1,13 +1,8 @@
 /**
- * Sidebar.js — Persistent navigation sidebar
- *
- * Receives `sections` already filtered by role from Dashboard.
- * Never does its own role-checking — that separation keeps this
- * component purely presentational and easy to test.
- *
- * The sidebar never unmounts. On mobile it slides in/out via CSS.
+ * Sidebar.js (v2)
+ * NEW: expanded footer with team credits + system info panel
  */
-import React from 'react';
+import React, { useState } from 'react';
 import './Sidebar.css';
 
 function Icon({ path }) {
@@ -20,21 +15,28 @@ function Icon({ path }) {
   );
 }
 
+const TEAM = [
+  { name: 'Brian Ssemakula',   role: 'Full-Stack Lead',    email: 'brian@iles.mak.ac.ug' },
+  { name: 'Aisha Nakato',      role: 'UI/UX Designer',     email: 'aisha@iles.mak.ac.ug' },
+  { name: 'David Ochieng',     role: 'Backend Developer',  email: 'david@iles.mak.ac.ug' },
+  { name: 'Grace Tumusiime',   role: 'Frontend Developer', email: 'grace@iles.mak.ac.ug' },
+];
+
+const ROLE_LABELS = {
+  student:              'Student',
+  workplace_supervisor: 'Workplace Supervisor',
+  academic_supervisor:  'Academic Supervisor',
+  administrator:        'Administrator',
+};
+
 export default function Sidebar({ sections, activeSection, onNav, currentUser, isOpen }) {
-  const roleLabel = {
-    student:              'Student',
-    workplace_supervisor: 'Workplace Supervisor',
-    academic_supervisor:  'Academic Supervisor',
-    administrator:        'Administrator',
-  }[currentUser?.role] || 'User';
+  const [showTeam, setShowTeam] = useState(false);
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
-      {/* ── Logo / Brand ── */}
+      {/* ── Logo ── */}
       <div className="sb-logo">
-        <div className="sb-logo-mark">
-          <span>IL</span>
-        </div>
+        <div className="sb-logo-mark"><span>IL</span></div>
         <div className="sb-logo-text">
           <span className="sb-logo-name">ILES</span>
           <span className="sb-logo-sub">CoCIS · Makerere</span>
@@ -44,11 +46,11 @@ export default function Sidebar({ sections, activeSection, onNav, currentUser, i
       {/* ── User badge ── */}
       <div className="sb-user">
         <div className="sb-avatar">
-          {(currentUser?.username || 'U')[0].toUpperCase()}
+          {(currentUser?.username || 'U').slice(0,2).toUpperCase()}
         </div>
         <div className="sb-user-info">
           <span className="sb-user-name">{currentUser?.username || 'User'}</span>
-          <span className="sb-user-role">{roleLabel}</span>
+          <span className="sb-user-role">{ROLE_LABELS[currentUser?.role] || 'User'}</span>
         </div>
       </div>
 
@@ -70,9 +72,39 @@ export default function Sidebar({ sections, activeSection, onNav, currentUser, i
         ))}
       </nav>
 
-      {/* ── Footer ── */}
+      {/* ── Team credits footer ── */}
       <div className="sb-footer">
-        <span className="sb-footer-text">ILES v1.0 · {new Date().getFullYear()}</span>
+        <button className="sb-footer-toggle" onClick={() => setShowTeam(t => !t)}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          About this system
+        </button>
+
+        {showTeam && (
+          <div className="sb-team-panel">
+            <div className="sb-team-title">Development Team</div>
+            {TEAM.map(m => (
+              <div key={m.email} className="sb-team-member">
+                <div className="sb-team-name">{m.name}</div>
+                <div className="sb-team-role">{m.role}</div>
+                <a href={`mailto:${m.email}`} className="sb-team-email">{m.email}</a>
+              </div>
+            ))}
+            <div className="sb-version">
+              ILES v1.0 · CoCIS Makerere University · {new Date().getFullYear()}
+            </div>
+          </div>
+        )}
+
+        {!showTeam && (
+          <div className="sb-version-inline">
+            ILES v1.0 · {new Date().getFullYear()}
+          </div>
+        )}
       </div>
     </aside>
   );

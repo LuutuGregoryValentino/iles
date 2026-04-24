@@ -515,3 +515,41 @@ input, textarea, select, button {
 }
 .modal-body { padding: 0 24px 24px; }
 .modal-title { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; }
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE ADDITIONS (appended)
+══════════════════════════════════════════════════════ */
+
+/* Modal fits small screens */
+@media (max-width: 600px) {
+  .modal-backdrop { padding: 12px; align-items: flex-end; }
+  .modal-box {
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    max-height: 92vh;
+  }
+  .modal-header { padding: 16px 16px 0; }
+  .modal-body   { padding: 0 16px 20px; }
+}
+
+/* Cards on mobile — tighter padding */
+@media (max-width: 480px) {
+  .card { padding: 14px 16px; }
+  .card-header { margin-bottom: 12px; padding-bottom: 10px; }
+  .data-table th,
+  .data-table td { padding: 10px 10px; font-size: 12.5px; }
+  .tab-bar { flex-wrap: wrap; }
+  .tab-btn { font-size: 12px; padding: 6px 12px; }
+  .btn { font-size: 12.5px; padding: 8px 14px; }
+}
+
+/* Stat tile value smaller on mobile */
+@media (max-width: 480px) {
+  .stat-tile .stat-value { font-size: 24px; }
+  .stat-tile { padding: 14px 16px; }
+}
+
+/* Auth screen stacks properly */
+@media (max-width: 600px) {
+  .auth-card { padding: 24px 18px; }
+  .auth-card h2 { font-size: 22px; }
+}
