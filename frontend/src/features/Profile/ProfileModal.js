@@ -157,7 +157,7 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
               <div className="form-group">
                 <label className="form-label">Email (read-only)</label>
                 <input className="form-input" type="email"
-                  value={currentUser?.email || ''} readOnly
+                  value={currentUser?.email || ''} 
                   style={{ opacity: .6, cursor: 'not-allowed' }} />
               </div>
               <div className="form-group">
