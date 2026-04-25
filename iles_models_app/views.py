@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model, authenticate
 from django.utils import timezone
+from django.core.mail import send_mail
+from django.conf import settings
 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -211,6 +213,11 @@ def logbook_detail(request, pk):
     if s.is_valid():
         if new_status == LogStatus.SUBMITTED and not obj.submitted_at:
             s.save(submitted_at=timezone.now())
+            #TRIGGER NOTIFICATION
+            student_email = obj.placement.student.user.email
+            workplace_supervisor_email = obj.placement.workplace_supervisor.user.email
+            send_mail(subject = "ILES:New Logbook Submission Pending Review", message =f"Hello,\n\nA new logbook entry has been submitted by {student_email}and is awaiting your review.\n\nPlease log into the ILES dashboard to approve or request changes.",from_email =settings.EMAIL_HOST_USER,recipient_list =[workplace_supervisor_email],fail_silently=False,)
+            #__________________________
         else:
             s.save()
         return Response(s.data)
