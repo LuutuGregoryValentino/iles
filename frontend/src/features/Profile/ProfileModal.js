@@ -157,16 +157,14 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
               <div className="form-group">
                 <label className="form-label">Email (read-only)</label>
                 <input className="form-input" type="email"
-                  value={currentUser?.email || ''} 
-                  
-                  style={{ opacity: .6,  }} />
+                  value={currentUser?.email || ''} readOnly
+                  style={{ opacity: .6, cursor: 'not-allowed' }} />
               </div>
               <div className="form-group">
                 <label className="form-label">Username (read-only)</label>
                 <input className="form-input" type="text"
-                  placeholder={currentUser?.username || ''} 
-                  value={form.display_name} onChange={set('display_name')}
-                  style={{ opacity: .6,  }} />
+                  value={currentUser?.username || ''} readOnly
+                  style={{ opacity: .6, cursor: 'not-allowed' }} />
               </div>
             </div>
 
