@@ -1,37 +1,16 @@
-from django.urls import path,include
+from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
-from rest_framework.routers import DefaultRouter
-from .views import StudentViewSet,PlacementViewSet
 
-router = DefaultRouter()
-router.register(r'students', StudentViewSet, basename='student')
-router.register(r'placements',PlacementViewSet, basename ='placement')
+"""
+THE URL CONFIGURATION FOR ILES
+This module defines the API endpoints for the INnternship LOgging and Evaluation System(ILES)
+this includes authentication, student records, placements, and logbook management
+"""
 
 app_name = 'iles_models_app'
 
 urlpatterns = [
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-    # ── AUTH ─────────────────────────────────────────────
-    path('auth/register/', views.register, name='register'),
-    path('auth/login/', views.login_api, name='login'),
-    path('auth/logout/', views.logout_api, name='logout'),
-    path('auth/me/', views.current_user, name='current-user'),
-    path('auth/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
-
-    # ── ADMIN DASHBOARD (NEW 🔥) ─────────────────────────
-    path('admin/dashboard/', views.admin_dashboard_api, name='admin-dashboard'),
-
-    # ── STUDENTS ────────────────────────────────────────
-    path('students/', views.student_list_api, name='student-list'),
-    path('students/<int:pk>/', views.student_detail_api, name='student-detail'),
-
-    # ── SUPERVISORS & ADMINS ────────────────────────────
-=======
-=======
->>>>>>> e88e7d016bcc03b17ff7b76c66c40a42bbad4661
     #__Authentication and JWT token management
     # ── Auth ──────────────────────────────────────────────────────────────────
     path('auth/register/', views.register,     name='register'),
@@ -40,45 +19,20 @@ urlpatterns = [
     path('auth/me/',       views.current_user,  name='current-user'),
     path('auth/refresh/',  TokenRefreshView.as_view(), name='token-refresh'),
 
-    # Students 
-    
-    path('',include(router.urls)),
-   
+
+    # ── Students Profile and listig endpoints──────────────────────────────────────────────────────────────
+    # ── Students ──────────────────────────────────────────────────────────────
+
+    path('students/',          views.student_list_api,   name='student-list'),
+    path('students/<int:pk>/', views.student_detail_api, name='student-detail'),
 
     # ── Supervisors & admins management endpoints──────────────────────────────────────────────────
-<<<<<<< HEAD
->>>>>>> 22329e6919a7d4f4cb527ae9d052ef97c1cf9749
-=======
->>>>>>> e88e7d016bcc03b17ff7b76c66c40a42bbad4661
     path('supervisors/', views.supervisor_list, name='supervisor-list'),
-    path('admins/', views.admin_list, name='admin-list'),
+    path('admins/',      views.admin_list,      name='admin-list'),
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    # ── PLACEMENTS ──────────────────────────────────────
-    path('placements/', views.placement_list, name='placement-list'),
-    path('placements/<int:pk>/', views.placement_detail, name='placement-detail'),
-
-    # ── LOGBOOKS ────────────────────────────────────────
-    path('logbooks/', views.logbook_list, name='logbook-list'),
-    path('logbooks/<int:pk>/', views.logbook_detail, name='logbook-detail'),
-
-    # ── EVALUATIONS ─────────────────────────────────────
-    path('evaluations/', views.evaluation_list, name='evaluation-list'),
-    path('evaluations/<int:pk>/', views.evaluation_detail, name='evaluation-detail'),
-
-    # ── ISSUES ──────────────────────────────────────────
-    path('issues/', views.issue_list, name='issue-list'),
-=======
-=======
->>>>>>> e88e7d016bcc03b17ff7b76c66c40a42bbad4661
     # ──Internship Placements endpoints ────────────────────────────────────────────────────────────
     path('placements/',            views.placement_list,   name='placement-list'),
     path('placements/<int:pk>/',   views.placement_detail, name='placement-detail'),
-=======
-
->>>>>>> 250ecd8f35804671c7ad3e2911bbc29ab956c024
 
     # ── Logbooks Entry and Tracking endpoits──────────────────────────────────────────────────────────────
     path('logbooks/',          views.logbook_list,   name='logbook-list'),
@@ -90,6 +44,5 @@ urlpatterns = [
 
     # ── Issue Management and query tracking endpoints────────────────────────────────────────────────────────────────
     path('issues/',          views.issue_list,   name='issue-list'),
->>>>>>> 22329e6919a7d4f4cb527ae9d052ef97c1cf9749
     path('issues/<int:pk>/', views.issue_detail, name='issue-detail'),
 ]
