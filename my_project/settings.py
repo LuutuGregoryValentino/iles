@@ -1,7 +1,15 @@
 from pathlib import Path
 from datetime import timedelta
 import os
+<<<<<<< HEAD
+<<<<<<< HEAD
 import dj_database_url
+=======
+#import dj_database_url
+>>>>>>> e88e7d016bcc03b17ff7b76c66c40a42bbad4661
+=======
+import dj_database_url
+>>>>>>> 250ecd8f35804671c7ad3e2911bbc29ab956c024
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -86,6 +94,10 @@ WSGI_APPLICATION = 'my_project.wsgi.application'
 
 # ── DATABASE — Neon PostgreSQL (reads from .env file) ────────────────────────
 DATABASES = {
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 250ecd8f35804671c7ad3e2911bbc29ab956c024
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
@@ -94,6 +106,22 @@ DATABASES = {
     )
 
 }
+<<<<<<< HEAD
+=======
+    'default':{
+        'ENGINE':'django.db.backends.postgresql',
+        'NAME':'neondb',
+        'USER':'neondb_owner',
+        'PASSWORD':'npg_J16UxswqlYyV',
+        'HOST':'ep-young-resonance-ampaofgy.c-5.us-east-1.aws.neon.tech',
+        'PORT':'5432',
+        'OPTIONS':{'sslmode':'require',
+                   },
+    },
+ } 
+>>>>>>> e88e7d016bcc03b17ff7b76c66c40a42bbad4661
+=======
+>>>>>>> 250ecd8f35804671c7ad3e2911bbc29ab956c024
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},

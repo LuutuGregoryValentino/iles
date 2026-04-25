@@ -6,9 +6,18 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    "package.json": "^2.0.1",
+>>>>>>> 3be749ee887fa80dc68098377f2ae91b7aae1927
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+=======
     "axios": "^1.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+>>>>>>> b3b99c241737ce916f5ac9ab26cf25915cb9052f
     "react-scripts": "5.0.1",
     "recharts": "^3.8.1",
     "web-vitals": "^2.1.4"

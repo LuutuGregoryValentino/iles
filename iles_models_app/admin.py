@@ -1,11 +1,196 @@
 from django.contrib import admin
-from .models import(User,Student,InternshipAdministrator,WorkplaceSupervisor,InternshipPlacement,LogbookEntry,Evaluation,Issue)
+from .models import *
+from django.utils.html import format_html
 
-admin.site.register(User)
-admin.site.register(Student)
-admin.site.register(InternshipAdministrator)
-admin.site.register(WorkplaceSupervisor)
-admin.site.register(InternshipPlacement)
-admin.site.register(LogbookEntry)
-admin.site.register(Evaluation)
-admin.site.register(Issue)
+# ───────────────── USER ADMIN ─────────────────
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('email', 'username', 'role', 'university_id', 'is_active', 'is_staff')
+    list_filter = ('role', 'is_active', 'is_staff')
+    search_fields = ('email', 'username', 'university_id')
+    ordering = ('email',)
+
+
+# ───────────────── PROFILE ADMINS ─────────────────
+
+@admin.register(Student)
+class StudentAdmin(admin.ModelAdmin):
+    list_display = ('student_name', 'student_id', 'course', 'year_of_study', 'semester')
+    search_fields = ('student_name', 'student_id', 'course')
+    list_filter = ('course', 'year_of_study', 'semester')
+
+
+@admin.register(InternshipAdministrator)
+class InternshipAdministratorAdmin(admin.ModelAdmin):
+    list_display = ('admin_name', 'admin_id', 'department')
+    search_fields = ('admin_name', 'admin_id', 'department')
+
+
+@admin.register(WorkplaceSupervisor)
+class WorkplaceSupervisorAdmin(admin.ModelAdmin):
+    list_display = ('supervisor_name', 'supervisor_id', 'job_title', 'department', 'phone_number')
+    search_fields = ('supervisor_name', 'supervisor_id', 'department')
+    list_filter = ('department',)
+
+
+@admin.register(AcademicSupervisor)
+class AcademicSupervisorAdmin(admin.ModelAdmin):
+    list_display = ('lecturer_name', 'staff_id', 'college_dept', 'phone_number')
+    search_fields = ('lecturer_name', 'staff_id', 'college_dept')
+    list_filter = ('college_dept',)
+
+
+# ───────────────── INLINE (POWER FEATURE) ─────────────────
+
+class LogbookInline(admin.TabularInline):
+    model = LogbookEntry
+    extra = 0
+    readonly_fields = ('submission_status', 'submitted_at')
+
+
+# ───────────────── PLACEMENT ADMIN ─────────────────
+
+@admin.register(InternshipPlacement)
+class InternshipPlacementAdmin(admin.ModelAdmin):
+    list_display = (
+        'student',
+        'organization_name',
+        'position',
+        'placement_status',
+        'start_date',
+        'end_date'
+    )
+    list_filter = ('placement_status', 'start_date', 'end_date')
+    search_fields = (
+        'student__student_name',
+        'organization_name',
+        'position'
+    )
+    date_hierarchy = 'start_date'
+    inlines = [LogbookInline]
+
+
+# ───────────────── LOGBOOK ADMIN ─────────────────
+
+@admin.register(LogbookEntry)
+class LogbookEntryAdmin(admin.ModelAdmin):
+    list_display = (
+        'placement',
+        'week_number',
+        'hours_worked',
+        'submission_status',
+        'submitted_at'
+    )
+    list_filter = ('submission_status',)
+    search_fields = ('placement__student__student_name',)
+    ordering = ('week_number',)
+    readonly_fields = ('submitted_at',)
+
+
+# ───────────────── EVALUATION ADMIN ─────────────────
+
+@admin.register(Evaluation)
+class EvaluationAdmin(admin.ModelAdmin):
+    list_display = (
+        'placement',
+        'workplace_score',
+        'academic_score',
+        'logbook_score',
+        'total_score',
+        'grade',
+        'submission_date'
+    )
+    list_filter = ('submission_date',)
+    search_fields = ('placement__student__student_name',)
+    readonly_fields = ('total_score', 'grade')
+
+
+# ───────────────── ISSUE ADMIN ─────────────────
+
+@admin.register(Issue)
+class IssueAdmin(admin.ModelAdmin):
+    list_display = (
+        'title',
+        'student',
+        'placement',
+        'status',
+        'created_at',
+        'updated_at'
+    )
+    list_filter = ('status', 'created_at')
+    search_fields = ('title', 'student__email')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+# ───────────────── ADMIN PANEL BRANDING ─────────────────
+
+admin.site.site_header = "Internship Management System"
+admin.site.site_title = "IMS Admin"
+admin.site.index_title = "Welcome to IMS Dashboard"
+
+#----------------resolve isuues quickly-------------#
+def mark_as_resolved(modeladmin, request, queryset):
+    queryset.update(status='Resolved')
+
+mark_as_resolved.short_description = "Mark selected issues as Resolved"
+
+@admin.register(Issue)
+class IssueAdmin(admin.ModelAdmin):
+    ...
+    actions = [mark_as_resolved]
+
+#------------------ADD STATUS COLOR  BADGES---------------#
+
+class IssueAdmin(admin.ModelAdmin):
+    ...
+
+    def colored_status(self, obj):
+        color = {
+            'Pending': 'orange',
+            'In Review': 'blue',
+            'Resolved': 'green'
+        }.get(obj.status, 'black')
+        return format_html('<span style="color: {};">{}</span>', color, obj.status)
+
+    colored_status.short_description = "Status"
+    list_display = ('title', 'student', 'colored_status', 'created_at')
+
+
+#-------Add filters for relationships--------#
+    list_filter = ('placement__organization_name', 'status')
+
+
+#------- Add fieldsets (clean forms)----#
+
+    @admin.register(Student)
+class StudentAdmin(admin.ModelAdmin):
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('student_name', 'student_id')
+        }),
+        ('Academic Info', {
+            'fields': ('course', 'year_of_study', 'semester')
+        }),
+    )
+
+#___________ Add autocomplete (pro feature)_________#
+    @admin.register(InternshipPlacement)
+class InternshipPlacementAdmin(admin.ModelAdmin):
+    autocomplete_fields = ['student', 'academic_supervisor', 'workplace_supervisor']
+
+
+#___________Add list_select_related (performance)_______#
+    class InternshipPlacementAdmin(admin.ModelAdmin):
+    list_select_related = ('student', 'academic_supervisor')
+
+    ordering = ('-created_at',)
+
+    readonly_fields = ('created_at', 'updated_at')
+
+    search_fields = (
+    'placement__student__student_name',
+    'placement__organization_name'
+)
+    
+    
