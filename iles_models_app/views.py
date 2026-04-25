@@ -1,17 +1,11 @@
 from django.contrib.auth import get_user_model, authenticate
 from django.utils import timezone
-from django.core.mail import send_mail
-from django.conf import settings
 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.exceptions import ValidationError,PermissionDenied
-
-
 
 from .models import (
     Student, WorkplaceSupervisor, AcademicSupervisor,
@@ -29,7 +23,7 @@ from .serializers import (
 User = get_user_model()
 
 
-#  HELPERS
+# ── HELPERS ───────────────────────────────────────────────────────────────────
 
 def is_admin_or_supervisor(user):
     return user.role in ('administrator', 'academic_supervisor', 'workplace_supervisor')
@@ -38,7 +32,7 @@ def is_student(user):
     return user.role == 'student'
 
 
-# AUTH 
+# ── AUTH ──────────────────────────────────────────────────────────────────────
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -90,34 +84,50 @@ def current_user(request):
     return Response(UserSerializer(request.user).data)
 
 
-# STUDENTS 
+# ── STUDENTS ──────────────────────────────────────────────────────────────────
 
-class StudentViewSet(ModelViewSet):
-    serializer_class = StudentSerializer
-    permission_classes =[IsAuthenticated]
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def student_list_api(request):
+    if request.method == 'GET':
+        if is_student(request.user):
+            students = Student.objects.filter(user=request.user)
+        else:
+            students = Student.objects.all()
+        return Response(StudentSerializer(students, many=True).data)
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.role == 'student':
-            return Student.objects.filter(user=user)
-        return Student.objects.all()
-    def perform_create(self,serializer):
-        if hasattr(self.request.user,'student_profile'):
-            raise ValidationError("you already have astudent profile")# make sure student dont create duplicate accounts
-        serializer.save(user=self.request.user)
-    def perform_destroy(self,instance):
-        if self.request.user.role != 'administrator':
-            raise PermissionDenied("only admins can delete student records")
-        instance.delete()
-    
+    s = StudentSerializer(data=request.data)
+    if s.is_valid():
+        s.save(user=request.user)
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-   
-    
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def student_detail_api(request, pk):
+    try:
+        obj = Student.objects.get(pk=pk)
+    except Student.DoesNotExist:
+        return Response({'error': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response(StudentSerializer(obj).data)
+
+    if request.method == 'PUT':
+        s = StudentSerializer(obj, data=request.data, partial=True)
+        if s.is_valid():
+            s.save()
+            return Response(s.data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    if not is_admin_or_supervisor(request.user):
+        return Response({'error': 'Only administrators can delete student records.'}, status=status.HTTP_403_FORBIDDEN)
+    obj.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-
-# SUPERVISORS & ADMINS 
+# ── SUPERVISORS & ADMINS ──────────────────────────────────────────────────────
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -143,36 +153,54 @@ def admin_list(request):
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# PLACEMENTS 
+# ── PLACEMENTS ────────────────────────────────────────────────────────────────
 
-class PlacementViewSet(ModelViewSet):
-    serializer_class = InternshipPlacementSerializer
-    permission_classes = [IsAuthenticated]
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def placement_list(request):
+    if request.method == 'GET':
+        if is_student(request.user):
+            placements = InternshipPlacement.objects.filter(student__user=request.user)
+        else:
+            placements = InternshipPlacement.objects.all()
+        return Response(InternshipPlacementSerializer(placements, many=True).data)
 
-
-    def get_queryset(self):
-        user = self.request.user
-
-        if user.role == "sudent":
-            return InternshipPlacement.objects.filter(student__user =user)
-        return InternshipPlacement.objects.all()
-    
-    def perform_create(self,serializer):
-        if self.request.user.role == 'student':
-            raise PermissionDenied('only administrators can create placement')
-        
-        serializer.save()
-    def perform_destroy(self, instance):
-        if self.request.user.role != 'administrator':
-            raise PermissionDenied("only adninistrators can delete placement")
-        instance.delete()
-
-    
+    if is_student(request.user):
+        return Response({'error': 'Only administrators can create placements.'}, status=status.HTTP_403_FORBIDDEN)
+    s = InternshipPlacementSerializer(data=request.data)
+    if s.is_valid():
+        s.save()
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def placement_detail(request, pk):
+    try:
+        obj = InternshipPlacement.objects.get(pk=pk)
+    except InternshipPlacement.DoesNotExist:
+        return Response({'error': 'Placement not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response(InternshipPlacementSerializer(obj).data)
+
+    if request.method == 'PUT':
+        if is_student(request.user):
+            return Response({'error': 'Students cannot edit placements.'}, status=status.HTTP_403_FORBIDDEN)
+        s = InternshipPlacementSerializer(obj, data=request.data, partial=True)
+        if s.is_valid():
+            s.save()
+            return Response(s.data)
+        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    if request.user.role != 'administrator':
+        return Response({'error': 'Only administrators can delete placements.'}, status=status.HTTP_403_FORBIDDEN)
+    obj.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-#  LOGBOOk
+# ── LOGBOOKS ──────────────────────────────────────────────────────────────────
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -213,11 +241,6 @@ def logbook_detail(request, pk):
     if s.is_valid():
         if new_status == LogStatus.SUBMITTED and not obj.submitted_at:
             s.save(submitted_at=timezone.now())
-            #TRIGGER NOTIFICATION
-            student_email = obj.placement.student.user.email
-            workplace_supervisor_email = obj.placement.workplace_supervisor.user.email
-            send_mail(subject = "ILES:New Logbook Submission Pending Review", message =f"Hello,\n\nA new logbook entry has been submitted by {student_email}and is awaiting your review.\n\nPlease log into the ILES dashboard to approve or request changes.",from_email =settings.EMAIL_HOST_USER,recipient_list =[workplace_supervisor_email],fail_silently=False,)
-            #__________________________
         else:
             s.save()
         return Response(s.data)
@@ -255,7 +278,7 @@ def evaluation_detail(request, pk):
     return Response(EvaluationSerializer(obj).data)
 
 
-# ── ISSUES
+# ── ISSUES ────────────────────────────────────────────────────────────────────
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
