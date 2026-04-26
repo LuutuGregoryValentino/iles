@@ -4,6 +4,7 @@
  * BUG FIXED: The original interceptor caught 401s but didn't clear state properly
  * when the refresh call itself failed — added window dispatch so App can react.
  *
+ * 
  * ADDED: placementsAPI.myStudent() — fetches the placement for the
  * currently-authenticated student; used by ScoreCard & LogbookForm.
  */
