@@ -6,3 +6,7 @@ def validate_strong_password(password):
     to check if password is strong enough
     """
     errors = []
+
+    if len(password) < 8:
+        errors.append("password must be at least 8 characters.")
+
