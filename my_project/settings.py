@@ -120,3 +120,6 @@ EMAIL_PORT = '587'
 EMAIL_USE_TLS = True 
 EMAIL_HOST_USER = os.environ.get('rahmaluutun@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('blcscaeaagrpykwh')
+
+
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key')
