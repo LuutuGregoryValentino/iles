@@ -1,54 +1,78 @@
-import React, { useState } from 'react';
-import './App.css';
-import Login       from './features/Login/Login';
-import Signup      from './features/Signup/Signup';
-import ProfileForm from './features/Profile/ProfileForm';
-import Dashboard   from './features/Dashboard/Dashboard';
+/**
+ * App.js — Root SPA shell
+ *
+ * CHANGES FROM v1:
+ * - Wraps everything in NotificationProvider for global notification system
+ * - Delegates profile-check logic to useProfileStatus hook (no more simple
+ *   needsProfile flag — now checks DB, respects 7-day recheck window, and
+ *   shows notification instead of modal for repeat logins)
+ * - Profile modal can be opened from the user avatar menu at any time
+ */
+import React, { useState, useEffect } from 'react';
+import './styles/global.css';
+import { NotificationProvider } from './context/NotificationContext';
+import AuthShell  from './features/Auth/AuthShell';
+import Dashboard  from './features/Dashboard/Dashboard';
 
 function App() {
-  const [screen, setScreen] = useState(() =>
-    localStorage.getItem('access_token') ? 'dashboard' : 'login'
+  /* ── Theme ── */
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem('iles_theme') || 'dark'
   );
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('iles_theme', theme);
+  }, [theme]);
+  const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
 
+  /* ── Auth state ── */
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('user');
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
   });
+
+  /* ── Session-expired event (fired by api.js interceptor) ── */
+  useEffect(() => {
+    const handleExpiry = () => {
+      localStorage.clear();
+      setCurrentUser(null);
+    };
+    window.addEventListener('iles:session-expired', handleExpiry);
+    return () => window.removeEventListener('iles:session-expired', handleExpiry);
+  }, []);
 
   const handleAuthSuccess = (user, access, refresh) => {
     localStorage.setItem('access_token',  access);
     localStorage.setItem('refresh_token', refresh);
     localStorage.setItem('user',          JSON.stringify(user));
     setCurrentUser(user);
-    setScreen(user.role === 'student' ? 'profile' : 'dashboard');
   };
 
   const handleLogout = () => {
     localStorage.clear();
     setCurrentUser(null);
-    setScreen('login');
   };
 
-  const isAuthenticated = Boolean(localStorage.getItem('access_token'));
+  const isLoggedIn = Boolean(currentUser && localStorage.getItem('access_token'));
 
   return (
-    <div className="App">
-      {screen === 'login' && (
-        <Login onAuthSuccess={handleAuthSuccess} goToSignup={() => setScreen('signup')} />
-      )}
-      {screen === 'signup' && (
-        <Signup onAuthSuccess={handleAuthSuccess} goToLogin={() => setScreen('login')} />
-      )}
-      {screen === 'profile' && isAuthenticated && (
-        <ProfileForm currentUser={currentUser} onSaved={() => setScreen('dashboard')} />
-      )}
-      {screen === 'dashboard' && isAuthenticated && (
-        <Dashboard currentUser={currentUser} onLogout={handleLogout} goToProfile={() => setScreen('profile')} />
-      )}
-      {(screen === 'dashboard' || screen === 'profile') && !isAuthenticated && (
-        <Login onAuthSuccess={handleAuthSuccess} goToSignup={() => setScreen('signup')} />
-      )}
-    </div>
+    <NotificationProvider>
+      <div className="App">
+        {!isLoggedIn && (
+          <AuthShell onAuthSuccess={handleAuthSuccess} />
+        )}
+        {isLoggedIn && (
+          <Dashboard
+            currentUser={currentUser}
+            onLogout={handleLogout}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+          />
+        )}
+      </div>
+    </NotificationProvider>
   );
 }
 
