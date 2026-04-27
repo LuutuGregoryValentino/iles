@@ -9,6 +9,10 @@ def validate_strong_password(password):
 
     if len(password) < 8:
         errors.append("password must be at least 8 characters.")
+
     if not re.search(r'[A-z]',password):
        errors.append("must have atleast one uppercase letter.")
-       
+
+    if not re.search(r'[a-z]'):
+        errors.append('must have atleast one lowercase letter')
+    
