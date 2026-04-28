@@ -46,6 +46,16 @@ def register(request):
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
         user    = serializer.save()
+    try:
+        send_mail(
+        subject='Welcome to ILES — Makerere University',
+        message=f'Dear {user.username},\n\nYour account has been created successfully.\n\nEmail: {user.email}\nRole: {user.get_role_display()}\n\nLog in at https://iles-nine.vercel.app/\n\nILES — Internship Logging & Evaluation System\nMakerere University',
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[user.email],
+        fail_silently=True,
+    )
+    except Exception:
+        pass
         refresh = RefreshToken.for_user(user)
         return Response({
             'user':    UserSerializer(user).data,
