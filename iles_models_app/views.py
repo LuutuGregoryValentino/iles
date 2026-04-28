@@ -218,6 +218,19 @@ def logbook_detail(request, pk):
     new_status = request.data.get('submission_status')
     if new_status == LogStatus.APPROVED and is_student(request.user):
         return Response({'error': 'Only supervisors can approve logbook entries.'}, status=status.HTTP_403_FORBIDDEN)
+    if new_status == LogStatus.APPROVED:
+        try:
+            student_email = obj.placement.student.user.email
+            student_name  = obj.placement.student.student_name
+            send_mail(
+            subject=f'Logbook Approved — Week {obj.week_number}',
+            message=f'Dear {student_name},\n\nYour Week {obj.week_number} logbook has been approved.\n\nLog in to view your progress:\nhttps://iles-nine.vercel.app/\n\nILES — Makerere University',
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[student_email],
+            fail_silently=True,
+        )
+        except Exception:
+            pass
 
     s = LogbookEntrySerializer(obj, data=request.data, partial=True)
     if s.is_valid():
