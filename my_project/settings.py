@@ -43,6 +43,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://iles.onrender.com",
+    "https://iles-git-main-luutugregoryvalentinos-projects.vercel.app/", # Add your actual Vercel URL here
+]
+
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
