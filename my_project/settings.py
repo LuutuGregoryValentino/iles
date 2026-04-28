@@ -28,7 +28,7 @@ AUTH_USER_MODEL = 'iles_models_app.User'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-DEBUG = os.environ.get('DEBUG', 'True') == 'False'
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
