@@ -17,7 +17,7 @@ import Dashboard  from './features/Dashboard/Dashboard';
 function App() {
   /* ── Theme ── */
   const [theme, setTheme] = useState(
-    () => localStorage.getItem('iles_theme') || 'dark'
+    () => localStorage.getItem('iles_theme') || 'light'
   );
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
