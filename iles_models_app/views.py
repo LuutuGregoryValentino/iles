@@ -216,7 +216,7 @@ def logbook_detail(request, pk):
             #TRIGGER NOTIFICATION
             student_email = obj.placement.student.user.email
             workplace_supervisor_email = obj.placement.workplace_supervisor.user.email
-            send_mail(subject = "ILES:New Logbook Submission Pending Review", message =f"Hello,\n\nA new logbook entry has been submitted by {student_email}and is awaiting your review.\n\nPlease log into the ILES dashboard to approve or request changes.",from_email =settings.EMAIL_HOST_USER,recipient_list =[workplace_supervisor_email],fail_silently=False,)
+            send_mail(subject = "ILES:New Logbook Submission Pending Review", message =f"Hello,\n\nA new logbook entry has been submitted by {student_email}and is awaiting your review.\n\nPlease log into the ILES dashboard to approve or request changes.",from_email =settings.EMAIL_HOST_USER,recipient_list =[workplace_supervisor_email,student_email],fail_silently=False,)
             #__________________________
         else:
             s.save()
