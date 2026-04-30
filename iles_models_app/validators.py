@@ -13,7 +13,7 @@ def validate_strong_password(password):
     if not re.search(r'[A-Z]',password):
        errors.append("must have atleast one uppercase letter.")
 
-    if not re.search(r'[a-z]'):
+    if not re.search(r'[a-z]',password):
         errors.append('must have atleast one lowercase letter')
 
     if not re.search(r'[0-9]',password):
