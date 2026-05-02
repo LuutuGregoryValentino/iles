@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import(User,Student,InternshipAdministrator,WorkplaceSupervisor,InternshipPlacement,LogbookEntry,Evaluation,Issue)
 
 admin.site.register(User)

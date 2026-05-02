@@ -130,28 +130,25 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL           = '/media/'
 MEDIA_ROOT          = BASE_DIR / 'media'
 
-<<<<<<< HEAD
+# ── Email — Gmail SMTP ─────────────────────────────────────────
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = '587'
-EMAIL_USE_TLS = True 
-<<<<<<< HEAD
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
-=======
-EMAIL_HOST_USER = os.environ.get('rahmaluutun@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('blcscaeaagrpykwh')
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
 
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key')
->>>>>>> main
-=======
+DEFAULT_FROM_EMAIL = f'ILES Makerere <{EMAIL_HOST_USER}>'
+
 # ── Email — Gmail SMTP ────────────────────────────────────────────────────────
 EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST          = 'smtp.gmail.com'
 EMAIL_PORT          = 587                                    # integer not string
 EMAIL_USE_TLS       = True
+
 EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+
 DEFAULT_FROM_EMAIL  = f'ILES Makerere <{os.environ.get("EMAIL_HOST_USER", "noreply@iles.mak.ac.ug")}>'
->>>>>>> 4d0161858c380385d30dcad4ba927d0c045b42e1
+ 
