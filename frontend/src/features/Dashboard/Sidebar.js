@@ -16,11 +16,12 @@ function Icon({ path }) {
 }
 
 const TEAM = [
-  { name: 'Luutu Rahma',   role: 'Full-Stack Lead',    email: 'rahma@iles.mak.ac.ug' },
-  { name: 'Luutu Gregory',   role: 'Frontend Dev',    email: 'greg@iles.mak.ac.ug' },
-  { name: 'Raudha Nambuya',      role: 'UI/UX Designer',     email: 'raudha@iles.mak.ac.ug' },
-  { name: 'Mumberere Breiline',     role: 'Backend Developer',  email: 'breiline@iles.mak.ac.ug' },
-  { name: 'Ojambo Nicholas',   role: 'Frontend Developer', email: 'nicho@iles.mak.ac.ug' },
+  { name: 'Luutu Rahma',   role: 'Full-Stack Lead',    email: "rahmaluutun@gmail.com" },
+  { name: 'Luutu Gregory',   role: 'UI/UX Designer',    email: 'snowchildwolf@gmail.com' },
+  { name: 'Raudha Nambuya',      role: 'Backend Dev',     email: 'raur743@gmail.com' },
+  { name: 'Mumberere Breiline',     role: 'Backend Developer',  email: 'breilinemumbere@gmail.com' },
+  { name: 'Ojambo Nicholas',   role: 'Frontend Developer', email: 'ojambonicholas052@gmail.com' },
+  { name: 'Staty Kukunda',   role: 'Frontend Developer', email: 'stacykukunda@gmail.com' },
 ];
 
 const ROLE_LABELS = {
