@@ -18,6 +18,8 @@ urlpatterns = [
     path('auth/logout/',   views.logout_api,    name='logout'),
     path('auth/me/',       views.current_user,  name='current-user'),
     path('auth/refresh/',  TokenRefreshView.as_view(), name='token-refresh'),
+    path('auth/approve/<int:pk>/', views.approve_user, name='approve-user'),
+    path('auth/pending/',  views.pending_users,  name='pending-users'),
 
 
     # ── Students Profile and listig endpoints──────────────────────────────────────────────────────────────
