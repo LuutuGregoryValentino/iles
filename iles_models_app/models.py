@@ -71,6 +71,9 @@ class InternshipAdministrator(models.Model):
 
 
 class WorkplaceSupervisor(models.Model):
+    """
+    Profile model for the workplace supervisor overseeing the student at their placement.
+      """
     user            = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='workplace_profile')
     supervisor_id   = models.CharField(max_length=20, unique=True)
     supervisor_name = models.CharField(max_length=100)
