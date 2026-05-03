@@ -73,7 +73,7 @@ class InternshipAdministrator(models.Model):
 class WorkplaceSupervisor(models.Model):
     """
     Profile model for the workplace supervisor overseeing the student at their placement.
-      """
+    """
     user            = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='workplace_profile')
     supervisor_id   = models.CharField(max_length=20, unique=True)
     supervisor_name = models.CharField(max_length=100)
@@ -86,6 +86,9 @@ class WorkplaceSupervisor(models.Model):
 
 
 class AcademicSupervisor(models.Model):
+    """
+    Profile model for the university lecturer evaluating the student's internship
+    """
     user          = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='academic_profile')
     staff_id      = models.CharField(max_length=20, unique=True)
     lecturer_name = models.CharField(max_length=100)
