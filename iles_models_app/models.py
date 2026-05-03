@@ -4,6 +4,11 @@ from django.conf import settings
 from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 
+"""
+validator to ensure phone numbers follow the Ugandan International format .
+matches strings starting with +256 followed by exactly 9 digits
+exmaple: +256000000000
+"""
 phone_regex = RegexValidator(
     regex=r'^\+256\d{9}$',
     message="Phone must be in format: +256700000000"
