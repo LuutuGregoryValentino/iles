@@ -58,6 +58,9 @@ class Student(models.Model):
 
 
 class InternshipAdministrator(models.Model):
+    """
+    Profile model for university staff managing the internship program
+    """
     user       = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='admin_profile')
     admin_id   = models.CharField(max_length=20, unique=True)
     admin_name = models.CharField(max_length=100)
