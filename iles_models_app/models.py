@@ -18,6 +18,9 @@ phone_regex = RegexValidator(
 # ── USER ─────────────────────────────────────────────────────────────────────
 
 class User(AbstractUser):
+    """
+    Custom user model for handling authentication and role-based access for students, administrators and supervisors
+    """
     ROLE_CHOICES = (
         ('student',              'Student'),
         ('academic_supervisor',  'Academic Supervisor'),
