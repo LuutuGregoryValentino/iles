@@ -57,7 +57,8 @@ def register(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 def validate_password(self, value):
     validate_strong_password(value)
-
+    
+    return value
 
 
 @api_view(['POST'])
