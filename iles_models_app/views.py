@@ -55,6 +55,7 @@ def register(request):
             'refresh': str(refresh),
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def validate_password(self, value):
 
 
 @api_view(['POST'])
