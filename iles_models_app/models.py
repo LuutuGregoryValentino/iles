@@ -136,7 +136,6 @@ class LogbookEntry(models.Model):
 
     class Meta:
         unique_together = ('placement', 'week_number')
-        ordering        = ['week_number']
 
     def clean(self):
         if self.hours_worked and self.hours_worked > 120:
@@ -147,6 +146,7 @@ class LogbookEntry(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return f"Week {self.week_number} — {self.placement.student.student_name}"

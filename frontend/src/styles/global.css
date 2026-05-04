@@ -553,3 +553,15 @@ input, textarea, select, button {
   .auth-card { padding: 24px 18px; }
   .auth-card h2 { font-size: 22px; }
 }
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-overlay) 25%, var(--bg-raised) 50%, var(--bg-overlay) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--r-sm);
+  height: 16px;
+  margin-bottom: 10px;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
