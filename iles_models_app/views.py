@@ -19,7 +19,15 @@ from .serializers import (
     EvaluationSerializer, IssueSerializer,
     RegisterSerializer, UserSerializer,
 )
-
+from .emails_utils import(
+    notify_student_placement_assigned,
+    notify_workplace_supervisor_placement_assigned,
+    notify_academic_supervisor_placement_assigned,
+    notify_supervisors_logbook_submitted,
+    notify_supervisors_issue_submitted,
+    notify_student_graded,
+    notify_user_approved,
+)
 User = get_user_model()
 
 
