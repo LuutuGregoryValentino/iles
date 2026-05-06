@@ -127,9 +127,9 @@ def notify_student_graded(evaluation):
 def notify_user_approved(user):
     role_display = user.get_role_display()
     send_email(
-        subject="Your ILES Account Has Been Approved",
-        recipient_email=user.email,
-        message_html=f"""
+        subject = "Your ILES Account Has Been Approved!",
+        recipient_email = user.email,
+        message_html = f"""
         <h3>Hello {user.get_full_name() or user.username},</h3>
         <p>Your <b>{role_display}</b> account on the ILES portal has been approved.</p>
         <p>You can now log in and access the system.</p>
