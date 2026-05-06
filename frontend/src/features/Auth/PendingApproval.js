@@ -47,7 +47,7 @@ export default function PendingApproval({ currentUser, onApproved, onLogout }) {
     checkApproval(); // check immediately 
     const interval = setInterval(checkApproval, POLL_MS);
     return () => clearInterval(interval);
-  }, []); 
+  }, []);
 
   return (
     <div className="pending-shell">
@@ -100,8 +100,8 @@ export default function PendingApproval({ currentUser, onApproved, onLogout }) {
         )}
 
 
-
-        <button {/*check approval with button*/}
+         {/*check approval with button*/}
+        <button
           className="btn btn-primary pending-check-btn"
           onClick={checkApproval}
           disabled={checking}
