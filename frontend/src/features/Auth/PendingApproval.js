@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { authAPI } from '../../services/api';
 import './PendingApproval.css';
 
@@ -24,7 +24,7 @@ export default function PendingApproval({ currentUser, onApproved, onLogout }) {
   const roleLabel = ROLE_LABELS[currentUser?.role] || currentUser?.role;
 
   /* checks fi approved */
-  const checkApproval = async () => {
+  const checkApproval = useCallback(async () => {
     setChecking(true);
     setError('');
     try {
@@ -39,15 +39,15 @@ export default function PendingApproval({ currentUser, onApproved, onLogout }) {
     } finally {
       setChecking(false);
     }
-  };
+  }, [onApproved]);
 
 
 
   useEffect(() => {
-    checkApproval(); // check immediately 
+    checkApproval(); // check immediately
     const interval = setInterval(checkApproval, POLL_MS);
     return () => clearInterval(interval);
-  }, []);
+  }, [checkApproval]);
 
   return (
     <div className="pending-shell">
@@ -100,7 +100,7 @@ export default function PendingApproval({ currentUser, onApproved, onLogout }) {
         )}
 
 
-         {/*check approval with button*/}
+        {/*check approval with button*/}
         <button
           className="btn btn-primary pending-check-btn"
           onClick={checkApproval}
