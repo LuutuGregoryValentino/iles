@@ -184,7 +184,13 @@ def placement_list(request):
         return Response({'error': 'Only administrators can create placements.'}, status=status.HTTP_403_FORBIDDEN)
     s = InternshipPlacementSerializer(data=request.data)
     if s.is_valid():
-        s.save()
+        placement = s.save()
+
+    # adding email notifications 
+        notify_student_placement_assigned(placement.student, placement)
+        notify_workplace_supervisor_placement_assigned(placement)
+        notify_academic_supervisor_placement_assigned(placement)
+
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -255,7 +261,10 @@ def logbook_detail(request, pk):
     s = LogbookEntrySerializer(obj, data=request.data, partial=True)
     if s.is_valid():
         if new_status == LogStatus.SUBMITTED and not obj.submitted_at:
-            s.save(submitted_at=timezone.now())
+            logbook = s.save(submitted_at=timezone.now())
+
+        # sending emails to supervisors
+            notify_supervisors_logbook_submitted(logbook)
         else:
             s.save()
         return Response(s.data)
@@ -278,7 +287,9 @@ def evaluation_list(request):
         return Response({'error': 'Students cannot submit evaluations.'}, status=status.HTTP_403_FORBIDDEN)
     s = EvaluationSerializer(data=request.data)
     if s.is_valid():
-        s.save(supervisor=request.user)
+        evaluation =s.save(supervisor=request.user)
+#sending email to students about evaluation    
+        notify_student_graded(evaluation)
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -307,7 +318,9 @@ def issue_list(request):
 
     s = IssueSerializer(data=request.data)
     if s.is_valid():
-        s.save(student=request.user)
+        issue = s.save(student=request.user)
+    # sending email to supervisors
+        notify_supervisors_issue_submitted(issue)
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -350,9 +363,12 @@ def approve_user(request, pk):
         target = User.objects.get(pk=pk)
     except User.DoesNotExist:
         return Response({'error': 'User not found.'}, status=404)
-    
+    was_approved = target.is_approved    
     target.is_approved = request.data.get('is_approved', True)
     target.save()
+#sending email to user when approved
+    if target.is_approved and not was_approved:
+        notify_user_approved(target)
     return Response(UserSerializer(target).data)
 
 @api_view(['GET'])
