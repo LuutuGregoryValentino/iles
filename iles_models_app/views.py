@@ -30,6 +30,8 @@ from .emails import (
     send_issue_reported_email,
     send_issue_resolved_email,
 )
+from .validators import validate_strong_password
+
 
 User = get_user_model()
 
@@ -59,6 +61,10 @@ def register(request):
             'refresh': str(refresh),
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def validate_password(self, value):
+    validate_strong_password(value)
+    
+    return value
 
 
 @api_view(['POST'])
