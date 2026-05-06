@@ -359,6 +359,6 @@ def pending_users(request):
     
     pending = User.objects.filter(
         is_approved=False,
-        role_in=['administrator', 'workplace_supervisor', 'academic_supervisor']
+        role__in=['administrator', 'workplace_supervisor', 'academic_supervisor']
     )
     return Response(UserSerializer(pending, many=True).data)
