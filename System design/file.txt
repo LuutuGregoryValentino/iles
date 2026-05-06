@@ -1,0 +1,7 @@
+
+Updating strict fields
+Certain feilds in the profile form are uneditabel upon first entry and saving.
+said entries will require user to submit an EditRequest to the admin with teh  submissionof some official document such as an id for verification, in teh backend, automaticllayor by the admin...
+uppon approval, the user will be sent a specialleid onetime, limitedDuration link to their registered email address allowing them to go to teh profile page
+f the link is unexpired, the Sensitive fields will now be editable, else, the fields remain filled
+
