@@ -18,6 +18,7 @@ const TEAM = [
   { name: 'Ojambo Nicholas', role: 'Frontend Developer', email: 'ojambonicholas052@gmail.com' },
   { name: 'Luutu Gregory', role: 'UI/UX Designer', email: 'snowchildwolf@gmail.com' },
   { name: 'Staty Kukunda', role: 'Frontend Developer', email: 'stacykukunda@gmail.com' },
+
 ];
 
 const ROLE_LABELS = {
