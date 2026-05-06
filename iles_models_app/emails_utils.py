@@ -51,6 +51,43 @@ def notify_workplace_supervisor_placement_assigned(placement):
         <p>Log in to the ILES portal to view full details.</p>
         """
     )
+#Notifying academic_supervisor
+def notify_academic_supervisor_placement_assigned(placement):
+    if not placement.academic_supervisor:
+        return
+    supervisor = placement.academic_supervisor
+    send_email(
+        subject="A Student Has Been Assigned to You for Academic Supervision",
+        recipient_email=supervisor.user.email,
+        message_html=f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+            <h2 style="color: #2c3e50;">New Student Assigned</h2>
+            <p>Hello <strong>{supervisor.lecturer_name}</strong>,</p>
+            <p>A student has been assigned to you for academic supervision:</p>
+            <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+                <tr style="background:#f2f2f2;">
+                    <td style="padding:8px; border:1px solid #ddd;"><strong>Student Name</strong></td>
+                    <td style="padding:8px; border:1px solid #ddd;">{placement.student.student_name}</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd;"><strong>Organisation</strong></td>
+                    <td style="padding:8px; border:1px solid #ddd;">{placement.organization_name}</td>
+                </tr>
+                <tr style="background:#f2f2f2;">
+                    <td style="padding:8px; border:1px solid #ddd;"><strong>Position</strong></td>  
+                    <td style="padding:8px; border:1px solid #ddd;">{placement.position}</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd;"><strong>Start Date</strong></td>
+                    <td style="padding:8px; border:1px solid #ddd;">{placement.start_date}</td>
+                </tr>
+            </table>
+            <p style="margin-top:20px;">Log in to the ILES portal to view the student's profile and track their progress.</p>
+            <p style="color:#888; font-size:12px;">This is an automated message from the ILES Portal.</p>
+        </div>
+        """
+    ) 
+
 #NOTIFICATION WHEN LOGBOOK HAS BEEN SUBMITTED  
 def notify_supervisors_logbook_submitted(logbook):
     placement = logbook.placement
