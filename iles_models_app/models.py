@@ -24,7 +24,8 @@ class User(AbstractUser):
     university_id = models.CharField(max_length=50, unique=True)
     groups        = models.ManyToManyField('auth.Group',      related_name='iles_users', blank=True)
     user_permissions = models.ManyToManyField('auth.Permission', related_name='iles_users_perms', blank=True)
-
+    is_approved = models.BooleanField(default=False)
+    
     USERNAME_FIELD  = 'email'
     REQUIRED_FIELDS = ['username', 'role', 'university_id']
 
@@ -209,3 +210,13 @@ class Issue(models.Model):
 
     def __str__(self):
         return f"{self.get_status_display()} — {self.title} ({self.student.email})"
+    #NEW: approval flag for gated roles
+    #False by default - admins/supervisors must be approved by an existing admin
+    #Students are always approved (True by default via save override below)
+    is_approved = models.BooleanField(default=False)
+
+    def save(self, *args,**kwargs):
+        #Students are auto-approved - they dont need gating
+        if self.role == 'student':
+            self.is_approved = True
+        super().save(*args, **kwargs)
