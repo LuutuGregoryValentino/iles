@@ -1,21 +1,42 @@
-/**
- * App.js — Root SPA shell
- *
- * CHANGES FROM v1:
- * - Wraps everything in NotificationProvider for global notification system
- * - Delegates profile-check logic to useProfileStatus hook (no more simple
- *   needsProfile flag — now checks DB, respects 7-day recheck window, and
- *   shows notification instead of modal for repeat logins)
- * - Profile modal can be opened from the user avatar menu at any time
- */
 import React, { useState, useEffect } from 'react';
 import './styles/global.css';
 import { NotificationProvider } from './context/NotificationContext';
-import AuthShell  from './features/Auth/AuthShell';
-import Dashboard  from './features/Dashboard/Dashboard';
+import LandingPage from './features/Landing/LandingPage';
+import AuthShell from './features/Auth/AuthShell';
+import PendingApproval from './features/Auth/PendingApproval';
+import Dashboard from './features/Dashboard/Dashboard';
+
+
+function initialScreen() {
+  const token = localStorage.getItem('access_token');
+  const sessionAlive = sessionStorage.getItem('iles_session'); // cleared on tab close
+
+  if (!token || !sessionAlive) {
+    // return "auth" to laod login page and "landing" to laod the langing page
+    return 'auth';
+  }
+
+
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) return 'landing';
+
+
+
+    // get approval before laoding
+    const GATED_ROLES = ['administrator', 'workplace_supervisor', 'academic_supervisor'];
+    if (GATED_ROLES.includes(user.role) && user.is_approved === false) {
+      return 'pending';
+    }
+
+    return 'dashboard';
+  } catch {
+    return 'landing';
+  }
+}
 
 function App() {
-  /* ── Theme ── */
+
   const [theme, setTheme] = useState(
     () => localStorage.getItem('iles_theme') || 'dark'
   );
@@ -25,45 +46,97 @@ function App() {
   }, [theme]);
   const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
 
-  /* ── Auth state ── */
+
+  // screen SM
+  const [screen, setScreen] = useState(initialScreen);
+
+
   const [currentUser, setCurrentUser] = useState(() => {
+    if (!sessionStorage.getItem('iles_session')) return null; // SESSION_GUARD
     try {
       const saved = localStorage.getItem('user');
       return saved ? JSON.parse(saved) : null;
     } catch { return null; }
   });
 
-  /* ── Session-expired event (fired by api.js interceptor) ── */
+
+
+
   useEffect(() => {
     const handleExpiry = () => {
       localStorage.clear();
+      sessionStorage.removeItem('iles_session'); // clear session flag
       setCurrentUser(null);
+      setScreen('landing');
     };
     window.addEventListener('iles:session-expired', handleExpiry);
     return () => window.removeEventListener('iles:session-expired', handleExpiry);
   }, []);
 
-  const handleAuthSuccess = (user, access, refresh) => {
-    localStorage.setItem('access_token',  access);
+   const handleAuthSuccess = (user, access, refresh) => {
+    localStorage.setItem('access_token', access);
     localStorage.setItem('refresh_token', refresh);
-    localStorage.setItem('user',          JSON.stringify(user));
+    localStorage.setItem('user', JSON.stringify(user));
+
+    sessionStorage.setItem('iles_session', 'true');
+
     setCurrentUser(user);
+
+    // approval check
+    const GATED_ROLES = ['administrator', 'workplace_supervisor', 'academic_supervisor'];
+    if (GATED_ROLES.includes(user.role) && user.is_approved === false) {
+      setScreen('pending'); //laod approval screen
+    } else {
+      setScreen('dashboard');
+    }
   };
 
   const handleLogout = () => {
     localStorage.clear();
+    sessionStorage.removeItem('iles_session'); // dletes the session
     setCurrentUser(null);
+    setScreen('auth'); 
   };
-
-  const isLoggedIn = Boolean(currentUser && localStorage.getItem('access_token'));
 
   return (
     <NotificationProvider>
       <div className="App">
-        {!isLoggedIn && (
-          <AuthShell onAuthSuccess={handleAuthSuccess} />
+
+        {/* for new visitors and un approved users*/}
+        {screen === 'landing' && (
+          <LandingPage
+            onGetStarted={() => setScreen('auth')}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+          />
         )}
-        {isLoggedIn && (
+
+
+        {screen === 'auth' && (
+          <AuthShell
+            onAuthSuccess={handleAuthSuccess}
+            onBack={() => setScreen('landing')}
+          />
+        )}
+
+
+
+        {screen === 'pending' && currentUser && (
+          <PendingApproval
+            currentUser={currentUser}
+            onApproved={(updatedUser) => {
+              // when is_approved = true ; 
+              localStorage.setItem('user', JSON.stringify(updatedUser));
+              setCurrentUser(updatedUser);
+              setScreen('dashboard');
+            }}
+            onLogout={handleLogout}
+          />
+        )}
+
+
+
+        {screen === 'dashboard' && currentUser && (
           <Dashboard
             currentUser={currentUser}
             onLogout={handleLogout}
@@ -71,6 +144,7 @@ function App() {
             onToggleTheme={toggleTheme}
           />
         )}
+
       </div>
     </NotificationProvider>
   );
