@@ -59,6 +59,13 @@ def login_api(request):
     user = authenticate(request, username=email, password=password)
     if user is None:
         return Response({'error': 'Invalid email or password.'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    # Blocking unapproved supervisors and administrators
+    if user.role in ('academic_supervisor', 'workplace_supervisor','administrator') and not user.is_approved:
+        return Response(
+            {'error' : 'Your account is pending admin approval.You will receive an email once approved.'},
+            status=status.HTTP_403_FORBIDDEN
+        )
     refresh = RefreshToken.for_user(user)
     return Response({
         'user':    UserSerializer(user).data,
@@ -340,7 +347,7 @@ def approve_user(request, pk):
     target.save()
     return Response(UserSerializer(target).data)
 
-@api_view
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def pending_users(request):
     """
