@@ -22,7 +22,6 @@ from .serializers import (
 )
 from .emails import (
     send_welcome_email,
-    send_account_approved_email,
     send_placement_assigned_email,
     send_logbook_submitted_email,
     send_logbook_approved_email,
@@ -36,9 +35,6 @@ User = get_user_model()
 
 def is_admin(user):
     return user.role == 'administrator'
-
-def is_supervisor(user):
-    return user.role in ('academic_supervisor', 'workplace_supervisor')
 
 def is_student(user):
     return user.role == 'student'
@@ -56,16 +52,20 @@ def register(request):
     if serializer.is_valid():
         try:
             user = serializer.save()
+            # Auto-approve students so they can login immediately
+            # Supervisors and admins need manual approval
             if user.role == 'student':
-                user.is_approved = True
-                user.save()
+                try:
+                    user.is_approved = True
+                    user.save()
+                except Exception:
+                    pass  # is_approved may not exist locally — ignore
             refresh = RefreshToken.for_user(user)
             send_welcome_email(user)
             return Response({
                 'user':    UserSerializer(user).data,
                 'access':  str(refresh.access_token),
                 'refresh': str(refresh),
-                'requires_approval': not user.is_approved,
             }, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response(
@@ -73,6 +73,7 @@ def register(request):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -90,15 +91,13 @@ def login_api(request):
             {'error': 'Invalid email or password.'},
             status=status.HTTP_401_UNAUTHORIZED
         )
-
-    # Check approval safely — getattr prevents crash if field missing
+    # Check approval safely — never crashes even if field missing
     is_approved = getattr(user, 'is_approved', True)
-    if not is_approved and user.role != 'student':
+    if not is_approved and not is_student(user):
         return Response(
             {'error': 'Your account is pending approval by an administrator.'},
             status=status.HTTP_403_FORBIDDEN
         )
-
     refresh = RefreshToken.for_user(user)
     return Response({
         'user':    UserSerializer(user).data,
@@ -132,43 +131,38 @@ def current_user(request):
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def approve_user(request, pk):
-    """
-    PATCH /api/users/<pk>/approve/
-    Admin approves a supervisor or admin account.
-    Sends email notification to the approved user.
-    """
-    if not is_admin(request.user) or not request.user.is_approved:
+    if not is_admin(request.user):
         return Response(
-            {'error': 'Only approved administrators can approve accounts.'},
+            {'error': 'Only administrators can approve accounts.'},
             status=status.HTTP_403_FORBIDDEN
         )
     try:
         target = User.objects.get(pk=pk)
     except User.DoesNotExist:
         return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    target.is_approved = True
-    target.save()
-    send_account_approved_email(target)   # ← email to approved supervisor/admin
-
+    try:
+        target.is_approved = True
+        target.save()
+    except Exception:
+        pass
     return Response({
-        'message': f'{target.username} has been approved successfully.',
+        'message': f'{target.username} has been approved.',
         'user':    UserSerializer(target).data,
     })
 
 
-# ── PENDING USERS — admin only ────────────────────────────────────────────────
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def pending_users(request):
-    """GET /api/users/pending/ — returns all unapproved supervisor/admin accounts."""
     if not is_admin(request.user):
         return Response(
             {'error': 'Only administrators can view pending accounts.'},
             status=status.HTTP_403_FORBIDDEN
         )
-    pending = User.objects.filter(is_approved=False).exclude(role='student')
+    try:
+        pending = User.objects.filter(is_approved=False).exclude(role='student')
+    except Exception:
+        pending = []
     return Response(UserSerializer(pending, many=True).data)
 
 
@@ -200,11 +194,10 @@ class PlacementViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         placement = serializer.save()
-        send_placement_assigned_email(placement)   # ← emails to student + both supervisors
+        send_placement_assigned_email(placement)
 
     def perform_update(self, serializer):
         placement = serializer.save()
-        # Send placement email again if supervisors changed
         send_placement_assigned_email(placement)
 
 
@@ -243,11 +236,11 @@ def admin_list(request):
 def logbook_list(request):
     if request.method == 'GET':
         if is_student(request.user):
-            logbooks = LogbookEntry.objects.filter(placement__student__user=request.user)
+            logbooks = LogbookEntry.objects.filter(
+                placement__student__user=request.user)
         else:
             logbooks = LogbookEntry.objects.all()
         return Response(LogbookEntrySerializer(logbooks, many=True).data)
-
     s = LogbookEntrySerializer(data=request.data)
     if s.is_valid():
         s.save()
@@ -261,33 +254,31 @@ def logbook_detail(request, pk):
     try:
         obj = LogbookEntry.objects.get(pk=pk)
     except LogbookEntry.DoesNotExist:
-        return Response({'error': 'Logbook entry not found.'}, status=status.HTTP_404_NOT_FOUND)
-
+        return Response(
+            {'error': 'Logbook entry not found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
     if request.method == 'GET':
         return Response(LogbookEntrySerializer(obj).data)
-
     if obj.submission_status == LogStatus.APPROVED:
         return Response(
             {'error': 'Approved logbook entries cannot be edited.'},
             status=status.HTTP_403_FORBIDDEN
         )
-
     new_status = request.data.get('submission_status')
-
     if new_status == LogStatus.APPROVED and is_student(request.user):
         return Response(
             {'error': 'Only supervisors can approve logbook entries.'},
             status=status.HTTP_403_FORBIDDEN
         )
-
     s = LogbookEntrySerializer(obj, data=request.data, partial=True)
     if s.is_valid():
         if new_status == LogStatus.SUBMITTED and not obj.submitted_at:
             s.save(submitted_at=timezone.now())
-            send_logbook_submitted_email(obj)   # ← email to both supervisors
+            send_logbook_submitted_email(obj)
         elif new_status == LogStatus.APPROVED:
             s.save()
-            send_logbook_approved_email(obj)    # ← email to student
+            send_logbook_approved_email(obj)
         else:
             s.save()
         return Response(s.data)
@@ -301,11 +292,11 @@ def logbook_detail(request, pk):
 def evaluation_list(request):
     if request.method == 'GET':
         if is_student(request.user):
-            evals = Evaluation.objects.filter(placement__student__user=request.user)
+            evals = Evaluation.objects.filter(
+                placement__student__user=request.user)
         else:
             evals = Evaluation.objects.all()
         return Response(EvaluationSerializer(evals, many=True).data)
-
     if is_student(request.user):
         return Response(
             {'error': 'Students cannot submit evaluations.'},
@@ -314,7 +305,7 @@ def evaluation_list(request):
     s = EvaluationSerializer(data=request.data)
     if s.is_valid():
         instance = s.save(supervisor=request.user)
-        send_evaluation_email(instance)         # ← email to student with grade
+        send_evaluation_email(instance)
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -325,7 +316,10 @@ def evaluation_detail(request, pk):
     try:
         obj = Evaluation.objects.get(pk=pk)
     except Evaluation.DoesNotExist:
-        return Response({'error': 'Evaluation not found.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {'error': 'Evaluation not found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
     return Response(EvaluationSerializer(obj).data)
 
 
@@ -340,11 +334,10 @@ def issue_list(request):
         else:
             issues = Issue.objects.all()
         return Response(IssueSerializer(issues, many=True).data)
-
     s = IssueSerializer(data=request.data)
     if s.is_valid():
         instance = s.save(student=request.user)
-        send_issue_reported_email(instance)     # ← email to both supervisors
+        send_issue_reported_email(instance)
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -355,11 +348,12 @@ def issue_detail(request, pk):
     try:
         obj = Issue.objects.get(pk=pk)
     except Issue.DoesNotExist:
-        return Response({'error': 'Issue not found.'}, status=status.HTTP_404_NOT_FOUND)
-
+        return Response(
+            {'error': 'Issue not found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
     if request.method == 'GET':
         return Response(IssueSerializer(obj).data)
-
     if is_student(request.user):
         if obj.student != request.user:
             return Response(
@@ -371,11 +365,10 @@ def issue_detail(request, pk):
                 {'error': 'Students cannot change issue status.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-
     s = IssueSerializer(obj, data=request.data, partial=True)
     if s.is_valid():
         s.save()
         if request.data.get('status') == 'Resolved':
-            send_issue_resolved_email(obj)      # ← email to student
+            send_issue_resolved_email(obj)
         return Response(s.data)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)

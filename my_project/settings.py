@@ -5,10 +5,8 @@ import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 load_dotenv()
 
-# ── Security ──────────────────────────────────────────────────────────────────
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     'django-insecure-z@$_&)_fq^v9ck6n3nett7_a2nccc=b5q5m!yrdc-8sidi46eq'
@@ -21,7 +19,6 @@ ALLOWED_HOSTS = os.environ.get(
     'localhost,127.0.0.1,.onrender.com'
 ).split(',')
 
-# ── Apps ──────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -32,14 +29,13 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',   # ← enables logout blacklisting
+    'rest_framework_simplejwt.token_blacklist',
     'iles_models_app',
 ]
 
-AUTH_USER_MODEL      = 'iles_models_app.User'
-DEFAULT_AUTO_FIELD   = 'django.db.models.BigAutoField'
+AUTH_USER_MODEL    = 'iles_models_app.User'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ── Middleware ─────────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -52,16 +48,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# ── CORS ──────────────────────────────────────────────────────────────────────
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://iles-nine.vercel.app',
-]
+# Allow all origins so mobile phones and all devices can connect
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = True #for testing only
 
-# ── REST Framework & JWT ──────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -80,7 +70,6 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-# ── URLs & Templates ──────────────────────────────────────────────────────────
 ROOT_URLCONF = 'my_project.urls'
 
 TEMPLATES = [
@@ -100,7 +89,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'my_project.wsgi.application'
 
-# ── Database — Neon PostgreSQL ────────────────────────────────────────────────
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
@@ -110,7 +98,6 @@ DATABASES = {
     )
 }
 
-# ── Password validation ───────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -118,23 +105,20 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ── Internationalisation ──────────────────────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE     = 'Africa/Kampala'
 USE_I18N      = True
 USE_TZ        = True
 
-# ── Static & Media ────────────────────────────────────────────────────────────
 STATIC_URL          = 'static/'
 STATIC_ROOT         = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL           = '/media/'
 MEDIA_ROOT          = BASE_DIR / 'media'
 
-# ── Email — Gmail SMTP ────────────────────────────────────────────────────────
 EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST          = 'smtp.gmail.com'
-EMAIL_PORT          = 587                                    # integer not string
+EMAIL_PORT          = 587
 EMAIL_USE_TLS       = True
 EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
