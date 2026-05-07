@@ -80,6 +80,9 @@ class AcademicSupervisorSerializer(serializers.ModelSerializer):
 
 
 # ── PLACEMENT ─────────────────────────────────────────────────────────────────
+"""
+This serializer ensures the logical consistency for dates of the beginning and enfing of a placmemt
+"""
 
 class InternshipPlacementSerializer(serializers.ModelSerializer):
     class Meta:
