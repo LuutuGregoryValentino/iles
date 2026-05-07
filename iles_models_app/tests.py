@@ -71,7 +71,7 @@ class StudentTests(TestCase):
         self.user = create_user()
         self.client.force_authenticate(user=self.user)
 
-    def test_create_student_profile(self):
+    def test_create_student_profile(self) -> None:
         res = self.client.post('/api/students/', {
             'user': self.user.id, 'student_id': '25/U/001',
             'student_name': 'Test Student', 'course': 'BSc Computer Science',
