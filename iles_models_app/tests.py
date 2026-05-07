@@ -16,7 +16,7 @@ def create_user(email: str = 'test@test.com', password: str = 'testpass123', rol
 
 class AuthTests(TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.client: APIClient = APIClient()
 
     def test_register_student(self):
