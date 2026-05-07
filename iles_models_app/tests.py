@@ -84,7 +84,7 @@ class StudentTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIsInstance(res.data, list)
 
-    def test_student_requires_auth(self):
+    def test_student_requires_auth(self) -> None:
         self.client.force_authenticate(user=None)
         res = self.client.get('/api/students/')
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
