@@ -39,7 +39,7 @@ class AuthTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn('access', res.data)
 
-    def test_login_invalid_password(self):
+    def test_login_invalid_password(self) -> None:
         create_user()
         res = self.client.post('/api/auth/login/', {
             'email': 'test@test.com', 'password': 'wrongpassword'
