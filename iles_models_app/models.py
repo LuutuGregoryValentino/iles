@@ -180,6 +180,9 @@ class LogbookEntry(models.Model):
 
 
 # ── EVALUATION ───────────────────────────────────────────────────────────────
+"""
+Documents the grading of the logbooks submitted from students
+"""
 
 class Evaluation(models.Model):
     placement       = models.OneToOneField(InternshipPlacement, on_delete=models.CASCADE, related_name='evaluation')
