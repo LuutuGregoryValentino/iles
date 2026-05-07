@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model, authenticate
 from django.utils import timezone
-from django.conf import settings
 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -13,7 +12,6 @@ from .models import (
     Student, WorkplaceSupervisor, AcademicSupervisor,
     InternshipPlacement, LogbookEntry,
     InternshipAdministrator, Evaluation, Issue, LogStatus,
-    PlacementStatus,
 )
 from .serializers import (
     StudentSerializer, InternshipAdministratorSerializer,
@@ -24,23 +22,29 @@ from .serializers import (
 )
 from .emails import (
     send_welcome_email,
+    send_account_approved_email,
+    send_placement_assigned_email,
     send_logbook_submitted_email,
     send_logbook_approved_email,
-    send_evaluation_email,
     send_issue_reported_email,
     send_issue_resolved_email,
+    send_evaluation_email,
 )
 
 User = get_user_model()
 
 
-# ── HELPERS ───────────────────────────────────────────────────────────────────
+def is_admin(user):
+    return user.role == 'administrator'
 
-def is_admin_or_supervisor(user):
-    return user.role in ('administrator', 'academic_supervisor', 'workplace_supervisor')
+def is_supervisor(user):
+    return user.role in ('academic_supervisor', 'workplace_supervisor')
 
 def is_student(user):
     return user.role == 'student'
+
+def is_admin_or_supervisor(user):
+    return user.role in ('administrator', 'academic_supervisor', 'workplace_supervisor')
 
 
 # ── AUTH ──────────────────────────────────────────────────────────────────────
@@ -50,16 +54,25 @@ def is_student(user):
 def register(request):
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
-        user    = serializer.save()
-        refresh = RefreshToken.for_user(user)
-        send_welcome_email(user)           # ← HTML welcome email
-        return Response({
-            'user':    UserSerializer(user).data,
-            'access':  str(refresh.access_token),
-            'refresh': str(refresh),
-        }, status=status.HTTP_201_CREATED)
+        try:
+            user = serializer.save()
+            if user.role == 'student':
+                user.is_approved = True
+                user.save()
+            refresh = RefreshToken.for_user(user)
+            send_welcome_email(user)
+            return Response({
+                'user':    UserSerializer(user).data,
+                'access':  str(refresh.access_token),
+                'refresh': str(refresh),
+                'requires_approval': not user.is_approved,
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -76,6 +89,12 @@ def login_api(request):
         return Response(
             {'error': 'Invalid email or password.'},
             status=status.HTTP_401_UNAUTHORIZED
+        )
+    # Block unapproved supervisors and admins from logging in
+    if not user.is_approved and user.role != 'student':
+        return Response(
+            {'error': 'Your account is pending approval by an administrator. You will receive an email once approved.'},
+            status=status.HTTP_403_FORBIDDEN
         )
     refresh = RefreshToken.for_user(user)
     return Response({
@@ -105,33 +124,85 @@ def current_user(request):
     return Response(UserSerializer(request.user).data)
 
 
-# ── STUDENTS (ViewSet) ────────────────────────────────────────────────────────
+# ── APPROVE USER — admin only ─────────────────────────────────────────────────
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def approve_user(request, pk):
+    """
+    PATCH /api/users/<pk>/approve/
+    Admin approves a supervisor or admin account.
+    Sends email notification to the approved user.
+    """
+    if not is_admin(request.user) or not request.user.is_approved:
+        return Response(
+            {'error': 'Only approved administrators can approve accounts.'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    try:
+        target = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    target.is_approved = True
+    target.save()
+    send_account_approved_email(target)   # ← email to approved supervisor/admin
+
+    return Response({
+        'message': f'{target.username} has been approved successfully.',
+        'user':    UserSerializer(target).data,
+    })
+
+
+# ── PENDING USERS — admin only ────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def pending_users(request):
+    """GET /api/users/pending/ — returns all unapproved supervisor/admin accounts."""
+    if not is_admin(request.user):
+        return Response(
+            {'error': 'Only administrators can view pending accounts.'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    pending = User.objects.filter(is_approved=False).exclude(role='student')
+    return Response(UserSerializer(pending, many=True).data)
+
+
+# ── STUDENTS ──────────────────────────────────────────────────────────────────
 
 class StudentViewSet(ModelViewSet):
     serializer_class   = StudentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.role == 'student':
-            return Student.objects.filter(user=user)
+        if is_student(self.request.user):
+            return Student.objects.filter(user=self.request.user)
         return Student.objects.all()
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
 
-# ── PLACEMENTS (ViewSet) ──────────────────────────────────────────────────────
+# ── PLACEMENTS ────────────────────────────────────────────────────────────────
 
 class PlacementViewSet(ModelViewSet):
     serializer_class   = InternshipPlacementSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.role == 'student':
-            return InternshipPlacement.objects.filter(student__user=user)
+        if is_student(self.request.user):
+            return InternshipPlacement.objects.filter(student__user=self.request.user)
         return InternshipPlacement.objects.all()
+
+    def perform_create(self, serializer):
+        placement = serializer.save()
+        send_placement_assigned_email(placement)   # ← emails to student + both supervisors
+
+    def perform_update(self, serializer):
+        placement = serializer.save()
+        # Send placement email again if supervisors changed
+        send_placement_assigned_email(placement)
 
 
 # ── SUPERVISORS & ADMINS ──────────────────────────────────────────────────────
@@ -169,8 +240,7 @@ def admin_list(request):
 def logbook_list(request):
     if request.method == 'GET':
         if is_student(request.user):
-            logbooks = LogbookEntry.objects.filter(
-                placement__student__user=request.user)
+            logbooks = LogbookEntry.objects.filter(placement__student__user=request.user)
         else:
             logbooks = LogbookEntry.objects.all()
         return Response(LogbookEntrySerializer(logbooks, many=True).data)
@@ -188,10 +258,7 @@ def logbook_detail(request, pk):
     try:
         obj = LogbookEntry.objects.get(pk=pk)
     except LogbookEntry.DoesNotExist:
-        return Response(
-            {'error': 'Logbook entry not found.'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Logbook entry not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         return Response(LogbookEntrySerializer(obj).data)
@@ -203,6 +270,7 @@ def logbook_detail(request, pk):
         )
 
     new_status = request.data.get('submission_status')
+
     if new_status == LogStatus.APPROVED and is_student(request.user):
         return Response(
             {'error': 'Only supervisors can approve logbook entries.'},
@@ -213,12 +281,10 @@ def logbook_detail(request, pk):
     if s.is_valid():
         if new_status == LogStatus.SUBMITTED and not obj.submitted_at:
             s.save(submitted_at=timezone.now())
-            send_logbook_submitted_email(obj)    # ← HTML email to supervisor
-
+            send_logbook_submitted_email(obj)   # ← email to both supervisors
         elif new_status == LogStatus.APPROVED:
             s.save()
-            send_logbook_approved_email(obj)     # ← HTML email to student
-
+            send_logbook_approved_email(obj)    # ← email to student
         else:
             s.save()
         return Response(s.data)
@@ -232,11 +298,10 @@ def logbook_detail(request, pk):
 def evaluation_list(request):
     if request.method == 'GET':
         if is_student(request.user):
-            evaluations = Evaluation.objects.filter(
-                placement__student__user=request.user)
+            evals = Evaluation.objects.filter(placement__student__user=request.user)
         else:
-            evaluations = Evaluation.objects.all()
-        return Response(EvaluationSerializer(evaluations, many=True).data)
+            evals = Evaluation.objects.all()
+        return Response(EvaluationSerializer(evals, many=True).data)
 
     if is_student(request.user):
         return Response(
@@ -246,7 +311,7 @@ def evaluation_list(request):
     s = EvaluationSerializer(data=request.data)
     if s.is_valid():
         instance = s.save(supervisor=request.user)
-        send_evaluation_email(instance)          # ← HTML email to student
+        send_evaluation_email(instance)         # ← email to student with grade
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -257,10 +322,7 @@ def evaluation_detail(request, pk):
     try:
         obj = Evaluation.objects.get(pk=pk)
     except Evaluation.DoesNotExist:
-        return Response(
-            {'error': 'Evaluation not found.'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Evaluation not found.'}, status=status.HTTP_404_NOT_FOUND)
     return Response(EvaluationSerializer(obj).data)
 
 
@@ -279,7 +341,7 @@ def issue_list(request):
     s = IssueSerializer(data=request.data)
     if s.is_valid():
         instance = s.save(student=request.user)
-        send_issue_reported_email(instance)      # ← HTML email to academic supervisor
+        send_issue_reported_email(instance)     # ← email to both supervisors
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -290,10 +352,7 @@ def issue_detail(request, pk):
     try:
         obj = Issue.objects.get(pk=pk)
     except Issue.DoesNotExist:
-        return Response(
-            {'error': 'Issue not found.'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Issue not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         return Response(IssueSerializer(obj).data)
@@ -313,8 +372,7 @@ def issue_detail(request, pk):
     s = IssueSerializer(obj, data=request.data, partial=True)
     if s.is_valid():
         s.save()
-        # Send resolved email when admin/supervisor marks as Resolved
         if request.data.get('status') == 'Resolved':
-            send_issue_resolved_email(obj)       # ← HTML email to student
+            send_issue_resolved_email(obj)      # ← email to student
         return Response(s.data)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
