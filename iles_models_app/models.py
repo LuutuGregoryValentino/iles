@@ -103,12 +103,15 @@ class AcademicSupervisor(models.Model):
 
 # ── PLACEMENT ────────────────────────────────────────────────────────────────
 
+
 class PlacementStatus(models.TextChoices):
     PENDING  = 'Pending',  'Pending'
     ACTIVE   = 'Active',   'Active'
     COMPLETE = 'Complete', 'Complete'
 
-
+"""
+This will link students to organizations and supervisors
+"""
 class InternshipPlacement(models.Model):
     organization_name = models.CharField(max_length=100)
     position          = models.CharField(max_length=100)
