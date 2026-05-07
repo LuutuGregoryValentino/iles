@@ -50,10 +50,14 @@ export function NotificationProvider({ children }) {
     setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
 
+  const clearNotifications = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <NotifCtx.Provider value={{ notifications, push, markRead, markAllRead, dismiss, unreadCount }}>
+    <NotifCtx.Provider value={{ notifications, push, markRead, markAllRead, dismiss, clearNotifications, unreadCount }}>
       {children}
     </NotifCtx.Provider>
   );
