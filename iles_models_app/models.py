@@ -147,7 +147,9 @@ class LogStatus(models.TextChoices):
     SUBMITTED = 'Submitted', 'Submitted'
     APPROVED  = 'Approved',  'Approved'
 
-
+"""
+This model ensures hours worked, days worked are realistic and also handles the submission of the logs by students
+ """
 class LogbookEntry(models.Model):
     placement         = models.ForeignKey(InternshipPlacement, on_delete=models.CASCADE, related_name='logbooks')
     week_number       = models.IntegerField(validators=[MinValueValidator(1)])
