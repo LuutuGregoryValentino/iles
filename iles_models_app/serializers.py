@@ -10,6 +10,9 @@ User = get_user_model()
 
 
 # ── AUTH ──────────────────────────────────────────────────────────────────────
+"""
+Handles user registration and includes customized validation methods for unique feilds and password strength
+"""
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
