@@ -27,7 +27,7 @@ class AuthTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertIn('access', res.data)
 
-    def test_register_missing_fields(self):
+    def test_register_missing_fields(self) -> None:
         res = self.client.post('/api/auth/register/', {'email': 'x@x.com'})
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
