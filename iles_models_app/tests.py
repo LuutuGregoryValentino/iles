@@ -79,7 +79,7 @@ class StudentTests(TestCase):
         })
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
-    def test_list_students(self):
+    def test_list_students(self) -> None:
         res = self.client.get('/api/students/')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIsInstance(res.data, list)
