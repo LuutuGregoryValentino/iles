@@ -1,60 +1,47 @@
-/**
- * AuthShell.js — Full-screen auth wrapper
- *
- * Contains Login + Signup as toggled panels.
- * No router needed — pure state machine.
- */
+
 import React, { useState } from 'react';
 import Login  from './Login';
 import Signup from './Signup';
 import './Auth.css';
 
-export default function AuthShell({ onAuthSuccess }) {
+export default function AuthShell({ onAuthSuccess, onBack }) {
   const [view, setView] = useState('login');
 
   return (
     <div className="auth-shell">
-      {/* Left panel — branding */}
-      <div className="auth-brand">
-        <div className="auth-brand-inner">
-          <div className="auth-logo">
-            <div className="auth-logo-mark">
-              <span>MU</span>
-            </div>
-          </div>
-          <h1 className="auth-brand-title">ILES</h1>
-          <p className="auth-brand-sub">
-            Internship Logbook &amp; Evaluation System
-          </p>
-          <p className="auth-brand-college">
-            College of Computing and Information Sciences<br />
-            Makerere University
-          </p>
-          <div className="auth-brand-divider" />
-          <ul className="auth-brand-features">
-            <li><span className="feat-dot green" />Weekly logbook submissions</li>
-            <li><span className="feat-dot green" />Supervisor evaluations</li>
-            <li><span className="feat-dot green" />Real-time status tracking</li>
-            <li><span className="feat-dot green" />Issue reporting</li>
-          </ul>
+
+      {/* bacck to landing */}
+      {onBack && (
+        <button className="auth-back-btn" onClick={onBack}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Back to home
+        </button>
+      )}
+
+      <div className="auth-brand-header">
+        <div className="auth-brand-header-logo">
+          <span>IL</span>
         </div>
+        <h1>ILES</h1>
+        <p>Internship Logbook &amp; Evaluation System · Makerere University</p>
       </div>
 
-      {/* Right panel — form */}
-      <div className="auth-form-panel">
-        <div className="auth-form-inner fade-in">
-          {view === 'login' ? (
-            <Login
-              onAuthSuccess={onAuthSuccess}
-              goToSignup={() => setView('signup')}
-            />
-          ) : (
-            <Signup
-              onAuthSuccess={onAuthSuccess}
-              goToLogin={() => setView('login')}
-            />
-          )}
-        </div>
+      {/* form */}
+      <div className="fade-in" style={{ width: '100%', maxWidth: 440 }}>
+        {view === 'login' ? (
+          <Login
+            onAuthSuccess={onAuthSuccess}
+            goToSignup={() => setView('signup')}
+          />
+        ) : (
+          <Signup
+            onAuthSuccess={onAuthSuccess}
+            goToLogin={() => setView('login')}
+          />
+        )}
       </div>
     </div>
   );
