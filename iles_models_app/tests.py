@@ -31,7 +31,7 @@ class AuthTests(TestCase):
         res = self.client.post('/api/auth/register/', {'email': 'x@x.com'})
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_login_valid(self):
+    def test_login_valid(self) -> None:
         create_user()
         res = self.client.post('/api/auth/login/', {
             'email': 'test@test.com', 'password': 'testpass123'
