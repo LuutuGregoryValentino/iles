@@ -17,7 +17,7 @@ def create_user(email: str = 'test@test.com', password: str = 'testpass123', rol
 class AuthTests(TestCase):
 
     def setUp(self):
-        self.client = APIClient()
+        self.client: APIClient = APIClient()
 
     def test_register_student(self):
         res = self.client.post('/api/auth/register/', {
@@ -67,8 +67,8 @@ class AuthTests(TestCase):
 class StudentTests(TestCase):
 
     def setUp(self):
-        self.client = APIClient()
-        self.user   = create_user()
+        self.client: APIClient = APIClient()
+        self.user = create_user()
         self.client.force_authenticate(user=self.user)
 
     def test_create_student_profile(self):
