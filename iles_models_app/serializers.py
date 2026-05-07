@@ -34,6 +34,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A user with this username already exists.")
         return value
 
+    """
+    This method ensures that every student or staff member has a unique identifier for either the organization or institution
+    """
     def validate_university_id(self, value):
         if User.objects.filter(university_id=value).exists():
             raise serializers.ValidationError("A user with this university ID already exists.")
