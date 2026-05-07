@@ -66,7 +66,7 @@ class AuthTests(TestCase):
 
 class StudentTests(TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.client: APIClient = APIClient()
         self.user = create_user()
         self.client.force_authenticate(user=self.user)
