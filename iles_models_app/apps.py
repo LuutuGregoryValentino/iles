@@ -12,3 +12,4 @@ class IlesModelsAppConfig(AppConfig):
         Use it to import signals or run startup logic.
         """
         import iles_models_app.signals  
+    name               = 'iles_models_app'

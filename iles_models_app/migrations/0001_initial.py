@@ -19,8 +19,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='User',
-            fields=[
+            name = 'User',
+            fields = [
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('password', models.CharField(max_length=128, verbose_name='password')),
                 ('last_login', models.DateTimeField(blank=True, null=True, verbose_name='last login')),
@@ -37,18 +37,18 @@ class Migration(migrations.Migration):
                 ('groups', models.ManyToManyField(blank=True, related_name='iles_users', to='auth.group')),
                 ('user_permissions', models.ManyToManyField(blank=True, related_name='iles_users_permissions', to='auth.permission')),
             ],
-            options={
+            options = {
                 'verbose_name': 'user',
                 'verbose_name_plural': 'users',
                 'abstract': False,
             },
-            managers=[
+            managers = [
                 ('objects', django.contrib.auth.models.UserManager()),
             ],
         ),
         migrations.CreateModel(
-            name='AcademicSupervisor',
-            fields=[
+            name    = 'AcademicSupervisor',
+            fields  =  [
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('staff_id', models.CharField(max_length=20, unique=True)),
                 ('lecturer_name', models.CharField(max_length=100)),
@@ -58,8 +58,8 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='InternshipAdministrator',
-            fields=[
+            name   = 'InternshipAdministrator',
+            fields = [
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('admin_id', models.CharField(max_length=20, unique=True)),
                 ('admin_name', models.CharField(max_length=100)),
@@ -68,8 +68,8 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='InternshipPlacement',
-            fields=[
+            name   = 'InternshipPlacement',
+            fields = [
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('organization_name', models.CharField(max_length=100)),
                 ('position', models.CharField(max_length=100)),
@@ -81,8 +81,8 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='Evaluation',
-            fields=[
+            name   = 'Evaluation',
+            fields =  [
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('workplace_score', models.IntegerField(help_text='Workplace supervisor score (out of 100)', validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)])),
                 ('academic_score', models.IntegerField(help_text='Academic supervisor score (out of 100)', validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)])),
@@ -94,8 +94,8 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='Issue',
-            fields=[
+            name   = 'Issue',
+            fields = [
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('title', models.CharField(max_length=200)),
                 ('description', models.TextField()),
@@ -113,8 +113,8 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='Student',
-            fields=[
+            name   = 'Student',
+            fields = [
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('student_id', models.CharField(max_length=20, unique=True)),
                 ('student_name', models.CharField(max_length=100)),
@@ -125,13 +125,13 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.AddField(
-            model_name='internshipplacement',
-            name='student',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='placements', to='iles_models_app.student'),
+            model_name  = 'internshipplacement',
+            name        = 'student',
+            field       = models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='placements', to='iles_models_app.student'),
         ),
         migrations.CreateModel(
-            name='WorkplaceSupervisor',
-            fields=[
+            name   =  'WorkplaceSupervisor',
+            fields =  [
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('supervisor_id', models.CharField(max_length=20, unique=True)),
                 ('supervisor_name', models.CharField(max_length=100)),
@@ -142,9 +142,9 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.AddField(
-            model_name='internshipplacement',
-            name='workplace_supervisor',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='iles_models_app.workplacesupervisor'),
+            model_name  = 'internshipplacement',
+            name        = 'workplace_supervisor',
+            field       = models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='iles_models_app.workplacesupervisor'),
         ),
         migrations.CreateModel(
             name='LogbookEntry',

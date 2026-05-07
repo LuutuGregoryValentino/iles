@@ -1,7 +1,3 @@
-/**
- * Sidebar.js (v2)
- * NEW: expanded footer with team credits + system info panel
- */
 import React, { useState } from 'react';
 import './Sidebar.css';
 
@@ -16,19 +12,20 @@ function Icon({ path }) {
 }
 
 const TEAM = [
-  { name: 'Luutu Rahma',   role: 'Full-Stack Lead',    email: 'rahma@iles.mak.ac.ug' },
-  { name: 'Luutu Gregory',   role: 'Frontend Dev',    email: 'greg@iles.mak.ac.ug' },
-  { name: 'Kukunda Stacy',      role: 'UI/UX Designer',     email: 'stacy@iles.mak.ac.ug' },
-  { name: 'Mumberere Breiline',     role: 'Backend Developer',  email: 'breiline@iles.mak.ac.ug' },
-  { name: 'Raudha Nambuya',   role: 'Backend Developer', email: 'raudha@iles.mak.ac.ug' },
-  { name: 'Ojambo Nicholas',   role: 'Frontend Dev', email: 'nicho@iles.mak.ac.ug' },
+  { name: 'Luutu Rahma', role: 'Full-Stack Lead', email: 'rahmaluutun@gmail.com' },
+  { name: 'Raudha Nambuya', role: 'Backend Dev', email: 'raur743@gmail.com' },
+  { name: 'Mumberere Breiline', role: 'Backend Developer', email: 'breilinemumbere@gmail.com' },
+  { name: 'Ojambo Nicholas', role: 'Frontend Developer', email: 'ojambonicholas052@gmail.com' },
+  { name: 'Luutu Gregory', role: 'UI/UX Designer', email: 'snowchildwolf@gmail.com' },
+  { name: 'Staty Kukunda', role: 'Frontend Developer', email: 'stacykukunda@gmail.com' },
+
 ];
 
 const ROLE_LABELS = {
-  student:              'Student',
+  student: 'Student',
   workplace_supervisor: 'Workplace Supervisor',
-  academic_supervisor:  'Academic Supervisor',
-  administrator:        'Administrator',
+  academic_supervisor: 'Academic Supervisor',
+  administrator: 'Administrator',
 };
 
 export default function Sidebar({ sections, activeSection, onNav, currentUser, isOpen }) {
@@ -48,7 +45,7 @@ export default function Sidebar({ sections, activeSection, onNav, currentUser, i
       {/* ── User badge ── */}
       <div className="sb-user">
         <div className="sb-avatar">
-          {(currentUser?.username || 'U').slice(0,2).toUpperCase()}
+          {(currentUser?.username || 'U').slice(0, 2).toUpperCase()}
         </div>
         <div className="sb-user-info">
           <span className="sb-user-name">{currentUser?.username || 'User'}</span>
@@ -79,9 +76,9 @@ export default function Sidebar({ sections, activeSection, onNav, currentUser, i
         <button className="sb-footer-toggle" onClick={() => setShowTeam(t => !t)}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           About this system
         </button>
