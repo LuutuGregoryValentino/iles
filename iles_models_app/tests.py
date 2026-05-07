@@ -52,7 +52,7 @@ class AuthTests(TestCase):
         })
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_get_current_user_authenticated(self):
+    def test_get_current_user_authenticated(self) -> None:
         user = create_user()
         self.client.force_authenticate(user=user)
         res = self.client.get('/api/auth/me/')
