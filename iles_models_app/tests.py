@@ -19,7 +19,7 @@ class AuthTests(TestCase):
     def setUp(self) -> None:
         self.client: APIClient = APIClient()
 
-    def test_register_student(self):
+    def test_register_student(self) -> None:
         res = self.client.post('/api/auth/register/', {
             'email': 'student@test.com', 'username': 'student1',
             'university_id': '25/U/001', 'role': 'student', 'password': 'pass1234'
