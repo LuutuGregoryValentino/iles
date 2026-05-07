@@ -46,7 +46,7 @@ class AuthTests(TestCase):
         })
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_login_nonexistent_user(self):
+    def test_login_nonexistent_user(self) -> None:
         res = self.client.post('/api/auth/login/', {
             'email': 'nobody@test.com', 'password': 'pass1234'
         })
