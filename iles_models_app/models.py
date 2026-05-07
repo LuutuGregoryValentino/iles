@@ -16,6 +16,11 @@ phone_regex = RegexValidator(
 
 
 # ── USER ─────────────────────────────────────────────────────────────────────
+"""
+The Core User Model
+It supports role-based access control for students, supervisors and admins 
+using email as their primary log in identifier
+"""
 
 class User(AbstractUser):
     """
