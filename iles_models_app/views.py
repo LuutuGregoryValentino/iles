@@ -90,12 +90,15 @@ def login_api(request):
             {'error': 'Invalid email or password.'},
             status=status.HTTP_401_UNAUTHORIZED
         )
-    # Block unapproved supervisors and admins from logging in
-    if not user.is_approved and user.role != 'student':
+
+    # Check approval safely — getattr prevents crash if field missing
+    is_approved = getattr(user, 'is_approved', True)
+    if not is_approved and user.role != 'student':
         return Response(
-            {'error': 'Your account is pending approval by an administrator. You will receive an email once approved.'},
+            {'error': 'Your account is pending approval by an administrator.'},
             status=status.HTTP_403_FORBIDDEN
         )
+
     refresh = RefreshToken.for_user(user)
     return Response({
         'user':    UserSerializer(user).data,

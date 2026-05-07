@@ -22,7 +22,15 @@ class User(AbstractUser):
     email         = models.EmailField(unique=True)
     role          = models.CharField(max_length=30, choices=ROLE_CHOICES)
     university_id = models.CharField(max_length=50, unique=True)
-    groups        = models.ManyToManyField('auth.Group',      related_name='iles_users', blank=True)
+
+    # Override username to allow spaces for full names
+    username = models.CharField(
+        max_length=100,
+        unique=True,
+        validators=[],   # removes Django's default no-spaces validator
+    )
+
+    groups = models.ManyToManyField('auth.Group', related_name='iles_users', blank=True)
     user_permissions = models.ManyToManyField('auth.Permission', related_name='iles_users_perms', blank=True)
 
     USERNAME_FIELD  = 'email'
@@ -30,7 +38,6 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.email} ({self.get_role_display()})"
-
 
 # ── PROFILES ─────────────────────────────────────────────────────────────────
 

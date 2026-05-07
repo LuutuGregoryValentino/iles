@@ -59,6 +59,7 @@ CORS_ALLOWED_ORIGINS = [
     'https://iles-nine.vercel.app',
 ]
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True #for testing only
 
 # ── REST Framework & JWT ──────────────────────────────────────────────────────
 REST_FRAMEWORK = {
