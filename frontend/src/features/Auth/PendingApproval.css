@@ -1,0 +1,197 @@
+.pending-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+.pending-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26, 122, 60, .18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, rgba(192, 57, 43, .10) 0%, transparent 60%),
+    var(--bg-base);
+  pointer-events: none;
+}
+
+.pending-card {
+  position: relative;
+  z-index: 1;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-xl);
+  padding: 40px 36px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.pending-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--status-warn-bg);
+  color: var(--status-warn);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  border: 2px solid var(--status-warn);
+}
+
+.pending-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+
+.pending-body {
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.pending-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg-raised);
+  border-radius: var(--r-md);
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.pending-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+}
+
+.pending-info-label {
+  color: var(--text-muted);
+}
+
+.pending-info-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pending-check-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 11px;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.pending-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, .3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  flex-shrink: 0;
+}
+
+.pending-auto-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+}
+
+.pending-contacts {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 20px;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.pending-contacts-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.pending-contact-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  text-decoration: none;
+  transition: background var(--dur-fast);
+  margin-bottom: 4px;
+}
+
+.pending-contact-row:hover {
+  background: var(--bg-raised);
+}
+
+.pending-contact-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--brand-green-dim);
+  color: var(--brand-green-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.pending-contact-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pending-contact-role {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.pending-contact-email {
+  font-size: 12px;
+  color: var(--brand-green-light);
+  margin-top: 2px;
+}
+
+.pending-logout {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+}
+
+.pending-logout:hover {
+  color: var(--brand-red-light);
+}
+
+@media (max-width: 560px) {
+  .pending-card {
+    padding: 28px 18px;
+  }
+}
