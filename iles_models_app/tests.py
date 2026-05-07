@@ -6,8 +6,8 @@ from rest_framework import status
 User = get_user_model()
 
 
-def create_user(email='test@test.com', password='testpass123', role='student',
-                university_id='25/U/0001', username='testuser'):
+def create_user(email: str = 'test@test.com', password: str = 'testpass123', role: str = 'student',
+                university_id: str = '25/U/0001', username: str = 'testuser'):
     return User.objects.create_user(
         email=email, password=password, role=role,
         university_id=university_id, username=username
