@@ -2,10 +2,9 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 def send_email(subject, recipient_email, message_html):
-    
+    """Base email sender."""
 
 
-    
     send_mail(
         subject = subject,
         message = '',  # plain text fallback 
