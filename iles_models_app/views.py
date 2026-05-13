@@ -29,6 +29,8 @@ from .emails import (
     send_issue_resolved_email,
     send_evaluation_email,
 )
+from .validators import validate_strong_password
+
 
 User = get_user_model()
 
@@ -73,6 +75,10 @@ def register(request):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def validate_password(self, value):
+    validate_strong_password(value)
+    
+    return value
 
 
 @api_view(['POST'])
@@ -372,3 +378,39 @@ def issue_detail(request, pk):
             send_issue_resolved_email(obj)
         return Response(s.data)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def approve_user(request, pk):
+    """
+    Approve a user account (admin only).
+    PATCH /api/auth/approve/<pk>/
+    Body: {"is_approved": true}
+    """
+    if request.user.role != 'administrator' or not request.user.is_approved:
+        return Response({'error':'Only approved administrators can approve users.'}, status=403)
+    
+    try:
+        target = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found.'}, status=404)
+    
+    target.is_approved = request.data.get('is_approved', True)
+    target.save()
+    return Response(UserSerializer(target).data)
+
+@api_view
+@permission_classes([IsAuthenticated])
+def pending_users(request):
+    """
+    List unapproved users (admin only).
+    GET /api/auth/pending/
+    """
+    if request.user.role !='administrator' or not request.user.is_approved:
+        return Response({'error': 'Only approved administrators can view pending users.'},status=403)
+    
+    pending = User.objects.filter(
+        is_approved=False,
+        role_in=['administrator', 'workplace_supervisor', 'academic_supervisor']
+    )
+    return Response(UserSerializer(pending, many=True).data)

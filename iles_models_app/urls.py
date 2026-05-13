@@ -9,9 +9,18 @@ router.register(r'placements', views.PlacementViewSet, basename='placement')
 urlpatterns = [
     # Auth
     path('auth/register/', views.register,     name='register'),
+<<<<<<< HEAD
     path('auth/login/',    views.login_api,    name='login'),
     path('auth/logout/',   views.logout_api,   name='logout'),
     path('auth/me/',       views.current_user, name='current-user'),
+=======
+    path('auth/login/',    views.login_api,     name='login'),
+    path('auth/logout/',   views.logout_api,    name='logout'),
+    path('auth/me/',       views.current_user,  name='current-user'),
+    path('auth/refresh/',  TokenRefreshView.as_view(), name='token-refresh'),
+    path('auth/approve/<int:pk>/', views.approve_user, name='approve-user'),
+    path('auth/pending/',  views.pending_users,  name='pending-users'),
+>>>>>>> 4bb96d94630885ef9a3f71df8235846a7bfa7d41
 
     # User approval (admin only)
     path('users/pending/',          views.pending_users, name='pending-users'),

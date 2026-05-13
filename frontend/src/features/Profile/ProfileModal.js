@@ -1,27 +1,5 @@
-/**
- * ProfileModal.js — Profile editor for ALL user roles
- *
- * Replaces the old ProfileForm.js which was student-only and always blocked.
- *
- * BEHAVIOUR:
- * - Pre-fills from `prefillData` (fetched by useProfileStatus hook)
- * - Username/email pre-filled from currentUser (always available)
- * - Partial saves are allowed — only filled fields are sent
- * - User can close without saving (onClose)
- * - Student fields (course, year, semester) only shown for student role
- * - Supervisor fields (job title, department, phone) shown for supervisors
- * - Admin fields (department) shown for admin
- *
- * API mapping:
- *   student              → studentsAPI.create / .update
- *   workplace_supervisor → POST /supervisors/ (supervisorsAPI)
- *   academic_supervisor  → no dedicated endpoint yet — updates user fields only
- *   administrator        → no dedicated endpoint — updates user fields only
- *
- * NOTE: The back-end only has separate profile endpoints for students and
- * workplace supervisors. For other roles, only the username is updatable
- * via the user record. Flag this for your back-end team if needed.
- */
+
+
 import React, { useState } from 'react';
 import { studentsAPI, supervisorsAPI } from '../../services/api';
 
@@ -34,9 +12,9 @@ const COURSES = [
 export default function ProfileModal({ currentUser, prefillData, onSaved, onClose }) {
   const role = currentUser?.role;
 
-  /* Build initial form state from prefillData + currentUser */
+
   const [form, setForm] = useState({
-    /* Common */
+
     display_name: prefillData?.student_name
       || prefillData?.supervisor_name
       || prefillData?.lecturer_name
@@ -44,25 +22,25 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
       || currentUser?.username
       || '',
 
-    /* Student-specific */
-    student_id:    prefillData?.student_id    || '',
-    course:        prefillData?.course        || '',
+    /* studnet */
+    student_id: prefillData?.student_id || '',
+    course: prefillData?.course || '',
     year_of_study: prefillData?.year_of_study?.toString() || '',
-    semester:      prefillData?.semester?.toString()      || '',
+    semester: prefillData?.semester?.toString() || '',
 
-    /* Supervisor-specific */
-    job_title:    prefillData?.job_title    || '',
-    department:   prefillData?.department   || '',
+    /* supervisor */
+    job_title: prefillData?.job_title || '',
+    department: prefillData?.department || '',
     phone_number: prefillData?.phone_number || '',
     college_dept: prefillData?.college_dept || '',
-    staff_id:     prefillData?.staff_id     || '',
+    staff_id: prefillData?.staff_id || '',
 
-    /* Admin-specific */
+    /* Admin */
     admin_id: prefillData?.admin_id || '',
   });
 
-  const [saving,  setSaving]  = useState(false);
-  const [error,   setError]   = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const set = (f) => (e) => setForm(v => ({ ...v, [f]: e.target.value }));
@@ -75,14 +53,15 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
     try {
       if (role === 'student') {
         const payload = {
-          user:         currentUser.id,
+          user: currentUser.id,
           student_name: form.display_name || currentUser.username,
         };
-        // Only include fields that have values (allows partial save)
-        if (form.student_id)    payload.student_id    = form.student_id;
-        if (form.course)        payload.course        = form.course;
+
+        // only fields that can handel partial saves
+        if (form.student_id) payload.student_id = form.student_id;
+        if (form.course) payload.course = form.course;
         if (form.year_of_study) payload.year_of_study = parseInt(form.year_of_study, 10);
-        if (form.semester)      payload.semester      = parseInt(form.semester, 10);
+        if (form.semester) payload.semester = parseInt(form.semester, 10);
 
         if (prefillData?.id) {
           await studentsAPI.update(prefillData.id, payload);
@@ -92,21 +71,20 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
 
       } else if (role === 'workplace_supervisor') {
         const payload = {
-          user:            currentUser.id,
+          user: currentUser.id,
           supervisor_name: form.display_name || currentUser.username,
         };
-        if (form.job_title)    payload.job_title    = form.job_title;
-        if (form.department)   payload.department   = form.department;
+        if (form.job_title) payload.job_title = form.job_title;
+        if (form.department) payload.department = form.department;
         if (form.phone_number) payload.phone_number = form.phone_number;
 
         // NOTE: supervisorsAPI.create always POSTs — no update endpoint exists yet.
         // If the record already exists this will 400. Flag for back-end team.
-        // TODO: add PUT /supervisors/:id/ to urls.py + views.py
+        // ->>>> add PUT /supervisors/:id/ to urls.py + views.py
         if (!prefillData) await supervisorsAPI.create(payload);
 
       } else {
-        // academic_supervisor / administrator — no profile endpoint, nothing to save
-        // but we still show "saved" so UX feels complete
+        //  profile endpoint needs to be created
       }
 
       setSuccess('Profile updated successfully!');
@@ -134,30 +112,31 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
           <button className="btn-icon" onClick={onClose} title="Close">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
 
         <div className="modal-body">
-          {error   && <div className="alert alert-danger">{error}</div>}
+          {error && <div className="alert alert-danger">{error}</div>}
           {success && <div className="alert alert-success">{success}</div>}
 
           <form onSubmit={handleSave}>
-            {/* ── Common: display name ── */}
+
+
             <div className="form-group">
               <label className="form-label">Full name</label>
               <input className="form-input" type="text"
                 value={form.display_name} onChange={set('display_name')} />
             </div>
 
-            {/* ── Read-only info ── */}
+            {/* read only */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <div className="form-group">
                 <label className="form-label">Email (read-only)</label>
                 <input className="form-input" type="email"
-                  value={currentUser?.email || ''} readOnly
+                  value={currentUser?.email || ''} 
                   style={{ opacity: .6, cursor: 'not-allowed' }} />
               </div>
               <div className="form-group">
@@ -168,7 +147,7 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
               </div>
             </div>
 
-            {/* ── Student fields ── */}
+
             {role === 'student' && (
               <>
                 <div className="form-group">
@@ -191,7 +170,7 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
                     <label className="form-label">Year of study</label>
                     <select className="form-select" value={form.year_of_study} onChange={set('year_of_study')}>
                       <option value="">Year…</option>
-                      {[1,2,3,4].map(y => <option key={y} value={y}>Year {y}</option>)}
+                      {[1, 2, 3, 4].map(y => <option key={y} value={y}>Year {y}</option>)}
                     </select>
                   </div>
                   <div className="form-group">
@@ -206,7 +185,7 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
               </>
             )}
 
-            {/* ── Workplace supervisor fields ── */}
+
             {role === 'workplace_supervisor' && (
               <>
                 <div className="form-group">
@@ -231,7 +210,8 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
               </>
             )}
 
-            {/* ── Academic supervisor fields ── */}
+
+
             {role === 'academic_supervisor' && (
               <div className="form-group">
                 <label className="form-label">College / Department</label>
@@ -240,7 +220,7 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
               </div>
             )}
 
-            {/* ── Administrator fields ── */}
+
             {role === 'administrator' && (
               <div className="form-group">
                 <label className="form-label">Department</label>

@@ -116,10 +116,22 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL           = '/media/'
 MEDIA_ROOT          = BASE_DIR / 'media'
 
+<<<<<<< HEAD
 EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST          = 'smtp.gmail.com'
 EMAIL_PORT          = 587
 EMAIL_USE_TLS       = True
 EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER', '')
+=======
+# ── Email — Gmail SMTP ─────────────────────────────────────────
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+>>>>>>> 4bb96d94630885ef9a3f71df8235846a7bfa7d41
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+
 DEFAULT_FROM_EMAIL  = f'ILES Makerere <{os.environ.get("EMAIL_HOST_USER", "noreply@iles.mak.ac.ug")}>'
+

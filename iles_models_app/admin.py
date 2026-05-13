@@ -1,3 +1,4 @@
+
 from django.contrib import admin
 from .models import(User,Student,InternshipAdministrator,WorkplaceSupervisor,InternshipPlacement,LogbookEntry,Evaluation,Issue)
 
@@ -8,4 +9,5 @@ admin.site.register(WorkplaceSupervisor)
 admin.site.register(InternshipPlacement)
 admin.site.register(LogbookEntry)
 admin.site.register(Evaluation)
-admin.site.register(Issue)
+admin.site.register(Issue) 
+
