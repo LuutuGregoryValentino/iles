@@ -53,7 +53,7 @@ export default function DashHeader({
 
       {/* Right: theme toggle + notifications + user menu */}
       <div className="dh-right">
-        {/* Theme toggle */}
+        {/* Theme toggle button */}
         <button
           className="btn-icon"
           onClick={onToggleTheme}

@@ -3,18 +3,22 @@ from rest_framework import serializers
 
 def validate_strong_password(password):
     """
-    to check if password is strong enough
+    Checks password strength and raises a ValidationError listing all
+    failures at once so the user knows exactly what to fix.
     """
     errors = []
 
     if len(password) < 8:
-        errors.append("password must be at least 8 characters.")
+        errors.append("Password must be at least 8 characters.")
 
-    if not re.search(r'[A-Z]',password):
-       errors.append("must have atleast one uppercase letter.")
+    if not re.search(r'[A-Z]', password):
+        errors.append("Password must contain at least one uppercase letter.")
 
-    if not re.search(r'[a-z]',password):
-        errors.append('must have atleast one lowercase letter')
+    if not re.search(r'[a-z]', password):
+        errors.append("Password must contain at least one lowercase letter.")
 
-    if not re.search(r'[0-9]',password):
-        errors.append("must have atleast one number 0-9")
+    if not re.search(r'[0-9]', password):
+        errors.append("Password must contain at least one number (0–9).")
+
+    if errors:
+        raise serializers.ValidationError(errors)

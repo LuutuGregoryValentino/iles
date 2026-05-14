@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './styles/global.css';
-import { NotificationProvider } from './context/NotificationContext';
+import { useNotifications } from './context/NotificationContext';
 import LandingPage from './features/Landing/LandingPage';
 import AuthShell from './features/Auth/AuthShell';
 import PendingApproval from './features/Auth/PendingApproval';
@@ -59,6 +59,8 @@ function App() {
     } catch { return null; }
   });
 
+  const { clearNotifications } = useNotifications();
+
 
 
 
@@ -96,14 +98,14 @@ function App() {
     sessionStorage.removeItem('iles_session'); // dletes the session
     setCurrentUser(null);
     setScreen('auth'); 
+    clearNotifications();
   };
 
   return (
-    <NotificationProvider>
-      <div className="App">
+    <div className="App">
 
-        {/* for new visitors and un approved users*/}
-        {screen === 'landing' && (
+      {/* for new visitors and un approved users*/}
+      {screen === 'landing' && (
           <LandingPage
             onGetStarted={() => setScreen('auth')}
             theme={theme}
@@ -145,8 +147,7 @@ function App() {
           />
         )}
 
-      </div>
-    </NotificationProvider>
+    </div>
   );
 }
 
