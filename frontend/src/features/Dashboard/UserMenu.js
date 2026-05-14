@@ -1,14 +1,13 @@
-/**
- * UserMenu.js
- *
- * Clickable avatar dropdown in the header.
- * Shows: user info, profile completion status, "Edit Profile" link, sign out.
- *
- * Props:
- *   currentUser      — user object
- *   profileComplete  — boolean from useProfileStatus
- *   onOpenProfile    — opens the ProfileModal
- *   onLogout         — logs out
+/*UserMenu.js
+
+ Clickable avatar dropdown in the header.
+ Shows: user info, profile completion status, "Edit Profile" link, sign out.
+
+ Props:
+   currentUser      — user object
+   profileComplete  — boolean from useProfileStatus
+   onOpenProfile    — opens the ProfileModal
+   onLogout         — logs out
  */
 import React, { useState, useRef, useEffect } from 'react';
 import { authAPI } from '../../services/api';
