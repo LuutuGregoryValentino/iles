@@ -121,8 +121,9 @@ class EvaluationSerializer(serializers.ModelSerializer):
     grade       = serializers.ReadOnlyField()
 
     class Meta:
-        model  = Evaluation
-        fields = '__all__'
+        model            = Evaluation
+        fields           = '__all__'
+        read_only_fields = ['supervisor', 'submission_date']
 
     def validate(self, data):
         placement = data.get('placement') or (self.instance.placement if self.instance else None)
