@@ -5,8 +5,10 @@ import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 load_dotenv()
 
+# ── Security ──────────────────────────────────────────────────────────────────
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     'django-insecure-z@$_&)_fq^v9ck6n3nett7_a2nccc=b5q5m!yrdc-8sidi46eq'
@@ -19,6 +21,7 @@ ALLOWED_HOSTS = os.environ.get(
     'localhost,127.0.0.1,.onrender.com'
 ).split(',')
 
+# ── Apps ──────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -29,13 +32,14 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',
+    'rest_framework_simplejwt.token_blacklist',   # ← enables logout blacklisting
     'iles_models_app',
 ]
 
-AUTH_USER_MODEL    = 'iles_models_app.User'
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AUTH_USER_MODEL      = 'iles_models_app.User'
+DEFAULT_AUTO_FIELD   = 'django.db.models.BigAutoField'
 
+# ── Middleware ─────────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -48,10 +52,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Allow all origins — fixes mobile phone login issues
-CORS_ALLOW_ALL_ORIGINS  = True
-CORS_ALLOW_CREDENTIALS  = True
+# ── CORS ──────────────────────────────────────────────────────────────────────
+# CORS_ALLOWED_ORIGINS env var: comma-separated list of allowed frontend origins.
+# Set this in your Render dashboard so it doesn't need a code change when the
+# frontend URL changes.
+_cors_env = os.environ.get(
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:3000,http://127.0.0.1:3000,https://iles-nine.vercel.app'
+)
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_env.split(',')]
+CORS_ALLOW_CREDENTIALS = True
 
+# ── REST Framework & JWT ──────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -70,20 +82,27 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-ROOT_URLCONF      = 'my_project.urls'
-WSGI_APPLICATION  = 'my_project.wsgi.application'
+# ── URLs & Templates ──────────────────────────────────────────────────────────
+ROOT_URLCONF = 'my_project.urls'
 
-TEMPLATES = [{
-    'BACKEND': 'django.template.backends.django.DjangoTemplates',
-    'DIRS': [],
-    'APP_DIRS': True,
-    'OPTIONS': {'context_processors': [
-        'django.template.context_processors.request',
-        'django.contrib.auth.context_processors.auth',
-        'django.contrib.messages.context_processors.messages',
-    ]},
-}]
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
+WSGI_APPLICATION = 'my_project.wsgi.application'
+
+# ── Database — Neon PostgreSQL ────────────────────────────────────────────────
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
@@ -93,6 +112,7 @@ DATABASES = {
     )
 }
 
+# ── Password validation ───────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -100,21 +120,22 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# ── Internationalisation ──────────────────────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE     = 'Africa/Kampala'
 USE_I18N      = True
 USE_TZ        = True
 
+# ── Static & Media ────────────────────────────────────────────────────────────
 STATIC_URL          = 'static/'
 STATIC_ROOT         = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-MEDIA_URL           = '/media/'
-MEDIA_ROOT          = BASE_DIR / 'media'
 
-EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST          = 'smtp.gmail.com'
-EMAIL_PORT          = 587
-EMAIL_USE_TLS       = True
-EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL  = f'ILES Makerere <{os.environ.get("EMAIL_HOST_USER", "noreply@iles.mak.ac.ug")}>'
+#Email notifications settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST    = 'smtp.gmail.com'
+EMAIL_PORT    =  587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@gmail.com' #this has to be changed
+EMAIL_HOST_PASSWORD = 'your-app-password-here' #Fill in your Gmail app password
+DEFAULT_FROM_EMAIL  = 'ILES Portal <your-email@gmail.com>'
