@@ -1,24 +1,22 @@
-/**
- * NotificationContext.js
- *
- * Global notification system. Any component can push a notification.
- * The bell in DashHeader subscribes to this context.
- *
- * Notification shape:
- * {
- *   id:       string   (auto-generated)
- *   type:     'info' | 'success' | 'warn' | 'danger'
- *   title:    string
- *   body:     string   (optional)
- *   read:     boolean
- *   ts:       Date
- *   action?:  { label: string, sectionId: string }  — nav shortcut
- * }
- *
- * USAGE (in any component):
- *   const { push } = useNotifications();
- *   push({ type: 'warn', title: 'Logbook pending', body: '3 logbooks need review.' });
- */
+/*
+NotificationContext.js
+
+any componet can use this to push a notification 
+
+notigfication shape 
+ id:       string   (auto gen)
+ type:     'info' | 'success' | 'warn' | 'danger'
+body:     string   (optional)
+  title:    string
+ read:     boolean
+ ts:       Date
+ action?:  { label: string, sectionId: string }  — nav shortcut
+ }
+
+usage
+  const { push } = useNotifications()
+  push({ type: 'warn', title: 'Logbook pending', body: '3 logbooks need review.' })
+*/
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const NotifCtx = createContext(null);
