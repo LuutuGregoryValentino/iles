@@ -1,70 +1,178 @@
 /**
  * NotificationContext.js
  *
- * Global notification system. Any component can push a notification.
- * The bell in DashHeader subscribes to this context.
+ * Global notification system for the entire app.
+ * Any component can push notifications that appear
+ * in the dashboard bell/header.
  *
  * Notification shape:
  * {
- *   id:       string   (auto-generated)
- *   type:     'info' | 'success' | 'warn' | 'danger'
- *   title:    string
- *   body:     string   (optional)
- *   read:     boolean
- *   ts:       Date
- *   action?:  { label: string, sectionId: string }  — nav shortcut
+ *   id: string,
+ *   type: 'info' | 'success' | 'warn' | 'danger',
+ *   title: string,
+ *   body?: string,
+ *   read: boolean,
+ *   ts: string,
+ *   action?: {
+ *      label: string,
+ *      sectionId: string
+ *   }
  * }
  *
- * USAGE (in any component):
- *   const { push } = useNotifications();
- *   push({ type: 'warn', title: 'Logbook pending', body: '3 logbooks need review.' });
+ * Usage:
+ * const { push } = useNotifications();
+ *
+ * push({
+ *   type: 'warn',
+ *   title: 'Pending Reviews',
+ *   body: '3 logbooks need review.'
+ * });
  */
-import React, { createContext, useContext, useState, useCallback } from 'react';
 
-const NotifCtx = createContext(null);
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+} from 'react';
 
-let _id = 0;
-const uid = () => `n_${++_id}_${Date.now()}`;
+const NotificationContext = createContext(null);
 
+const STORAGE_KEY = 'iles_notifications';
+
+/* ─────────────────────────────────────────────
+   Generate Unique Notification ID
+───────────────────────────────────────────── */
+const generateId = () =>
+  `notif_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+/* ─────────────────────────────────────────────
+   Provider
+───────────────────────────────────────────── */
 export function NotificationProvider({ children }) {
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+      return [];
+    }
+  });
 
+  /* ──────────────────────────────────────────
+     Persist notifications to localStorage
+  ─────────────────────────────────────────── */
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(notifications)
+      );
+    } catch (error) {
+      console.error('Failed to save notifications:', error);
+    }
+  }, [notifications]);
+
+  /* ──────────────────────────────────────────
+     Push Notification
+  ─────────────────────────────────────────── */
   const push = useCallback((notif) => {
+    const newNotification = {
+      id: generateId(),
+      type: 'info',
+      read: false,
+      ts: new Date().toISOString(),
+      ...notif,
+    };
+
     setNotifications(prev => [
-      { id: uid(), read: false, ts: new Date(), ...notif },
+      newNotification,
       ...prev,
-    ].slice(0, 50)); // cap at 50
+    ].slice(0, 50)); // Keep latest 50
   }, []);
 
+  /* ──────────────────────────────────────────
+     Mark One As Read
+  ─────────────────────────────────────────── */
   const markRead = useCallback((id) => {
     setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
+      prev.map(notification =>
+        notification.id === id
+          ? { ...notification, read: true }
+          : notification
+      )
     );
   }, []);
 
+  /* ──────────────────────────────────────────
+     Mark All As Read
+  ─────────────────────────────────────────── */
   const markAllRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications(prev =>
+      prev.map(notification => ({
+        ...notification,
+        read: true,
+      }))
+    );
   }, []);
 
+  /* ──────────────────────────────────────────
+     Remove Notification
+  ─────────────────────────────────────────── */
   const dismiss = useCallback((id) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications(prev =>
+      prev.filter(notification => notification.id !== id)
+    );
   }, []);
 
+  /* ──────────────────────────────────────────
+     Clear Everything
+  ─────────────────────────────────────────── */
   const clearNotifications = useCallback(() => {
     setNotifications([]);
   }, []);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  /* ──────────────────────────────────────────
+     Unread Count
+  ─────────────────────────────────────────── */
+  const unreadCount = useMemo(() => {
+    return notifications.filter(n => !n.read).length;
+  }, [notifications]);
+
+  /* ──────────────────────────────────────────
+     Context Value
+  ─────────────────────────────────────────── */
+  const value = {
+    notifications,
+    unreadCount,
+    push,
+    markRead,
+    markAllRead,
+    dismiss,
+    clearNotifications,
+  };
 
   return (
-    <NotifCtx.Provider value={{ notifications, push, markRead, markAllRead, dismiss, clearNotifications, unreadCount }}>
+    <NotificationContext.Provider value={value}>
       {children}
-    </NotifCtx.Provider>
+    </NotificationContext.Provider>
   );
 }
 
+/* ─────────────────────────────────────────────
+   Custom Hook
+───────────────────────────────────────────── */
 export function useNotifications() {
-  const ctx = useContext(NotifCtx);
-  if (!ctx) throw new Error('useNotifications must be inside NotificationProvider');
-  return ctx;
+  const context = useContext(NotificationContext);
+
+  if (!context) {
+    throw new Error(
+      'useNotifications must be used inside NotificationProvider'
+    );
+  }
+
+  return context;
 }
