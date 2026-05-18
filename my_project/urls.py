@@ -9,3 +9,4 @@ urlpatterns = [
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# This line is used to serve media files during development. In production, you would typically serve media files using a web server like Nginx or Apache.
