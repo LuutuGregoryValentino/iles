@@ -93,16 +93,19 @@ function App() {
     }
   };
 
+  
+
   const handleLogout = () => {
     localStorage.clear();
     sessionStorage.removeItem('iles_session'); // dletes the session
     setCurrentUser(null);
     setScreen('auth'); 
-    clearNotifications();
+    // clearNotifications();
   };
 
   return (
     <NotificationProvider>
+
       <div className="App">
 
         {/* for new visitors and un approved users*/}
