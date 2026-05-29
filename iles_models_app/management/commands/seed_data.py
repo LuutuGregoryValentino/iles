@@ -25,7 +25,7 @@ class Command(BaseCommand):
         # ── 1. USERS ──────────────────────────────────────────────────────────
 
         student_user, created = User.objects.get_or_create(
-            email='gregory@iles.ac.ug',
+            email='luutugregory@gmail.com',
             defaults=dict(
                 username='gregory',
                 university_id='467389',
@@ -42,7 +42,7 @@ class Command(BaseCommand):
             self.stdout.write('  Student user already exists — skipping.')
 
         admin_user, created = User.objects.get_or_create(
-            email='admin@iles.ac.ug',
+            email='snowchildwolf@gmail.com',
             defaults=dict(
                 username='iles_admin',
                 university_id='ADM001',
@@ -59,7 +59,7 @@ class Command(BaseCommand):
             self.stdout.write('  Admin user already exists — skipping.')
 
         wp_user, created = User.objects.get_or_create(
-            email='wp.supervisor@company.com',
+            email='raur734@gmail.com',
             defaults=dict(
                 username='wp_supervisor',
                 university_id='WP001',
@@ -76,7 +76,7 @@ class Command(BaseCommand):
             self.stdout.write('  Workplace supervisor user already exists — skipping.')
 
         ac_user, created = User.objects.get_or_create(
-            email='ac.supervisor@mak.ac.ug',
+            email='rahmaluutun@gmail.com',
             defaults=dict(
                 username='ac_supervisor',
                 university_id='STAFF001',
