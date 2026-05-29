@@ -1,17 +1,14 @@
-/**
- * ProfileForm.js — Student profile setup
- *
- * Rendered as a modal overlay inside Dashboard on first login.
- * Non-student roles skip this entirely (gated in App.js → Dashboard).
- *
- * ┌──────────────────────────────────────────────────┐
- * │ WHO SEES THIS: student role only, on first login │
- * │ CONDITION: needsProfile === true (App.js)         │
- * └──────────────────────────────────────────────────┘
- *
- * BUG FIXED: Original sent year_of_study and semester as strings;
- * the API expected integers. Now explicitly parsed.
+/* 
+rendered as a modal overlay inside Dashboard on first login.
+Non-student roles skip this entirely (gated in App.js... Dashboard).
+
+CONDITION: needsProfile === true ..........  in app.js        
+
+
+BUG FIXED: Original sent year_of_study and semester as strings;
+the API expected integers. Now explicitly parsed.
  */
+
 import React, { useState } from 'react';
 import { studentsAPI } from '../../services/api';
 
