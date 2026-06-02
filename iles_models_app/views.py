@@ -336,8 +336,10 @@ def issue_list(request):
     s = IssueSerializer(data=request.data)
     if s.is_valid():
         issue = s.save(student=request.user)
-    # sending email to supervisors
-        notify_supervisors_issue_submitted(issue)
+        try:
+            notify_supervisors_issue_submitted(issue)
+        except Exception:
+            pass   # email failure must never block the API response
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 

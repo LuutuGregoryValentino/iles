@@ -115,11 +115,19 @@ def notify_supervisors_logbook_submitted(logbook):
 
 #NOTIFICATION WHEN AN ISSUE HAS BEEN SUBMITTED
 def notify_supervisors_issue_submitted(issue):
-    placement = issue.placement
+    # Issue has no direct placement field — look it up via the student
+    try:
+        placement = issue.student.student_profile.placement
+    except Exception:
+        return   # student has no profile or no placement yet — skip email silently
+
     if not placement:
         return
 
-    student_name = issue.student.student_profile.student_name
+    try:
+        student_name = issue.student.student_profile.student_name
+    except Exception:
+        student_name = issue.student.username
     subject = f"New Issue Submitted — {issue.title}"
     message_template = lambda name: f"""
         <h3>Hello {name},</h3>
