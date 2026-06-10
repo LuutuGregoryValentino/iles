@@ -59,7 +59,7 @@ function App() {
     } catch { return null; }
   });
 
-  const { clearNotifications } = useNotifications();
+  // const { clearNotifications } = useNotifications();
 
 
 
