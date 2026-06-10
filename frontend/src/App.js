@@ -100,7 +100,7 @@ function App() {
     sessionStorage.removeItem('iles_session'); // dletes the session
     setCurrentUser(null);
     setScreen('auth'); 
-    clearNotifications();
+    // clearNotifications();
   };
 
   return (
