@@ -426,7 +426,7 @@ class CurrentUserAPITests(TestCase):
  #APROVAL API TESTS
 class ApproveUserAPITests(TestCase):
     """
-    Location: iles_models_app/tests.py → class ApproveUserAPITests
+    Location: iles_models_app/tests.py = class ApproveUserAPITests
     Endpoint: PATCH /api/auth/approve/<pk>/
     """
 
@@ -512,6 +512,46 @@ class PendingUsersAPITests(TestCase):
 
     def test_unauthenticated_returns_401(self):
         res = self.client.get("/api/auth/pending/")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+#stuudent profile API tests 
+class StudentViewSetTests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class StudentViewSetTests
+    Endpoints: GET/POST /api/students/  |  GET/PUT/PATCH/DELETE /api/students/<pk>/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = make_user()
+        self.client.force_authenticate(user=self.user)
+
+    def test_create_student_profile(self):
+        res = self.client.post("/api/students/", {
+            "user": self.user.id, "student_id": "26/U/001",
+            "student_name": "Bob", "course": "BSc IT",
+            "year_of_study": 1, "semester": 2,
+        })
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+    def test_list_only_own_profile_for_student(self):
+        make_student_profile(self.user)
+        other_user = make_user(email="o@test.com", university_id="O002", username="ou")
+        make_student_profile(other_user, student_id="S002", name="Other")
+        res = self.client.get("/api/students/")
+        self.assertEqual(len(res.data), 1)
+
+    def test_admin_sees_all_students(self):
+        make_student_profile(self.user)
+        admin = make_user(email="adm@test.com", role="administrator",
+                          university_id="ADM01", username="adm", is_approved=True)
+        self.client.force_authenticate(user=admin)
+        res = self.client.get("/api/students/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_unauthenticated_returns_401(self):
+        self.client.force_authenticate(user=None)
+        res = self.client.get("/api/students/")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
