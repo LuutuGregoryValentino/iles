@@ -897,3 +897,70 @@ class AdminListAPITests(TestCase):
         res = self.client.get("/api/admins/")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
+ SERIALIZER TESTS
+
+
+class PlacementSerializerTests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class PlacementSerializerTests
+    Tests: InternshipPlacementSerializer.validate()
+    """
+
+    def setUp(self):
+        self.user = make_user()
+        self.student = make_student_profile(self.user)
+
+    def test_end_before_start_invalid(self):
+        from .serializers import InternshipPlacementSerializer
+        data = {
+            "organization_name": "Org",
+            "position": "Intern",
+            "start_date": "2025-09-01",
+            "end_date": "2025-06-01",
+            "student": self.student.id,
+        }
+        s = InternshipPlacementSerializer(data=data)
+        self.assertFalse(s.is_valid())
+
+    def test_valid_dates_pass(self):
+        from .serializers import InternshipPlacementSerializer
+        data = {
+            "organization_name": "Org",
+            "position": "Intern",
+            "start_date": "2025-06-01",
+            "end_date": "2025-08-31",
+            "student": self.student.id,
+        }
+        s = InternshipPlacementSerializer(data=data)
+        self.assertTrue(s.is_valid(), s.errors)
+
+
+class EvaluationSerializerTests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class EvaluationSerializerTests
+    Tests: EvaluationSerializer.validate() (no duplicate placement)
+    """
+
+    def setUp(self):
+        self.user = make_user()
+        self.student = make_student_profile(self.user)
+        self.placement = make_placement(self.student)
+        self.supervisor = make_user(
+            email="sup@test.com", role="academic_supervisor",
+            university_id="SUP1", username="sup1", is_approved=True,
+        )
+
+    def test_duplicate_placement_invalid(self):
+        from .serializers import EvaluationSerializer
+        make_evaluation(self.placement, self.supervisor)
+        data = {
+            "placement": self.placement.id,
+            "supervisor": self.supervisor.id,
+            "workplace_score": 70,
+            "academic_score": 70,
+            "logbook_score": 70,
+            "feedback": "Second eval",
+        }
+        s = EvaluationSerializer(data=data)
+        self.assertFalse(s.is_valid())
+
