@@ -277,4 +277,149 @@ class EvaluationModelTests(TestCase):
     def test_grade_F(self):
         self.assertEqual(self._eval(30, 30, 30).grade, "F")
 
+
+#AUTH API TESTS
+
+class RegisterAPITests(TestCase):
+    """
+    Location: iles_models_app/tests.py =class RegisterAPITests
+    Endpoint: POST /api/auth/register/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+
+    @patch("iles_models_app.views.send_welcome_email")
+    def test_register_student_success(self, mock_email):
+        res = self.client.post("/api/auth/register/", {
+            "email": "new@test.com", "username": "newuser",
+            "university_id": "26/U/100", "role": "student", "password": "Secure1",
+        })
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertIn("access", res.data)
+        self.assertIn("refresh", res.data)
+        mock_email.assert_called_once()
+
+    @patch("iles_models_app.views.send_welcome_email")
+    def test_register_missing_fields_returns_400(self, _):
+        res = self.client.post("/api/auth/register/", {"email": "x@x.com"})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch("iles_models_app.views.send_welcome_email")
+    def test_register_duplicate_email_returns_400(self, _):
+        make_user()
+        res = self.client.post("/api/auth/register/", {
+            "email": "test@iles.com", "username": "other",
+            "university_id": "26/U/999", "role": "student", "password": "Secure1",
+        })
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch("iles_models_app.views.send_welcome_email")
+    def test_register_duplicate_university_id_returns_400(self, _):
+        make_user()
+        res = self.client.post("/api/auth/register/", {
+            "email": "other@test.com", "username": "other2",
+            "university_id": "25/U/0001",  # duplicate
+            "role": "student", "password": "Secure1",
+        })
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class LoginAPITests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class LoginAPITests
+    Endpoint: POST /api/auth/login/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.student = make_user()  # students are auto-approved
+
+    def test_login_valid_credentials(self):
+        res = self.client.post("/api/auth/login/", {
+            "email": "test@iles.com", "password": "Testpass1",
+        })
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("access", res.data)
+
+    def test_login_wrong_password(self):
+        res = self.client.post("/api/auth/login/", {
+            "email": "test@iles.com", "password": "WrongPass",
+        })
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_login_unknown_user(self):
+        res = self.client.post("/api/auth/login/", {
+            "email": "ghost@test.com", "password": "Testpass1",
+        })
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_login_missing_fields_returns_400(self):
+        res = self.client.post("/api/auth/login/", {})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_unapproved_supervisor_blocked(self):
+        sup = make_user(email="sup@test.com", role="academic_supervisor",
+                        university_id="S002", username="sup1")
+        res = self.client.post("/api/auth/login/", {
+            "email": "sup@test.com", "password": "Testpass1",
+        })
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_approved_supervisor_can_login(self):
+        sup = make_user(email="sup2@test.com", role="academic_supervisor",
+                        university_id="S003", username="sup2", is_approved=True)
+        res = self.client.post("/api/auth/login/", {
+            "email": "sup2@test.com", "password": "Testpass1",
+        })
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+
+class LogoutAPITests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class LogoutAPITests
+    Endpoint: POST /api/auth/logout/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = make_user()
+
+    def test_logout_with_valid_token(self):
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh = str(RefreshToken.for_user(self.user))
+        self.client.force_authenticate(user=self.user)
+        res = self.client.post("/api/auth/logout/", {"refresh": refresh})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_logout_with_invalid_token_returns_400(self):
+        self.client.force_authenticate(user=self.user)
+        res = self.client.post("/api/auth/logout/", {"refresh": "bad_token"})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logout_requires_auth(self):
+        res = self.client.post("/api/auth/logout/", {"refresh": "anything"})
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class CurrentUserAPITests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class CurrentUserAPITests
+    Endpoint: GET /api/auth/me/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_returns_own_data_when_authenticated(self):
+        user = make_user()
+        self.client.force_authenticate(user=user)
+        res = self.client.get("/api/auth/me/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["email"], user.email)
+
+    def test_unauthenticated_returns_401(self):
+        res = self.client.get("/api/auth/me/")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
  
