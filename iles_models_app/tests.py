@@ -423,3 +423,95 @@ class CurrentUserAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
  
+ #APROVAL API TESTS
+class ApproveUserAPITests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class ApproveUserAPITests
+    Endpoint: PATCH /api/auth/approve/<pk>/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.admin = make_user(
+            email="admin@test.com", role="administrator",
+            university_id="ADM001", username="admin1", is_approved=True,
+        )
+        self.pending_sup = make_user(
+            email="pending@test.com", role="academic_supervisor",
+            university_id="SUP001", username="sup1",
+        )
+
+    def test_admin_can_approve_user(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.patch(
+            f"/api/auth/approve/{self.pending_sup.pk}/", {"is_approved": True}
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.pending_sup.refresh_from_db()
+        self.assertTrue(self.pending_sup.is_approved)
+
+    def test_non_admin_cannot_approve(self):
+        student = make_user()
+        self.client.force_authenticate(user=student)
+        res = self.client.patch(
+            f"/api/auth/approve/{self.pending_sup.pk}/", {"is_approved": True}
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_unapproved_admin_cannot_approve(self):
+        unapproved_admin = make_user(
+            email="uadm@test.com", role="administrator",
+            university_id="ADM002", username="adm2",
+        )
+        self.client.force_authenticate(user=unapproved_admin)
+        res = self.client.patch(
+            f"/api/auth/approve/{self.pending_sup.pk}/", {"is_approved": True}
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_approve_nonexistent_user_returns_404(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.patch("/api/auth/approve/99999/", {"is_approved": True})
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch("iles_models_app.views.notify_user_approved")
+    def test_approval_email_sent_once(self, mock_notify):
+        self.client.force_authenticate(user=self.admin)
+        self.client.patch(
+            f"/api/auth/approve/{self.pending_sup.pk}/", {"is_approved": True}
+        )
+        mock_notify.assert_called_once_with(self.pending_sup)
+
+
+class PendingUsersAPITests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class PendingUsersAPITests
+    Endpoint: GET /api/auth/pending/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.admin = make_user(
+            email="admin@test.com", role="administrator",
+            university_id="ADM001", username="admin1", is_approved=True,
+        )
+
+    def test_admin_sees_pending_users(self):
+        make_user(email="pend@test.com", role="academic_supervisor",
+                  university_id="S101", username="pend1")
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.get("/api/auth/pending/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(res.data), 1)
+
+    def test_student_cannot_see_pending(self):
+        student = make_user()
+        self.client.force_authenticate(user=student)
+        res = self.client.get("/api/auth/pending/")
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_unauthenticated_returns_401(self):
+        res = self.client.get("/api/auth/pending/")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
