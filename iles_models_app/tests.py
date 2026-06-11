@@ -130,5 +130,151 @@ def make_issue(student_user, placement=None):
         description="Something is wrong",
     )
  
+## MODEL TESTS
+
+class UserModelTests(TestCase):
+    """
+    Location: iles_models_app/tests.py =class UserModelTests
+    Tests: User.save() role logic, __str__, USERNAME_FIELD
+    """
+ 
+    def test_student_is_auto_approved(self):
+        user = make_user(role="student")
+        self.assertTrue(user.is_approved)
+ 
+    def test_supervisor_not_auto_approved(self):
+        user = make_user(role="academic_supervisor", email="sup@test.com",
+                         university_id="S002", username="sup1")
+        self.assertFalse(user.is_approved)
+ 
+    def test_administrator_not_auto_approved(self):
+        user = make_user(role="administrator", email="adm@test.com",
+                         university_id="A001u", username="adm1")
+        self.assertFalse(user.is_approved)
+ 
+    def test_str_format(self):
+        user = make_user()
+        self.assertIn(user.email, str(user))
+ 
+    def test_username_field_is_email(self):
+        self.assertEqual(User.USERNAME_FIELD, "email")
+ 
+ 
+class InternshipPlacementModelTests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class InternshipPlacementModelTests
+    Tests: clean() date validation, overlap validation
+    """
+ 
+    def setUp(self):
+        self.user = make_user()
+        self.student = make_student_profile(self.user)
+ 
+    def test_end_before_start_raises(self):
+        placement = InternshipPlacement(
+            organization_name="Org",
+            position="Intern",
+            start_date=datetime.date(2025, 8, 1),
+            end_date=datetime.date(2025, 6, 1),
+            student=self.student,
+        )
+        with self.assertRaises(ValidationError):
+            placement.clean()
+ 
+    def test_overlapping_placement_raises(self):
+        make_placement(self.student)  # first placement Jun–Aug 2025
+        overlap = InternshipPlacement(
+            organization_name="Other Org",
+            position="Intern",
+            start_date=datetime.date(2025, 7, 1),
+            end_date=datetime.date(2025, 9, 30),
+            student=self.student,
+        )
+        with self.assertRaises(ValidationError):
+            overlap.clean()
+ 
+    def test_valid_placement_no_exception(self):
+        p = make_placement(self.student)
+        p.clean()  # should not raise
+ 
+ 
+class LogbookEntryModelTests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class LogbookEntryModelTests
+    Tests: hours validation in clean(), unique_together, save() calls full_clean()
+    """
+ 
+    def setUp(self):
+        self.user = make_user()
+        self.student = make_student_profile(self.user)
+        self.placement = make_placement(self.student)
+ 
+    def test_negative_hours_raises(self):
+        entry = LogbookEntry(
+            placement=self.placement, week_number=1,
+            start_date=datetime.date(2025, 6, 1),
+            end_date=datetime.date(2025, 6, 7),
+            tasks_done="Tasks", hours_worked=Decimal("-1"),
+        )
+        with self.assertRaises(ValidationError):
+            entry.clean()
+ 
+    def test_over_120_hours_raises(self):
+        entry = LogbookEntry(
+            placement=self.placement, week_number=1,
+            start_date=datetime.date(2025, 6, 1),
+            end_date=datetime.date(2025, 6, 7),
+            tasks_done="Tasks", hours_worked=Decimal("121"),
+        )
+        with self.assertRaises(ValidationError):
+            entry.clean()
+ 
+    def test_valid_hours_no_exception(self):
+        entry = LogbookEntry(
+            placement=self.placement, week_number=1,
+            start_date=datetime.date(2025, 6, 1),
+            end_date=datetime.date(2025, 6, 7),
+            tasks_done="Tasks", hours_worked=Decimal("40"),
+        )
+        entry.clean()  # should not raise
+ 
+    def test_duplicate_week_raises(self):
+        make_logbook(self.placement, week=1)
+        with self.assertRaises(Exception):  # IntegrityError or ValidationError
+            make_logbook(self.placement, week=1)
+ 
+ 
+class EvaluationModelTests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class EvaluationModelTests
+    Tests: total_score property, grade property
+    """
+ 
+    def setUp(self):
+        self.user = make_user()
+        self.student = make_student_profile(self.user)
+        self.placement = make_placement(self.student)
+ 
+    def _eval(self, wp, ac, lb):
+        sup = make_user(email="s@s.com", role="academic_supervisor",
+                        university_id="X99", username="sup99", is_approved=True)
+        return Evaluation(
+            placement=self.placement, supervisor=sup,
+            workplace_score=wp, academic_score=ac,
+            logbook_score=lb, feedback="OK",
+        )
+ 
+    def test_total_score_formula(self):
+        e = self._eval(80, 70, 60)
+        self.assertAlmostEqual(e.total_score, 71.0)
+ 
+    def test_grade_A(self):
+        self.assertEqual(self._eval(100, 100, 100).grade, "A")
+ 
+    def test_grade_B(self):
+        self.assertEqual(self._eval(70, 70, 70).grade, "B")
+ 
+    def test_grade_F(self):
+        self.assertEqual(self._eval(30, 30, 30).grade, "F")
 
  
