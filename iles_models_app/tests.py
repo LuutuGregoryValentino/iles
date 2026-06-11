@@ -611,6 +611,116 @@ class PlacementViewSetTests(TestCase):
         res = self.client.get("/api/placements/")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
+#logbook API tests
 
+
+class LogbookListAPITests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class LogbookListAPITests
+    Endpoint: GET/POST /api/logbooks/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.student_user = make_user()
+        self.student = make_student_profile(self.student_user)
+        self.placement = make_placement(self.student)
+
+    def test_student_can_create_logbook(self):
+        self.client.force_authenticate(user=self.student_user)
+        res = self.client.post("/api/logbooks/", {
+            "placement": self.placement.id,
+            "week_number": 1,
+            "start_date": "2025-06-01",
+            "end_date": "2025-06-07",
+            "tasks_done": "Set up dev environment",
+            "hours_worked": "40.00",
+            "challenges": "None",
+        })
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+    def test_student_only_sees_own_logbooks(self):
+        make_logbook(self.placement, week=1)
+        other_user = make_user(email="o@test.com", university_id="OO1", username="ou")
+        other_st = make_student_profile(other_user, student_id="S999")
+        other_pl = make_placement(other_st)
+        make_logbook(other_pl, week=1)
+
+        self.client.force_authenticate(user=self.student_user)
+        res = self.client.get("/api/logbooks/")
+        self.assertEqual(len(res.data), 1)
+
+    def test_unauthenticated_returns_401(self):
+        res = self.client.get("/api/logbooks/")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class LogbookDetailAPITests(TestCase):
+    """
+    Location: iles_models_app/tests.py = class LogbookDetailAPITests
+    Endpoint: GET/PATCH /api/logbooks/<pk>/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.student_user = make_user()
+        self.student = make_student_profile(self.student_user)
+        self.placement = make_placement(self.student)
+        self.logbook = make_logbook(self.placement)
+        self.supervisor = make_user(
+            email="sup@test.com", role="academic_supervisor",
+            university_id="SUP1", username="sup1", is_approved=True,
+        )
+
+    def test_get_logbook_detail(self):
+        self.client.force_authenticate(user=self.student_user)
+        res = self.client.get(f"/api/logbooks/{self.logbook.pk}/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["week_number"], self.logbook.week_number)
+
+    def test_get_nonexistent_logbook_returns_404(self):
+        self.client.force_authenticate(user=self.student_user)
+        res = self.client.get("/api/logbooks/99999/")
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch("iles_models_app.views.notify_supervisors_logbook_submitted")
+    def test_student_can_submit_logbook(self, mock_notify):
+        self.client.force_authenticate(user=self.student_user)
+        res = self.client.patch(
+            f"/api/logbooks/{self.logbook.pk}/",
+            {"submission_status": LogStatus.SUBMITTED},
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        mock_notify.assert_called_once()
+
+    @patch("iles_models_app.views.send_logbook_approved_email")
+    def test_supervisor_can_approve_logbook(self, mock_email):
+        self.logbook.submission_status = LogStatus.SUBMITTED
+        self.logbook.save()
+        self.client.force_authenticate(user=self.supervisor)
+        res = self.client.patch(
+            f"/api/logbooks/{self.logbook.pk}/",
+            {"submission_status": LogStatus.APPROVED},
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        mock_email.assert_called_once()
+
+    def test_student_cannot_approve_logbook(self):
+        self.client.force_authenticate(user=self.student_user)
+        res = self.client.patch(
+            f"/api/logbooks/{self.logbook.pk}/",
+            {"submission_status": LogStatus.APPROVED},
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_approved_logbook_cannot_be_edited(self):
+        self.logbook.submission_status = LogStatus.APPROVED
+        self.logbook.save()
+        self.client.force_authenticate(user=self.supervisor)
+        res = self.client.patch(
+            f"/api/logbooks/{self.logbook.pk}/",
+            {"tasks_done": "Changed tasks"},
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
 
