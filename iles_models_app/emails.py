@@ -137,11 +137,13 @@ def _send(subject: str, to: str, html: str, preview: str = ""):
         msg = EmailMultiAlternatives(
             subject    = f"[ILES] {subject}",
             body       = plain,
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', settings.EMAIL_HOST_USER),
+            #  get from_email without crashing if settings missing
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', getattr(settings, 'EMAIL_HOST_USER', 'webmaster@localhost')),
             to         = [to],
         )
         msg.attach_alternative(full_html, "text/html")
-        msg.send(fail_silently=True)
+        # fail_silently = False so  try/except block can catch and log SMTP errors
+        msg.send(fail_silently=False)
     except Exception as e:
         print(f"Email failure to {to}: {str(e)}") # Log error for debugging
 
