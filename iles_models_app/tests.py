@@ -517,8 +517,8 @@ class PendingUsersAPITests(TestCase):
 #stuudent profile API tests 
 class StudentViewSetTests(TestCase):
     """
-    Location: iles_models_app/tests.py → class StudentViewSetTests
-    Endpoints: GET/POST /api/students/  |  GET/PUT/PATCH/DELETE /api/students/<pk>/
+    Location: iles_models_app/tests.py =class StudentViewSetTests
+    Endpoints: GET/POST /api/students/  or  GET/PUT/PATCH/DELETE /api/students/<pk>/
     """
 
     def setUp(self):
@@ -553,5 +553,64 @@ class StudentViewSetTests(TestCase):
         self.client.force_authenticate(user=None)
         res = self.client.get("/api/students/")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+#placement api test
+
+class PlacementViewSetTests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class PlacementViewSetTests
+    Endpoints: GET/POST /api/placements/  |  GET/PUT/PATCH/DELETE /api/placements/<pk>/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.admin = make_user(
+            email="admin@test.com", role="administrator",
+            university_id="ADM001", username="admin1", is_approved=True,
+        )
+        self.student_user = make_user()
+        self.student_profile = make_student_profile(self.student_user)
+
+    @patch("iles_models_app.views.notify_student_placement_assigned")
+    @patch("iles_models_app.views.notify_workplace_supervisor_placement_assigned")
+    @patch("iles_models_app.views.notify_academic_supervisor_placement_assigned")
+    def test_create_placement(self, *mocks):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.post("/api/placements/", {
+            "organization_name": "BigCorp",
+            "position": "Dev Intern",
+            "start_date": "2025-06-01",
+            "end_date": "2025-08-31",
+            "student": self.student_profile.id,
+        })
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+    def test_student_sees_only_own_placements(self):
+        make_placement(self.student_profile)
+        other_user = make_user(email="o@test.com", university_id="OO99", username="ou")
+        other_student = make_student_profile(other_user, student_id="S999")
+        make_placement(other_student)
+
+        self.client.force_authenticate(user=self.student_user)
+        res = self.client.get("/api/placements/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+
+    def test_invalid_date_range_returns_400(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.post("/api/placements/", {
+            "organization_name": "Org",
+            "position": "Intern",
+            "start_date": "2025-09-01",
+            "end_date": "2025-06-01",   # end before start
+            "student": self.student_profile.id,
+        })
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_unauthenticated_returns_401(self):
+        res = self.client.get("/api/placements/")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
 
 
