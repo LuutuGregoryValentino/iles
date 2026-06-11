@@ -823,3 +823,77 @@ class EvaluationDetailAPITests(TestCase):
         res = self.client.get("/api/evaluations/99999/")
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
+
+# SUPERVISOR & ADMIN LIST API TESTS
+
+class SupervisorListAPITests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class SupervisorListAPITests
+    Endpoint: GET/POST /api/supervisors/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = make_user()
+        self.client.force_authenticate(user=self.user)
+        self.wp_user = make_user(
+            email="wp@test.com", role="workplace_supervisor",
+            university_id="WP01", username="wp1", is_approved=True,
+        )
+
+    def test_list_supervisors(self):
+        make_workplace_profile(self.wp_user)
+        res = self.client.get("/api/supervisors/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(res.data, list)
+
+    def test_create_supervisor_profile(self):
+        res = self.client.post("/api/supervisors/", {
+            "user": self.wp_user.id,
+            "supervisor_id": "WS002",
+            "supervisor_name": "New Sup",
+            "job_title": "Engineer",
+            "phone_number": "+256700000099",
+            "department": "R&D",
+        })
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+    def test_unauthenticated_returns_401(self):
+        self.client.force_authenticate(user=None)
+        res = self.client.get("/api/supervisors/")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class AdminListAPITests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class AdminListAPITests
+    Endpoint: GET/POST /api/admins/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.admin_user = make_user(
+            email="admin@test.com", role="administrator",
+            university_id="ADM001", username="admin1", is_approved=True,
+        )
+        self.client.force_authenticate(user=self.admin_user)
+
+    def test_list_admins(self):
+        make_admin_profile(self.admin_user)
+        res = self.client.get("/api/admins/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_create_admin_profile(self):
+        res = self.client.post("/api/admins/", {
+            "user": self.admin_user.id,
+            "admin_id": "ADM099",
+            "admin_name": "New Admin",
+            "department": "Registry",
+        })
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+    def test_unauthenticated_returns_401(self):
+        self.client.force_authenticate(user=None)
+        res = self.client.get("/api/admins/")
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
