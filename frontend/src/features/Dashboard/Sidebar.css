@@ -1,4 +1,4 @@
-/* ── Sidebar ── */
+/*Sidebar*/
 .sidebar {
   width: var(--sidebar-width);
   flex-shrink: 0;
@@ -18,7 +18,7 @@
   border-right: none;
 }
 
-/* ── Logo ── */
+/*Logo*/
 .sb-logo {
   display: flex;
   align-items: center;
@@ -58,7 +58,7 @@
   margin-top: 2px;
 }
 
-/* ── User badge ── */
+/*User badge*/
 .sb-user {
   display: flex;
   align-items: center;
@@ -108,7 +108,7 @@
   flex-shrink: 0;
 }
 
-/* ── Nav ── */
+/*Nav*/
 .sb-nav {
   flex: 1;
   overflow-y: auto;
@@ -160,7 +160,7 @@
   flex-shrink: 0;
 }
 
-/* ── Footer ── */
+/*Footer*/
 .sb-footer {
   padding: 14px 20px;
   border-top: 1px solid var(--border-subtle);
@@ -171,11 +171,10 @@
   color: var(--text-muted);
 }
 
-/* ── Mobile overlay ── */
+/*Mobile overlay*/
 @media (max-width: 768px) {
-  /* On mobile the sidebar is always fixed-position and full height.
-     Width stays at var(--sidebar-width) — we slide it off-screen instead
-     of collapsing to 0 width, so reopening it has no layout reflow. */
+  /* On mobile the sidebar is always fixed-position and full height. width stays at var(--sidebar-width) — we slide it off-screen instead
+     of collapsing to 0 width, so re opening it has no layout reflow. */
   .sidebar {
     position: fixed;
     top: 0; left: 0; bottom: 0;
@@ -191,7 +190,7 @@
   }
 }
 
-/* ── Team footer additions ── */
+/*Team footer additions*/
 .sb-footer {
   padding: 12px 10px;
   border-top: 1px solid var(--border-subtle);

@@ -1,6 +1,4 @@
-/* ══════════════════════════════════════════════════════
-   Dashboard shell layout
-══════════════════════════════════════════════════════ */
+/* dashboard */
 .dash-shell {
   display: flex;
   height: 100vh;
@@ -13,7 +11,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0;          /* prevent flex child from overflowing */
+  min-width: 0;          
   overflow: hidden;
 }
 
@@ -23,12 +21,12 @@
   padding: 28px 32px;
 }
 
-/* Panel fade-in on section switch */
+
 .panel-wrapper {
   animation: fadeIn var(--dur-slow) var(--ease-out) both;
 }
 
-/* ── Section headings ── */
+/* section headings */
 .panel-title {
   font-family: 'Outfit', sans-serif;
   font-size: 22px;
@@ -42,7 +40,7 @@
   margin-bottom: 24px;
 }
 
-/* ── Stat grid ── */
+/*statistic grid */
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -50,22 +48,19 @@
   margin-bottom: 28px;
 }
 
-/* ── Two-column layout ── */
+/* two colum layout */
 .dash-two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
-/* ── Form state classes ── */
+/*form state classes */
 .input-ok  { border-color: var(--brand-green-light) !important; }
 .input-err { border-color: var(--brand-red-light)   !important; }
 
-/* ══════════════════════════════════════════════════════
-   MOBILE OVERLAY BACKDROP
-   Sits between the sidebar and the main content.
-   Tapping it closes the sidebar and shows the last panel.
-══════════════════════════════════════════════════════ */
+/*mbile overlay backdrops*/
+
 .sb-backdrop {
   display: none;
   position: fixed;
@@ -77,11 +72,9 @@
   animation: fadeIn var(--dur-med) var(--ease-out) both;
 }
 
-/* ══════════════════════════════════════════════════════
-   RESPONSIVE BREAKPOINTS
-══════════════════════════════════════════════════════ */
+/* RESPONSIVE BREAKPOINTS */
 
-/* ── Tablet (900px) ── */
+/* Tablet APPROX 900px   */
 @media (max-width: 900px) {
   .dash-two-col {
     grid-template-columns: 1fr;
@@ -91,20 +84,19 @@
   }
 }
 
-/* ── Mobile (768px) ── */
+/* Mobile APPROX 768px */
 @media (max-width: 768px) {
   .dash-content {
     padding: 16px;
   }
 
-  /* Show the backdrop when sidebar is open on mobile */
+  /* SHOWS bcakdrop when the sidebar is open on mobilee */
   .dash-shell.mobile-sidebar-open .sb-backdrop {
     display: block;
   }
 
-  /* On mobile with sidebar open, main content is still rendered
-     (so the last panel stays in memory) but visually obscured by the backdrop.
-     We do NOT hide it — that would cause layout flash on close. */
+  /* On mobile with sidebar open, main content is still rendered...so the last panel stays in memory... but visually obscured by the backdrop. We do not hide it...  that would cause layout flash on close. */
+
   .dash-shell.mobile-sidebar-open .dash-main {
     pointer-events: none; /* prevent interaction with content behind overlay */
   }
@@ -118,7 +110,7 @@
   .panel-subtitle { font-size: 13px; margin-bottom: 16px; }
 }
 
-/* ── Small mobile (480px) ── */
+/* Small mobile approx 480px */
 @media (max-width: 480px) {
   .stat-grid {
     grid-template-columns: 1fr;

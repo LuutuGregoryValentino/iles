@@ -16,7 +16,6 @@ User = get_user_model()
 Handles user registration and includes customized validation methods for unique feilds and password strength
 """
 
-
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
 
@@ -42,7 +41,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A user with this university ID already exists.")
         return value
     
-    def validate_password(self, value):
+    def validate_passord(self,value):
         validate_strong_password(value)
         return value
    
@@ -121,9 +120,8 @@ class EvaluationSerializer(serializers.ModelSerializer):
     grade       = serializers.ReadOnlyField()
 
     class Meta:
-        model            = Evaluation
-        fields           = '__all__'
-        read_only_fields = ['supervisor', 'submission_date']
+        model  = Evaluation
+        fields = '__all__'
 
     def validate(self, data):
         placement = data.get('placement') or (self.instance.placement if self.instance else None)

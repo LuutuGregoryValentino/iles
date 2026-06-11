@@ -22,17 +22,17 @@ from .serializers import (
     EvaluationSerializer, IssueSerializer,
     RegisterSerializer, UserSerializer,
 )
-from .emails_utils import(
-    notify_user_registered,
-    notify_student_placement_assigned,
-    notify_workplace_supervisor_placement_assigned,
-    notify_academic_supervisor_placement_assigned,
-    notify_supervisors_logbook_submitted,
-    notify_supervisors_issue_submitted,
-    notify_student_graded,
-    notify_user_approved,
-    notify_student_issue_resolved,
+from .emails import (
+    send_welcome_email,
+    send_logbook_submitted_email,
+    send_logbook_approved_email,
+    send_evaluation_email,
+    send_issue_reported_email,
+    send_issue_resolved_email,
 )
+from .validators import validate_strong_password
+
+
 User = get_user_model()
 
 
@@ -124,6 +124,7 @@ class StudentViewSet(ModelViewSet):
         return Student.objects.all()
 
     def perform_create(self, serializer):
+        # Just save the student profile linked to the current user
         serializer.save(user=self.request.user)
 
 
@@ -138,6 +139,13 @@ class PlacementViewSet(ModelViewSet):
         if user.role == 'student':
             return InternshipPlacement.objects.filter(student__user=user)
         return InternshipPlacement.objects.all()
+
+    def perform_create(self, serializer):
+        placement = serializer.save()
+        # Trigger notifications on placement creation
+        notify_student_placement_assigned(placement.student, placement)
+        notify_workplace_supervisor_placement_assigned(placement)
+        notify_academic_supervisor_placement_assigned(placement)
 
 
 # ── SUPERVISORS & ADMINS ──────────────────────────────────────────────────────
@@ -271,10 +279,13 @@ def logbook_detail(request, pk):
     s = LogbookEntrySerializer(obj, data=request.data, partial=True)
     if s.is_valid():
         if new_status == LogStatus.SUBMITTED and not obj.submitted_at:
-            logbook = s.save(submitted_at=timezone.now())
+            s.save(submitted_at=timezone.now())
+            send_logbook_submitted_email(obj)    # ← HTML email to supervisor
 
-        # sending emails to supervisors
-            notify_supervisors_logbook_submitted(logbook)
+        elif new_status == LogStatus.APPROVED:
+            s.save()
+            send_logbook_approved_email(obj)     # ← HTML email to student
+
         else:
             s.save()
         return Response(s.data)
@@ -335,11 +346,8 @@ def issue_list(request):
 
     s = IssueSerializer(data=request.data)
     if s.is_valid():
-        issue = s.save(student=request.user)
-        try:
-            notify_supervisors_issue_submitted(issue)
-        except Exception:
-            pass   # email failure must never block the API response
+        instance = s.save(student=request.user)
+        send_issue_reported_email(instance)      # ← HTML email to academic supervisor
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
