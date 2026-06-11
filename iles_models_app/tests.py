@@ -723,4 +723,103 @@ class LogbookDetailAPITests(TestCase):
         )
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
+# EVALUATION API TESTS
+
+class EvaluationListAPITests(TestCase):
+    """
+    Location: iles_models_app/tests.py = class EvaluationListAPITests
+    Endpoint: GET/POST /api/evaluations/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.supervisor = make_user(
+            email="sup@test.com", role="academic_supervisor",
+            university_id="SUP1", username="sup1", is_approved=True,
+        )
+        self.student_user = make_user()
+        self.student = make_student_profile(self.student_user)
+        self.placement = make_placement(self.student)
+
+    @patch("iles_models_app.views.notify_student_graded")
+    def test_supervisor_can_create_evaluation(self, mock_notify):
+        self.client.force_authenticate(user=self.supervisor)
+        res = self.client.post("/api/evaluations/", {
+            "placement": self.placement.id,
+            "workplace_score": 80,
+            "academic_score": 75,
+            "logbook_score": 70,
+            "feedback": "Great effort",
+        })
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        mock_notify.assert_called_once()
+
+    def test_student_cannot_create_evaluation(self):
+        self.client.force_authenticate(user=self.student_user)
+        res = self.client.post("/api/evaluations/", {
+            "placement": self.placement.id,
+            "workplace_score": 80,
+            "academic_score": 75,
+            "logbook_score": 70,
+            "feedback": "Self-eval",
+        })
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_student_sees_only_own_evaluations(self):
+        make_evaluation(self.placement, self.supervisor)
+        other_user = make_user(email="o@test.com", university_id="OO1", username="ou")
+        other_st = make_student_profile(other_user, student_id="S999")
+        other_pl = make_placement(other_st)
+        make_evaluation(other_pl, self.supervisor)
+
+        self.client.force_authenticate(user=self.student_user)
+        res = self.client.get("/api/evaluations/")
+        self.assertEqual(len(res.data), 1)
+
+    @patch("iles_models_app.views.notify_student_graded")
+    def test_duplicate_evaluation_returns_400(self, _):
+        make_evaluation(self.placement, self.supervisor)
+        self.client.force_authenticate(user=self.supervisor)
+        res = self.client.post("/api/evaluations/", {
+            "placement": self.placement.id,
+            "workplace_score": 70,
+            "academic_score": 70,
+            "logbook_score": 70,
+            "feedback": "Duplicate",
+        })
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class EvaluationDetailAPITests(TestCase):
+    """
+    Location: iles_models_app/tests.py → class EvaluationDetailAPITests
+    Endpoint: GET /api/evaluations/<pk>/
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.supervisor = make_user(
+            email="sup@test.com", role="academic_supervisor",
+            university_id="SUP1", username="sup1", is_approved=True,
+        )
+        self.student_user = make_user()
+        self.student = make_student_profile(self.student_user)
+        self.placement = make_placement(self.student)
+        self.evaluation = make_evaluation(self.placement, self.supervisor)
+
+    def test_get_evaluation_detail(self):
+        self.client.force_authenticate(user=self.supervisor)
+        res = self.client.get(f"/api/evaluations/{self.evaluation.pk}/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_evaluation_response_includes_grade_and_total(self):
+        self.client.force_authenticate(user=self.supervisor)
+        res = self.client.get(f"/api/evaluations/{self.evaluation.pk}/")
+        self.assertIn("total_score", res.data)
+        self.assertIn("grade", res.data)
+
+    def test_nonexistent_evaluation_returns_404(self):
+        self.client.force_authenticate(user=self.supervisor)
+        res = self.client.get("/api/evaluations/99999/")
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
