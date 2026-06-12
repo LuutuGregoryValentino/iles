@@ -111,7 +111,8 @@ def _send(subject: str, to: str, html: str, preview: str = ""):
         msg = EmailMultiAlternatives(
             subject=f"[ILES] {subject}",
             body=f"{subject}\n\nLog in at {APP_URL}",
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', settings.EMAIL_HOST_USER),
+            #  get from_email without crashing if settings missing
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', getattr(settings, 'EMAIL_HOST_USER', 'webmaster@localhost')),
             to=[to],
         )
         msg.attach_alternative(_base(html, preview), "text/html")
