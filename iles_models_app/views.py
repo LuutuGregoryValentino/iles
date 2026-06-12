@@ -31,7 +31,8 @@ from .emails_utils import(
     notify_student_graded,
     notify_user_approved,
 )
-from .utils import (send_welcome_email, validate_strong_password, send_issue_resolved_email)
+from iles_models_app.emails_utils import send_welcome_email,send_issue_resolved_email
+from iles_models_app.validators import validate_strong_password
 User = get_user_model()
 
 
