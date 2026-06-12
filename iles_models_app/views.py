@@ -31,6 +31,7 @@ from .emails_utils import(
     notify_student_graded,
     notify_user_approved,
 )
+from .utils import (send_welcome_email, validate_strong_password, send_issue_resolved_email)
 User = get_user_model()
 
 
