@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.conf import settings
 
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, notify_user
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -383,7 +383,7 @@ def issue_detail(request, pk):
         s.save()
         # Send resolved email when admin/supervisor marks as Resolved
         if request.data.get('status') == 'Resolved':
-            notify_student_issue_resolved(obj)
+            send_issue_resolved(obj)
         return Response(s.data)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
