@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './styles/global.css';
-<<<<<<< HEAD
 import { useNotifications } from './context/NotificationContext';
-=======
-import { NotificationProvider, useNotifications } from './context/NotificationContext';
->>>>>>> origin/main
 import LandingPage from './features/Landing/LandingPage';
 import AuthShell from './features/Auth/AuthShell';
 import PendingApproval from './features/Auth/PendingApproval';
@@ -108,13 +104,7 @@ function App() {
   };
 
   return (
-<<<<<<< HEAD
     <div className="App">
-=======
-    <NotificationProvider userId={currentUser?.id} >
-
-      <div className="App">
->>>>>>> origin/main
 
       {/* for new visitors and un approved users*/}
       {screen === 'landing' && (
