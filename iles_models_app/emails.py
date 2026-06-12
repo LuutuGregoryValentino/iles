@@ -8,6 +8,7 @@ from django.conf import settings
 
 PRIMARY  = "#1a3a6b"
 GREEN    = "#10b981"
+BLACK    = "#000000"
 AMBER    = "#f59e0b"
 RED      = "#ef4444"
 PURPLE   = "#534AB7"
@@ -348,7 +349,7 @@ def send_issue_resolved_email(issue):
     {_box(issue.supervisor_feedback, GREEN) if issue.supervisor_feedback else ""}
     {_btn("View My Issues", APP_URL, GREEN)}
     """
-    _send(f"Issue Resolved — {issue.title}", issue.student.email, html,
+    _send(f"Issue Resolved — {issue.title}", issue.student.email, content,
           f"Your issue '{issue.title}' has been resolved.")
 
 
