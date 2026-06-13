@@ -11,7 +11,7 @@ jest.mock('./services/api', () => ({
   logbooksAPI:    { list: jest.fn(() => Promise.resolve({ data: [] })) },
 }));
 
-// ── Test 1: Login form renders correctly ─────────────────────────────────────
+//  Test 1: Login form renders correctly
 test('Login form renders email, password fields and a sign in button', () => {
   render(<Login onAuthSuccess={jest.fn()} goToSignup={jest.fn()} />);
   expect(screen.getByPlaceholderText(/you@mak.ac.ug/i)).toBeInTheDocument();
@@ -19,7 +19,7 @@ test('Login form renders email, password fields and a sign in button', () => {
   expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
 });
 
-// ── Test 2: Login fields start empty ─────────────────────────────────────────
+//  Test 2: Login fields start empty 
 test('Login form fields are empty on first load', () => {
   render(<Login onAuthSuccess={jest.fn()} goToSignup={jest.fn()} />);
   const emailInput    = screen.getByPlaceholderText(/you@mak.ac.ug/i);
@@ -28,14 +28,14 @@ test('Login form fields are empty on first load', () => {
   expect(passwordInput.value).toBe('');
 });
 
-// ── Test 3: Login fields are required ────────────────────────────────────────
+//  Test 3: Login fields are required 
 test('Login form requires both email and password', () => {
   render(<Login onAuthSuccess={jest.fn()} goToSignup={jest.fn()} />);
   expect(screen.getByPlaceholderText(/you@mak.ac.ug/i)).toBeRequired();
   expect(screen.getByPlaceholderText(/••••••••/i)).toBeRequired();
 });
 
-// ── Test 4: Login form accepts typed input ────────────────────────────────────
+//  Test 4: Login form accepts typed input 
 test('Login form updates fields when user types', () => {
   render(<Login onAuthSuccess={jest.fn()} goToSignup={jest.fn()} />);
   const emailInput    = screen.getByPlaceholderText(/you@mak.ac.ug/i);
@@ -46,7 +46,7 @@ test('Login form updates fields when user types', () => {
   expect(passwordInput.value).toBe('Pass@1234');
 });
 
-// ── Test 5: ScoreCardPanel renders without crashing ───────────────────────────
+// Test 5: ScoreCardPanel renders without crashing
 test('ScoreCardPanel renders for a student without crashing', () => {
   render(
     <ScoreCardPanel
