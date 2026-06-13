@@ -151,8 +151,10 @@ def _execute_email_send(subject: str, to: str, html: str, preview: str):
         msg.attach_alternative(full_html, "text/html")
         # Send without failing silently in the background so we can log errors
         msg.send(fail_silently=False)
+        logger.info(f"Email sent successfully to {to}")
     except Exception as e:
         logger.error(f"Background email failure to {to}: {str(e)}")
+        logger.error(f"Failed to send email to {to}: {str(e)}")
 
 
 def _send(subject: str, to: str, html: str, preview: str = ""):
@@ -160,6 +162,7 @@ def _send(subject: str, to: str, html: str, preview: str = ""):
     Dispatches the email to the background scheduler.
     This prevents the API from hanging while waiting for the SMTP server.
     """
+    """Sends email synchronously to ensure completion on Render free tier."""
     if not to:
         logger.warning(f"Skipping email send for '{subject}': No recipient address provided.")
         return
@@ -167,6 +170,8 @@ def _send(subject: str, to: str, html: str, preview: str = ""):
     logger.info(f"Scheduling email to {to}: {subject}")
     # Schedule the job to run immediately
     scheduler.add_job(_execute_email_send, 'date', run_date=timezone.now(), args=[subject, to, html, preview])
+    logger.info(f"Sending: [ILES] {subject} to {to}")
+    _execute_email_send(subject, to, html, preview)
 
 
 # ── 1. WELCOME EMAIL — sent on registration ───────────────────────────────────
@@ -180,6 +185,12 @@ def send_welcome_email(user):
       Hi <strong style="color:{BLACK};">{user.username}</strong>, welcome to the Internship
       Logging &amp; Evaluation System at Makerere University. Your account is ready and
       you can now log in to get started.
+    </p>
+
+    <p style="font-size:14px;line-height:1.7;color:{RED};font-weight:700;margin:0 0 20px;">
+      ⚠️ ACTION REQUIRED: To be assigned an internship placement, you must first 
+      complete your Student Profile. Log in now and fill in your details to be 
+      eligible for placement.
     </p>
 
     {_info_table([
