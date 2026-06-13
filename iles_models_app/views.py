@@ -245,14 +245,9 @@ def logbook_detail(request, pk):
     s = LogbookEntrySerializer(obj, data=request.data, partial=True)
     if s.is_valid():
         if new_status == LogStatus.SUBMITTED and not obj.submitted_at:
-            logbook = s.save(submitted_at=timezone.now())
-
-        # sending emails to supervisors
-            # Send notification to supervisors
-            notify_supervisors_logbook_submitted(logbook)
+            s.save(submitted_at=timezone.now())  # Signal handles email
         elif new_status == LogStatus.APPROVED:
-            logbook = s.save()
-            # Send notification to student
+            logbook = s.save() 
             send_logbook_approved_email(logbook)
         else:
             s.save()

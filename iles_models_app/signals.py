@@ -1,31 +1,33 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from .models import User, Issue, LogbookEntry, LogStatus
-from .emails import (
-    send_welcome_email,
-    notify_supervisors_issue_submitted,
-    notify_supervisors_logbook_submitted,
-    notify_student_logbook_submitted,
-    send_logbook_approved_email,
-)
+import logging
+from .models import LogbookEntry, LogStatus
+from .emails import notify_supervisors_logbook_submitted
 
-@receiver(post_save, sender=User)
-def handle_user_created(sender, instance, created, **kwargs):
-    if created:
-        send_welcome_email(instance)
+logger = logging.getLogger(__name__)
 
-@receiver(post_save, sender=Issue)
-def handle_issue_created(sender, instance, created, **kwargs):
-    if created:
-        notify_supervisors_issue_submitted(instance)
+@receiver(pre_save, sender=LogbookEntry)
+def track_logbook_status_change(sender, instance, **kwargs):
+    """
+    Detects if the submission_status is changing from 'Draft' to 'Submitted'.
+    """
+    if instance.pk:  # Check if this is an update, not a new creation
+        try:
+            old_instance = LogbookEntry.objects.get(pk=instance.pk)
+            if old_instance.submission_status == LogStatus.DRAFT and \
+               instance.submission_status == LogStatus.SUBMITTED:
+                # Set a temporary flag on the instance to be used in post_save
+                instance._is_transitioning_to_submitted = True
+        except LogbookEntry.DoesNotExist:
+            pass
 
 @receiver(post_save, sender=LogbookEntry)
-def handle_logbook_update(sender, instance, **kwargs):
-    # Triggered when status is set to SUBMITTED
-    if instance.submission_status == LogStatus.SUBMITTED:
-        notify_student_logbook_submitted(instance)
+def handle_logbook_submission_email(sender, instance, created, **kwargs):
+    """
+    Instantly fires a Brevo HTTP request upon Logbook creation.
+    'created' flag ensures duplicates never fire on re-saves.
+    """
+    # We only fire if the record is brand new AND submitted immediately.
+    if created and instance.submission_status == LogStatus.SUBMITTED:
+        logger.info(f"Signal Triggered: New Logbook {instance.id} notification.")
         notify_supervisors_logbook_submitted(instance)
-    
-    # Triggered when status is set to APPROVED
-    elif instance.submission_status == LogStatus.APPROVED:
-        send_logbook_approved_email(instance)
