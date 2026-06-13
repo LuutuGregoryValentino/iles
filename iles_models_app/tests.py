@@ -4,6 +4,8 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from iles_models_app.models import Student
 from iles_models_app.serializers import RegisterSerializer
+from rest_framework import serializers
+from iles_models_app.validators import validate_strong_password
 
 User = get_user_model()
 
@@ -125,7 +127,7 @@ class StudentModelTests(TestCase):
             course='BSc Computer Science', year_of_study=2,semester=1
         )
         self.assertEqual(str(student),'Test Student')
-        
+
 class RegisterSerializerTests(TestCase):
     def test_valid_data(self)-> None:
         data = {'email':'new@test.com','username':'newuser','password':'pass1234',
@@ -138,3 +140,11 @@ class RegisterSerializerTests(TestCase):
         serializer = RegisterSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         self.assertIn('email',serializer.errors)
+
+class ValidatorTests(TestCase):
+    def test_strong_password_valid(self) -> None:
+        validate_strong_password('Password123')
+
+    def test_weak_password_invalid(self) -> None:
+        with self.assertRaises(serializers.ValidationError):
+            validate_strong_password('weak')
