@@ -3,6 +3,8 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
 from iles_models_app.models import Student
+from iles_models_app.serializers import RegisterSerializer
+
 User = get_user_model()
 
 
@@ -124,3 +126,15 @@ class StudentModelTests(TestCase):
         )
         self.assertEqual(str(student),'Test Student')
         
+class RegisterSerializerTests(TestCase):
+    def test_valid_data(self)-> None:
+        data = {'email':'new@test.com','username':'newuser','password':'pass1234',
+                'university_id':'25/U/002','role':'student' } 
+        serializer = RegisterSerializer(data=data) 
+        self.assertTrue(serializer.is_valid()) 
+
+    def test_missing_email(self) -> None:
+        data = {'username':'newuser','password':'pass1234'}
+        serializer = RegisterSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('email',serializer.errors)
