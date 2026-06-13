@@ -161,8 +161,10 @@ def _send(subject: str, to: str, html: str, preview: str = ""):
     This prevents the API from hanging while waiting for the SMTP server.
     """
     if not to:
+        logger.warning(f"Skipping email send for '{subject}': No recipient address provided.")
         return
 
+    logger.info(f"Scheduling email to {to}: {subject}")
     # Schedule the job to run immediately
     scheduler.add_job(_execute_email_send, 'date', run_date=timezone.now(), args=[subject, to, html, preview])
 
@@ -266,6 +268,24 @@ def notify_supervisors_logbook_submitted(logbook):
 def send_logbook_submitted_email(logbook):
     """Wrapper for backward compatibility in views."""
     notify_supervisors_logbook_submitted(logbook)
+
+
+def notify_student_logbook_submitted(logbook):
+    student = logbook.placement.student
+    content = f"""
+    {_heading("Logbook Received", BLACK)}
+    {_subheading(f"Your logbook for Week {logbook.week_number} has been submitted.")}
+    <p style="font-size:14px;line-height:1.7;color:{MUTED};margin:0 0 20px;">
+      Hi <strong style="color:{BLACK};">{student.student_name}</strong>, your logbook for Week {logbook.week_number} has been received and sent to your supervisors for review.
+    </p>
+    {_cta_button("View My Logbooks", APP_URL, BLACK)}
+    """
+    _send(
+        subject = f"Logbook Submitted: Week {logbook.week_number}",
+        to      = student.user.email,
+        html    = content,
+        preview = f"Week {logbook.week_number} logbook has been submitted."
+    )
 
 
 # ── 4. LOGBOOK APPROVED — sent to student ────────────────────────────────────
