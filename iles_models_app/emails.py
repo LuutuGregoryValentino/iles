@@ -6,6 +6,9 @@ Triggered from views.py on key events.
 
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
+from django.utils import timezone
+from apscheduler.schedulers.background import BackgroundScheduler
+import logging
 
 # ── Brand colours ─────────────────────────────────────────────────────────────
 RED       = "#990000"  # Makerere Red
@@ -19,6 +22,12 @@ LIGHT_BG  = "#f8fafc"
 CARD_BG   = "#ffffff"
 APP_URL   = "https://iles-nine.vercel.app"
 LOGO_TEXT = "ILES Portal"
+
+logger = logging.getLogger(__name__)
+
+# init bckgd scheduler
+scheduler = BackgroundScheduler()
+scheduler.start()
 
 
 def _base_template(content: str, preview: str = "") -> str:
@@ -127,25 +136,34 @@ def _badge(text: str, color: str) -> str:
     return f'<span style="display:inline-block;background:{color}22;color:{color};font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid {color}44;">{text}</span>'
 
 
-def _send(subject: str, to: str, html: str, preview: str = ""):
-    """Helper that sends the HTML email with a plain text fallback."""
-    if not to:
-        return
+def _execute_email_send(subject: str, to: str, html: str, preview: str):
+    """The actual worker function that communicates with the SMTP server."""
     try:
         full_html = _base_template(html, preview)
         plain     = f"{subject}\n\nLog in at {APP_URL}"
         msg = EmailMultiAlternatives(
             subject    = f"[ILES] {subject}",
             body       = plain,
-            #  get from_email without crashing if settings missing
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', getattr(settings, 'EMAIL_HOST_USER', 'webmaster@localhost')),
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', settings.EMAIL_HOST_USER),
             to         = [to],
         )
         msg.attach_alternative(full_html, "text/html")
-        # fail_silently = False so  try/except block can catch and log SMTP errors
+        # Send without failing silently in the background so we can log errors
         msg.send(fail_silently=False)
     except Exception as e:
-        print(f"Email failure to {to}: {str(e)}") # Log error for debugging
+        logger.error(f"Background email failure to {to}: {str(e)}")
+
+
+def _send(subject: str, to: str, html: str, preview: str = ""):
+    """
+    Dispatches the email to the background scheduler.
+    This prevents the API from hanging while waiting for the SMTP server.
+    """
+    if not to:
+        return
+
+    # Schedule the job to run immediately
+    scheduler.add_job(_execute_email_send, 'date', run_date=timezone.now(), args=[subject, to, html, preview])
 
 
 # ── 1. WELCOME EMAIL — sent on registration ───────────────────────────────────
