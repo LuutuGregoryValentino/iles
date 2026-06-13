@@ -22,7 +22,9 @@ from .serializers import (
     EvaluationSerializer, IssueSerializer,
     RegisterSerializer, UserSerializer,
 )
-from .emails_utils import(
+
+from .emails import (
+    send_welcome_email,
     notify_student_placement_assigned,
     notify_workplace_supervisor_placement_assigned,
     notify_academic_supervisor_placement_assigned,
@@ -30,6 +32,8 @@ from .emails_utils import(
     notify_supervisors_issue_submitted,
     notify_student_graded,
     notify_user_approved,
+    send_logbook_approved_email,
+    send_issue_resolved_email,
 )
 from iles_models_app.emails_utils import send_welcome_email,send_issue_resolved_email
 from iles_models_app.validators import validate_strong_password
@@ -128,6 +132,7 @@ class StudentViewSet(ModelViewSet):
         return Student.objects.all()
 
     def perform_create(self, serializer):
+        # Just save the student profile linked to the current user
         serializer.save(user=self.request.user)
 
 
@@ -142,6 +147,13 @@ class PlacementViewSet(ModelViewSet):
         if user.role == 'student':
             return InternshipPlacement.objects.filter(student__user=user)
         return InternshipPlacement.objects.all()
+
+    def perform_create(self, serializer):
+        placement = serializer.save()
+        # Trigger notifications on placement creation
+        notify_student_placement_assigned(placement.student, placement)
+        notify_workplace_supervisor_placement_assigned(placement)
+        notify_academic_supervisor_placement_assigned(placement)
 
 
 # ── SUPERVISORS & ADMINS ──────────────────────────────────────────────────────
@@ -170,59 +182,6 @@ def admin_list(request):
         s.save()
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# ── PLACEMENTS ────────────────────────────────────────────────────────────────
-
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def placement_list(request):
-    if request.method == 'GET':
-        if is_student(request.user):
-            placements = InternshipPlacement.objects.filter(student__user=request.user)
-        else:
-            placements = InternshipPlacement.objects.all()
-        return Response(InternshipPlacementSerializer(placements, many=True).data)
-
-    if is_student(request.user):
-        return Response({'error': 'Only administrators can create placements.'}, status=status.HTTP_403_FORBIDDEN)
-    s = InternshipPlacementSerializer(data=request.data)
-    if s.is_valid():
-        placement = s.save()
-
-    # adding email notifications 
-        notify_student_placement_assigned(placement.student, placement)
-        notify_workplace_supervisor_placement_assigned(placement)
-        notify_academic_supervisor_placement_assigned(placement)
-
-        return Response(s.data, status=status.HTTP_201_CREATED)
-    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def placement_detail(request, pk):
-    try:
-        obj = InternshipPlacement.objects.get(pk=pk)
-    except InternshipPlacement.DoesNotExist:
-        return Response({'error': 'Placement not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        return Response(InternshipPlacementSerializer(obj).data)
-
-    if request.method == 'PUT':
-        if is_student(request.user):
-            return Response({'error': 'Students cannot edit placements.'}, status=status.HTTP_403_FORBIDDEN)
-        s = InternshipPlacementSerializer(obj, data=request.data, partial=True)
-        if s.is_valid():
-            s.save()
-            return Response(s.data)
-        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    if request.user.role != 'administrator':
-        return Response({'error': 'Only administrators can delete placements.'}, status=status.HTTP_403_FORBIDDEN)
-    obj.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # ── LOGBOOKS ──────────────────────────────────────────────────────────────────
@@ -278,7 +237,12 @@ def logbook_detail(request, pk):
             logbook = s.save(submitted_at=timezone.now())
 
         # sending emails to supervisors
+            # Send notification to supervisors
             notify_supervisors_logbook_submitted(logbook)
+        elif new_status == LogStatus.APPROVED:
+            logbook = s.save()
+            # Send notification to student
+            send_logbook_approved_email(logbook)
         else:
             s.save()
         return Response(s.data)
