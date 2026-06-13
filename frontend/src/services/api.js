@@ -138,6 +138,11 @@ export const supervisorsAPI = {
   create: (data) => API.post('/supervisors/', data),
 };
 
+export const academicSupervisorsAPI = {
+  list:   ()     => API.get('/academic-supervisors/'),
+  create: (data) => API.post('/academic-supervisors/', data),
+};
+
 /* ─────────────────────────────────────────────────────────────
    ADMINS
    GET /admins/    → list
