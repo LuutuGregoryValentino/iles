@@ -28,6 +28,7 @@ urlpatterns = [
 
     # ── Supervisors & admins management endpoints──────────────────────────────────────────────────
     path('supervisors/', views.supervisor_list, name='supervisor-list'),
+    path('academic-supervisors/', views.academic_supervisor_list, name='academic-supervisor-list'),
     path('admins/',      views.admin_list,      name='admin-list'),
 
 

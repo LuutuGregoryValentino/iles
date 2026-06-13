@@ -171,6 +171,19 @@ def supervisor_list(request):
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
+def academic_supervisor_list(request):
+    if request.method == 'GET':
+        return Response(AcademicSupervisorSerializer(
+            AcademicSupervisor.objects.all(), many=True).data)
+    s = AcademicSupervisorSerializer(data=request.data)
+    if s.is_valid():
+        s.save()
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def admin_list(request):
     if request.method == 'GET':
         return Response(InternshipAdministratorSerializer(
