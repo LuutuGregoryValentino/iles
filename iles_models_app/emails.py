@@ -1,69 +1,98 @@
 """
 emails.py — ILES HTML Email Notifications
-All emails are sent as branded HTML with a plain text fallback.
+All emails are sent as HTML with a plain text fallback.
+Triggered from views.py on key events.
 """
 
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
-PRIMARY  = "#1a3a6b"
-GREEN    = "#10b981"
-BLACK    = "#000000"
-AMBER    = "#f59e0b"
-RED      = "#ef4444"
-PURPLE   = "#534AB7"
-LIGHT_BG = "#f8fafc"
-CARD_BG  = "#ffffff"
-TEXT     = "#0f172a"
-MUTED    = "#64748b"
-BORDER   = "#e2e8f0"
-APP_URL  = "https://iles-nine.vercel.app"
+# ── Brand colours ─────────────────────────────────────────────────────────────
+RED       = "#990000"  # Makerere Red
+BLACK     = "#000000"
+GREEN     = "#10b981"  # Success Green
+PRIMARY   = "#990000"
+TEXT      = "#1e293b"
+MUTED     = "#64748b"
+BORDER    = "#e2e8f0"
+LIGHT_BG  = "#f8fafc"
+CARD_BG   = "#ffffff"
+APP_URL   = "https://iles-nine.vercel.app"
+LOGO_TEXT = "ILES Portal"
 
 
-def _base(content, preview=""):
-    return f"""<!DOCTYPE html>
+def _base_template(content: str, preview: str = "") -> str:
+    """Wraps any content block in the ILES branded email shell."""
+    return f"""
+<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>ILES — Makerere University</title></head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ILES — Makerere University</title>
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+</head>
 <body style="margin:0;padding:0;background:{LIGHT_BG};font-family:'Segoe UI',Arial,sans-serif;color:{TEXT};">
-<div style="display:none;max-height:0;overflow:hidden;font-size:1px;">{preview}</div>
-<table width="100%" cellpadding="0" cellspacing="0" style="background:{LIGHT_BG};padding:32px 16px;">
-<tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:{CARD_BG};border-radius:12px;border:1px solid {BORDER};overflow:hidden;">
-<tr><td style="background:{PRIMARY};padding:28px 40px;text-align:center;">
-  <span style="font-size:24px;font-weight:700;color:#fff;letter-spacing:-0.5px;">ILES</span>
-  <p style="margin:6px 0 0;font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:1px;text-transform:uppercase;">Internship Logging &amp; Evaluation System</p>
-</td></tr>
-<tr><td style="padding:40px;">{content}</td></tr>
-<tr><td style="background:{LIGHT_BG};border-top:1px solid {BORDER};padding:24px 40px;text-align:center;">
-  <p style="margin:0;font-size:12px;color:{MUTED};">ILES — Makerere University<br/>
-  College of Computing &amp; Information Sciences<br/>
-  <a href="{APP_URL}" style="color:{PRIMARY};text-decoration:none;">{APP_URL}</a></p>
-  <p style="margin:10px 0 0;font-size:11px;color:{BORDER};">If you did not expect this email you can safely ignore it.</p>
-</td></tr>
-</table></td></tr></table>
-</body></html>"""
+
+  <!-- Preview text (hidden) -->
+  <div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:{LIGHT_BG};">{preview}</div>
+
+  <!-- Wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:{LIGHT_BG};padding:40px 16px;">
+    <tr><td align="center">
+
+      <!-- Card -->
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:{CARD_BG};border-radius:8px;border:1px solid {BORDER};overflow:hidden;box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:{RED};padding:28px 40px;text-align:center;">
+            <div style="display:inline-block;width:40px;height:40px;background:rgba(255,255,255,0.15);border-radius:10px;vertical-align:middle;margin-right:12px;"></div>
+            <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;vertical-align:middle;">{LOGO_TEXT}</span>
+            <p style="margin:8px 0 0;font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:1px;text-transform:uppercase;">Internship Logging &amp; Evaluation System</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:40px;">
+            {content}
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:{LIGHT_BG};border-top:1px solid {BORDER};padding:24px 40px;text-align:center;">
+            <p style="margin:0;font-size:12px;color:{MUTED};">
+              This email was sent by <strong>ILES — Makerere University</strong><br/>
+              College of Computing &amp; Information Sciences<br/>
+              <a href="{APP_URL}" style="color:{PRIMARY};text-decoration:none;">{APP_URL}</a>
+            </p>
+            <p style="margin:12px 0 0;font-size:11px;color:{BORDER};">
+              If you did not expect this email, you can safely ignore it.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+"""
 
 
-def _h(text, color=PRIMARY):
-    return f'<h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:{color};">{text}</h1>'
+def _heading(text: str, color: str = BLACK) -> str:
+    return f'<h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:{color};letter-spacing:-0.3px;">{text}</h1>'
 
-def _sub(text):
+
+def _subheading(text: str) -> str:
     return f'<p style="margin:0 0 24px;font-size:14px;color:{MUTED};">{text}</p>'
 
-def _info(rows):
-    cells = "".join([
-        f'<tr><td style="padding:10px 16px;font-size:13px;color:{MUTED};width:40%;border-bottom:1px solid {BORDER};">{k}</td>'
-        f'<td style="padding:10px 16px;font-size:13px;color:{TEXT};font-weight:500;border-bottom:1px solid {BORDER};">{v}</td></tr>'
-        for k,v in rows
-    ])
-    return f'<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid {BORDER};border-radius:8px;overflow:hidden;margin:20px 0;">{cells}</table>'
 
-def _btn(label, url, color=PRIMARY):
-    return f'<div style="text-align:center;margin:32px 0;"><a href="{url}" style="display:inline-block;background:{color};color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:14px 32px;border-radius:8px;">{label} &rarr;</a></div>'
+def _divider() -> str:
+    return f'<hr style="border:none;border-top:1px solid {BORDER};margin:24px 0;" />'
 
-def _box(text, color=GREEN):
-    return f'<div style="background:{color}11;border-left:4px solid {color};border-radius:6px;padding:14px 18px;margin:20px 0;font-size:14px;color:{TEXT};line-height:1.6;">{text}</div>'
 
 def _info_row(label: str, value: str) -> str:
     return f"""
@@ -72,12 +101,6 @@ def _info_row(label: str, value: str) -> str:
       <td style="padding:10px 16px;font-size:13px;color:{BLACK};font-weight:600;border-bottom:1px solid {BORDER};">{value}</td>
     </tr>"""
 
-def _heading(text: str, color: str = BLACK) -> str:
-    return f'<h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:{color};">{text}</h1>'
-
-
-def _subheading(text: str) -> str:
-    return f'<p style="margin:0 0 24px;font-size:14px;color:{MUTED};">{text}</p>'
 
 def _info_table(rows: list) -> str:
     rows_html = "".join([_info_row(label, value) for label, value in rows])
@@ -109,34 +132,51 @@ def _send(subject: str, to: str, html: str, preview: str = ""):
     if not to:
         return
     try:
+        full_html = _base_template(html, preview)
+        plain     = f"{subject}\n\nLog in at {APP_URL}"
         msg = EmailMultiAlternatives(
-            subject=f"[ILES] {subject}",
-            body=f"{subject}\n\nLog in at {APP_URL}",
-            #  get from_email without crashing if settings missing
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', getattr(settings, 'EMAIL_HOST_USER', 'webmaster@localhost')),
-            to=[to],
+            subject    = f"[ILES] {subject}",
+            body       = plain,
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', settings.EMAIL_HOST_USER),
+            to         = [to],
         )
-        msg.attach_alternative(_base(html, preview), "text/html")
+        msg.attach_alternative(full_html, "text/html")
         msg.send(fail_silently=True)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Email failure to {to}: {str(e)}") # Log error for debugging
 
 
-# ── 1. WELCOME EMAIL ──────────────────────────────────────────────────────────
+# ── 1. WELCOME EMAIL — sent on registration ───────────────────────────────────
 
 def send_welcome_email(user):
-    html = f"""
-    {_h("Welcome to ILES! 🎉")}
-    {_sub("Your account has been created successfully.")}
+    content = f"""
+    {_heading("Welcome to ILES! 🎉", BLACK)}
+    {_subheading("Your account has been created successfully.")}
+
     <p style="font-size:14px;line-height:1.7;color:{MUTED};margin:0 0 20px;">
-      Hi <strong style="color:{TEXT};">{user.username}</strong>, welcome to the Internship
-      Logging &amp; Evaluation System at Makerere University.
+      Hi <strong style="color:{BLACK};">{user.username}</strong>, welcome to the Internship
+      Logging &amp; Evaluation System at Makerere University. Your account is ready and
+      you can now log in to get started.
     </p>
-    {_info([("Email address", user.email), ("University ID", user.university_id), ("Role", user.get_role_display())])}
-    {_btn("Log in to ILES", APP_URL)}
+
+    {_info_table([
+        ("Email address", user.email),
+        ("ID Number",      user.university_id),
+        ("Role",           user.get_role_display()),
+    ])}
+
+    {_cta_button("Log in to ILES", APP_URL, PRIMARY)}
+
+    <p style="font-size:13px;color:{MUTED};text-align:center;margin:0;">
+      If you did not create this account, please contact your administrator immediately.
+    </p>
     """
-    _send("Welcome to ILES — Your account is ready", user.email, html,
-          f"Hi {user.username}, your ILES account has been created.")
+    _send(
+        subject = "Welcome to ILES — Your account is ready",
+        to      = user.email,
+        html    = content,
+        preview = f"Hi {user.username}, your ILES account has been created.",
+    )
 
 
 # ── 2. ACCOUNT APPROVED — sent to staff ───────────────────────────────────────
@@ -210,28 +250,39 @@ def send_logbook_submitted_email(logbook):
 # ── 4. LOGBOOK APPROVED — sent to student ────────────────────────────────────
 
 def send_logbook_approved_email(logbook):
-    student = logbook.placement.student
-    sup     = logbook.placement.workplace_supervisor
-    html = f"""
-    {_h("Logbook Approved ✓", GREEN)}
-    {_sub(f"Your Week {logbook.week_number} logbook has been reviewed and approved.")}
+    student    = logbook.placement.student
+    supervisor = logbook.placement.workplace_supervisor
+    content = f"""
+    {_heading("Logbook Approved ✓", GREEN)}
+    {_subheading("Great news — your logbook has been reviewed and approved.")}
+
     <p style="font-size:14px;line-height:1.7;color:{MUTED};margin:0 0 20px;">
-      Hi <strong style="color:{TEXT};">{student.student_name}</strong>,
-      your Week {logbook.week_number} logbook has been approved by your supervisor.
-      This entry is now locked.
+      Hi <strong style="color:{BLACK};">{student.student_name}</strong>, your Week {logbook.week_number}
+      logbook has been approved by your supervisor. This entry is now locked.
     </p>
-    {_info([
+
+    {_info_table([
         ("Week",         f"Week {logbook.week_number}"),
         ("Organisation", logbook.placement.organization_name),
         ("Hours worked", f"{logbook.hours_worked} hours"),
-        ("Approved by",  sup.supervisor_name if sup else "Your supervisor"),
-        ("Status",       "Approved ✓ — locked permanently"),
+        ("Approved by",  supervisor.supervisor_name if supervisor else "Your supervisor"),
+        ("Status",       "Approved ✓"),
     ])}
-    {_box("Keep it up! Submit your next weekly logbook on time. 🎉", GREEN)}
-    {_btn("View My Logbooks", APP_URL, GREEN)}
+
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px 20px;margin:20px 0;text-align:center;">
+      <p style="margin:0;font-size:14px;color:#166534;font-weight:500;">
+        🎉 Keep it up! Submit your next weekly logbook on time.
+      </p>
+    </div>
+
+    {_cta_button("View My Logbooks", APP_URL, GREEN)}
     """
-    _send(f"Logbook Approved — Week {logbook.week_number}", student.user.email, html,
-          f"Your Week {logbook.week_number} logbook has been approved.")
+    _send(
+        subject = f"Logbook Approved — Week {logbook.week_number}",
+        to      = student.user.email,
+        html    = content,
+        preview = f"Your Week {logbook.week_number} logbook has been approved.",
+    )
 
 
 # ── 5. EVALUATION SUBMITTED — sent to student ────────────────────────────────
@@ -346,47 +397,85 @@ def send_issue_resolved_email(issue):
         ("Reported on",  str(issue.created_at.strftime('%d %b %Y'))),
         ("Status",       "Resolved ✓"),
     ])}
-    {_box(issue.supervisor_feedback, GREEN) if issue.supervisor_feedback else ""}
-    {_btn("View My Issues", APP_URL, GREEN)}
+
+    {f'''<div style="background:{LIGHT_BG};border-left:4px solid {GREEN};border-radius:6px;padding:16px 20px;margin:20px 0;">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:{MUTED};text-transform:uppercase;letter-spacing:.5px;">Supervisor Response</p>
+      <p style="margin:0;font-size:14px;color:{BLACK};line-height:1.6;">{issue.supervisor_feedback}</p>
+    </div>''' if issue.supervisor_feedback else ''}
+
+    {_cta_button("View Resolution", APP_URL, BLACK)}
     """
-    _send(f"Issue Resolved — {issue.title}", issue.student.email, content,
-          f"Your issue '{issue.title}' has been resolved.")
+    _send(
+        subject = f"Issue Resolved — {issue.title}",
+        to      = issue.student.email,
+        html    = content,
+        preview = f"Resolution found for your issue: {issue.title}",
+    )
 
 
-# ── 8. EVALUATION SUBMITTED — sent to student ────────────────────────────────
+# ── 8. PLACEMENT ASSIGNED — sent to student & supervisors ───────────────────
 
-def send_evaluation_email(evaluation):
-    student = evaluation.placement.student
-    grade   = evaluation.grade
-    score   = evaluation.total_score
-    gc      = {
-        "A": GREEN, "B": "#3b82f6", "C": AMBER, "D": "#f97316", "F": RED
-    }.get(grade, PRIMARY)
+def notify_student_placement_assigned(student, placement):
+    content = f"""
+    {_heading("Placement Assigned!", RED)}
+    {_subheading("Details regarding your official internship placement.")}
 
-    html = f"""
-    {_h("Your Internship Evaluation is Ready", PRIMARY)}
-    {_sub("Your supervisor has submitted your final internship evaluation.")}
-    <p style="font-size:14px;line-height:1.7;color:{MUTED};margin:0 0 24px;">
-      Hi <strong style="color:{TEXT};">{student.student_name}</strong>,
-      your internship evaluation has been submitted. Here is your result:
-    </p>
-    <div style="text-align:center;margin:24px 0;">
-      <div style="display:inline-block;background:{gc}11;border:2px solid {gc};border-radius:16px;padding:24px 48px;">
-        <div style="font-size:60px;font-weight:800;color:{gc};line-height:1;">{grade}</div>
-        <div style="font-size:22px;font-weight:700;color:{gc};margin-top:4px;">{score}%</div>
-        <div style="font-size:12px;color:{MUTED};margin-top:4px;text-transform:uppercase;">Final Grade</div>
-      </div>
-    </div>
-    {_info([
-        ("Workplace score (40%)", f"{evaluation.workplace_score}/100 → {round(evaluation.workplace_score * 0.4, 1)} pts"),
-        ("Academic score (30%)",  f"{evaluation.academic_score}/100 → {round(evaluation.academic_score  * 0.3, 1)} pts"),
-        ("Logbook score (30%)",   f"{evaluation.logbook_score}/100 → {round(evaluation.logbook_score   * 0.3, 1)} pts"),
-        ("Total score",           f"{score}%"),
-        ("Grade",                 grade),
+    {_info_table([
+        ("Organisation", placement.organization_name),
+        ("Position",     placement.position),
+        ("Start Date",   str(placement.start_date)),
+        ("End Date",     str(placement.end_date)),
     ])}
-    {_box(evaluation.feedback, PRIMARY) if evaluation.feedback else ""}
-    {_btn("View Full Scorecard", APP_URL, gc)}
+
+    {_cta_button("View My Placement", APP_URL, BLACK)}
     """
-    _send(f"Your Internship Evaluation — Grade {grade} ({score}%)",
-          student.user.email, html,
-          f"Your internship grade is ready: {grade} ({score}%)")
+    _send(
+        subject = "Your Internship Placement Assigned",
+        to      = student.user.email,
+        html    = content,
+        preview = f"You have been assigned to {placement.organization_name}.",
+    )
+
+def notify_workplace_supervisor_placement_assigned(placement):
+    supervisor = placement.workplace_supervisor
+    if not supervisor or not supervisor.user: return
+    content = f"""
+    {_heading("New Student Assigned", BLACK)}
+    {_subheading("A student has been assigned to your supervision.")}
+
+    {_info_table([
+        ("Student Name", placement.student.student_name),
+        ("Position",     placement.position),
+        ("Duration",     f"{placement.start_date} to {placement.end_date}"),
+    ])}
+
+    {_cta_button("Manage Supervision", APP_URL, RED)}
+    """
+    _send(
+        subject = f"New Student Supervision — {placement.student.student_name}",
+        to      = supervisor.user.email,
+        html    = content,
+        preview = f"Supervision request for {placement.student.student_name}.",
+    )
+
+def notify_academic_supervisor_placement_assigned(placement):
+    supervisor = placement.academic_supervisor
+    if not supervisor or not supervisor.user: return
+    content = f"""
+    {_heading("Academic Supervision Task", BLACK)}
+    {_subheading("A student has been assigned for academic oversight.")}
+
+    {_info_table([
+        ("Student",      placement.student.student_name),
+        ("Organisation", placement.organization_name),
+        ("Start Date",   str(placement.start_date)),
+    ])}
+
+    {_cta_button("Review Student Profile", APP_URL, BLACK)}
+    """
+    _send(
+        subject = f"New Academic Supervision — {placement.student.student_name}",
+        to      = supervisor.user.email,
+        html    = content,
+        preview = f"You are the academic supervisor for {placement.student.student_name}.",
+    )
