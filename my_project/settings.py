@@ -60,7 +60,7 @@ _cors_env = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
     'http://localhost:3000,http://127.0.0.1:3000,https://iles-nine.vercel.app'
 )
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_env.split(',')]
+CORS_ALLOWED_ORIGINS = [r"^https://.*\.vercel\.app$", *[origin.strip() for origin in _cors_env.split(',')]]
 CORS_ALLOW_CREDENTIALS = True
 
 # ── REST Framework & JWT ──────────────────────────────────────────────────────
