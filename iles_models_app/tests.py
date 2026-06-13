@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
-
+from iles_models_app.models import Student
 User = get_user_model()
 
 
@@ -88,3 +88,39 @@ class StudentTests(TestCase):
         self.client.force_authenticate(user=None)
         res = self.client.get('/api/students/')
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+class UserModelTests(TestCase):
+    def test_create_user_defaults(self)-> None:
+        user = create_user()
+        self.assertEqual(user.email,'test@test.com')
+        self.assertEqual(user.role,'student')
+        self.assertEqual(user.university_id,'25/U/0001')
+        self.assertTrue(user.check_password('testpass123'))
+
+    def test_user_str(self) -> None:
+        user = create_user()
+        self.assertEqual(str(user), f"{user.email} ({user.role.capitalize()})")
+
+class StudentModelTests(TestCase):
+    def setUp(self)-> None:
+        self.user = create_user()
+
+    def test_create_student(self) -> None:
+        student = Student.objects.create(
+            user=self.user,
+            student_id='25/U/001',
+            student_name='Test Student',
+            course='BSc Computer Science',
+            year_of_study=2,
+            semester=1
+        )
+        self.assertEqual(student.user,self.user)
+        self.assertEqual(student.student_id,'25/U/001')
+
+    def test_student_str(self) -> None:
+        student = Student.objects.create(
+            user=self.user,student_id='25/U/001',student_name='Test Student',
+            course='BSc Computer Science', year_of_study=2,semester=1
+        )
+        self.assertEqual(str(student),'Test Student')
+        
