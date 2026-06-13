@@ -5,6 +5,7 @@ Triggered from views.py on key events.
 """
 
 from django.core.mail import EmailMultiAlternatives
+from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.utils import timezone
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -364,7 +365,25 @@ def send_evaluation_email(evaluation):
 
 def notify_supervisors_issue_submitted(issue):
     placement = issue.placement
-    student_name = getattr(issue.student, 'username', issue.student.email)
+    student_user = issue.student
+    student_name = getattr(student_user, 'username', student_user.email)
+
+    # 1. Notify the student confirming receipt of the issue
+    student_content = f"""
+    {_heading("Issue Received", BLACK)}
+    {_subheading("We have received your report and are looking into it.")}
+    <p style="font-size:14px;line-height:1.7;color:{MUTED};margin:0 0 20px;">
+      Hi <strong style="color:{BLACK};">{student_name}</strong>, thank you for reporting the issue: 
+      <strong>{issue.title}</strong>. Our team will review it and get back to you shortly.
+    </p>
+    {_cta_button("View My Issues", APP_URL, BLACK)}
+    """
+    _send(
+        subject = f"Issue Received: {issue.title}",
+        to      = student_user.email,
+        html    = student_content,
+        preview = f"We have received your report: {issue.title}"
+    )
 
     recipients = []
     if placement:
@@ -372,6 +391,13 @@ def notify_supervisors_issue_submitted(issue):
             recipients.append((placement.workplace_supervisor.user.email, placement.workplace_supervisor.supervisor_name))
         if placement.academic_supervisor:
             recipients.append((placement.academic_supervisor.user.email, placement.academic_supervisor.lecturer_name))
+    
+    # 2. Fallback to Administrators if no placement exists (student not yet assigned)
+    if not recipients:
+        User = get_user_model()
+        admins = User.objects.filter(role='administrator', is_approved=True)
+        for admin in admins:
+            recipients.append((admin.email, admin.username or "Administrator"))
 
     for email, name in recipients:
         content = f"""
