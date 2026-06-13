@@ -42,18 +42,10 @@ class Command(BaseCommand):
             self.stdout.write('  Student user already exists — skipping.')
 
         admin_user, created = User.objects.get_or_create(
-            email='snowchildwolf@gmail.com', 
+            email='snowchildwolf@gmail.com',
             defaults=dict(
                 username='snowchildwolf',
                 university_id='ADM001',
-                role='administrator',
-                first_name='Admin',
-                last_name='ILES',
-
-            email='ojambonicholas052@gmail.com', 
-            defaults=dict(
-                username='ojambonicholas',
-                university_id='ADM002',
                 role='administrator',
                 first_name='Admin',
                 last_name='ILES',

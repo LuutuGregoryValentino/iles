@@ -38,7 +38,7 @@ from .emails import (
 User = get_user_model()
 
 
-# ── HELPERS ───────────────────────────────────────────────────────────────────
+#HELPERS 
 
 def is_admin_or_supervisor(user):
     return user.role in ('administrator', 'academic_supervisor', 'workplace_supervisor')
@@ -47,7 +47,7 @@ def is_student(user):
     return user.role == 'student'
 
 
-# ── AUTH ──────────────────────────────────────────────────────────────────────
+#  AUTH 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -114,7 +114,7 @@ def current_user(request):
     return Response(UserSerializer(request.user).data)
 
 
-# ── STUDENTS ──────────────────────────────────────────────────────────────────
+# STUDENTS 
 
 class StudentViewSet(ModelViewSet):
     serializer_class   = StudentSerializer
@@ -130,7 +130,7 @@ class StudentViewSet(ModelViewSet):
         serializer.save(user=self.request.user)
 
 
-# ── PLACEMENTS ────────────────────────────────────────────────────────────────
+# PLACEMENTS
 
 class PlacementViewSet(ModelViewSet):
     serializer_class   = InternshipPlacementSerializer
@@ -149,7 +149,7 @@ class PlacementViewSet(ModelViewSet):
         notify_academic_supervisor_placement_assigned(placement)
 
 
-# ── SUPERVISORS & ADMINS ──────────────────────────────────────────────────────
+#  SUPERVISORS & ADMINS 
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -177,7 +177,7 @@ def admin_list(request):
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ── LOGBOOKS ──────────────────────────────────────────────────────────────────
+#  LOGBOOKS  
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -238,7 +238,7 @@ def logbook_detail(request, pk):
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ── EVALUATIONS ───────────────────────────────────────────────────────────────
+# EVALUATIONS 
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -277,8 +277,8 @@ def evaluation_detail(request, pk):
     return Response(EvaluationSerializer(obj).data)
 
 
-# ── ISSUES ────────────────────────────────────────────────────────────────────
-
+# ISSUES
+ 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def issue_list(request):
@@ -332,7 +332,7 @@ def issue_detail(request, pk):
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ── USER APPROVAL ─────────────────────────────────────────────────────────────
+#  USER APPROVAL 
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
