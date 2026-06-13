@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.conf import settings
 
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes, notify_user
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -22,17 +22,19 @@ from .serializers import (
     EvaluationSerializer, IssueSerializer,
     RegisterSerializer, UserSerializer,
 )
+
 from .emails import (
     send_welcome_email,
-    send_logbook_submitted_email,
+    notify_student_placement_assigned,
+    notify_workplace_supervisor_placement_assigned,
+    notify_academic_supervisor_placement_assigned,
+    notify_supervisors_logbook_submitted,
+    notify_supervisors_issue_submitted,
+    notify_student_graded,
+    notify_user_approved,
     send_logbook_approved_email,
-    send_evaluation_email,
-    send_issue_reported_email,
     send_issue_resolved_email,
 )
-from .validators import validate_strong_password
-
-
 User = get_user_model()
 
 
@@ -54,13 +56,17 @@ def register(request):
     if serializer.is_valid():
         user    = serializer.save()
         refresh = RefreshToken.for_user(user)
-        notify_user_registered(user)
+        send_welcome_email(user)           # ← HTML welcome email
         return Response({
             'user':    UserSerializer(user).data,
             'access':  str(refresh.access_token),
             'refresh': str(refresh),
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def validate_password(self, value):
+    validate_strong_password(value)
+    
+    return value
 
 
 @api_view(['POST'])
@@ -176,59 +182,6 @@ def admin_list(request):
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ── PLACEMENTS ────────────────────────────────────────────────────────────────
-
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def placement_list(request):
-    if request.method == 'GET':
-        if is_student(request.user):
-            placements = InternshipPlacement.objects.filter(student__user=request.user)
-        else:
-            placements = InternshipPlacement.objects.all()
-        return Response(InternshipPlacementSerializer(placements, many=True).data)
-
-    if is_student(request.user):
-        return Response({'error': 'Only administrators can create placements.'}, status=status.HTTP_403_FORBIDDEN)
-    s = InternshipPlacementSerializer(data=request.data)
-    if s.is_valid():
-        placement = s.save()
-
-    # adding email notifications 
-        notify_student_placement_assigned(placement.student, placement)
-        notify_workplace_supervisor_placement_assigned(placement)
-        notify_academic_supervisor_placement_assigned(placement)
-
-        return Response(s.data, status=status.HTTP_201_CREATED)
-    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def placement_detail(request, pk):
-    try:
-        obj = InternshipPlacement.objects.get(pk=pk)
-    except InternshipPlacement.DoesNotExist:
-        return Response({'error': 'Placement not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        return Response(InternshipPlacementSerializer(obj).data)
-
-    if request.method == 'PUT':
-        if is_student(request.user):
-            return Response({'error': 'Students cannot edit placements.'}, status=status.HTTP_403_FORBIDDEN)
-        s = InternshipPlacementSerializer(obj, data=request.data, partial=True)
-        if s.is_valid():
-            s.save()
-            return Response(s.data)
-        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    if request.user.role != 'administrator':
-        return Response({'error': 'Only administrators can delete placements.'}, status=status.HTTP_403_FORBIDDEN)
-    obj.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 # ── LOGBOOKS ──────────────────────────────────────────────────────────────────
 
 @api_view(['GET', 'POST'])
@@ -279,13 +232,15 @@ def logbook_detail(request, pk):
     s = LogbookEntrySerializer(obj, data=request.data, partial=True)
     if s.is_valid():
         if new_status == LogStatus.SUBMITTED and not obj.submitted_at:
-            s.save(submitted_at=timezone.now())
-            send_logbook_submitted_email(obj)    # ← HTML email to supervisor
+            logbook = s.save(submitted_at=timezone.now())
 
+        # sending emails to supervisors
+            # Send notification to supervisors
+            notify_supervisors_logbook_submitted(logbook)
         elif new_status == LogStatus.APPROVED:
-            s.save()
-            send_logbook_approved_email(obj)     # ← HTML email to student
-
+            logbook = s.save()
+            # Send notification to student
+            send_logbook_approved_email(logbook)
         else:
             s.save()
         return Response(s.data)
@@ -346,8 +301,9 @@ def issue_list(request):
 
     s = IssueSerializer(data=request.data)
     if s.is_valid():
-        instance = s.save(student=request.user)
-        send_issue_reported_email(instance)      # ← HTML email to academic supervisor
+        issue = s.save(student=request.user)
+    # sending email to supervisors
+        notify_supervisors_issue_submitted(issue)
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -383,7 +339,7 @@ def issue_detail(request, pk):
         s.save()
         # Send resolved email when admin/supervisor marks as Resolved
         if request.data.get('status') == 'Resolved':
-            send_issue_resolved(obj)
+            send_issue_resolved_email(obj)       # ← HTML email to student
         return Response(s.data)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
