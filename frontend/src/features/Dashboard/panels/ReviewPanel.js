@@ -105,11 +105,11 @@ export default function ReviewPanel({ isActive }) {
       {!loading && filtered.map(lb => (
         <div key={lb.id} className="card" style={{
           marginBottom: 12,
-          borderLeft: `4px solid ${
-            lb.submission_status === 'Approved'  ? 'var(--brand-green-light)' :
-            lb.submission_status === 'Submitted' ? 'var(--brand-gold)'        :
-            'var(--border-strong)'
-          }`
+          // borderLeft: `4px solid ${
+          //   lb.submission_status === 'Approved'  ? 'var(--brand-green-light)' :
+          //   lb.submission_status === 'Submitted' ? 'var(--brand-gold)'        :
+          //   'var(--border-strong)'
+          // }`
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
             <div>
