@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './styles/global.css';
-import { NotificationProvider, useNotifications } from './context/NotificationContext';
+import { NotificationProvider, useNotifications } from './context/NotificationContext'; // eslint-disable-line no-unused-vars
 import LandingPage from './features/Landing/LandingPage';
 import AuthShell from './features/Auth/AuthShell';
 import PendingApproval from './features/Auth/PendingApproval';
@@ -59,7 +59,7 @@ function App() {
     } catch { return null; }
   });
 
-  // const { clearNotifications } = useNotifications();
+  const { clearNotifications } = useNotifications();
 
 
 
@@ -100,14 +100,16 @@ function App() {
     sessionStorage.removeItem('iles_session'); // dletes the session
     setCurrentUser(null);
     setScreen('auth'); 
-    // clearNotifications();
+    clearNotifications();
   };
 
   return (
-    <div className="App">
+    <NotificationProvider userId={currentUser?.id} >
 
-      {/* for new visitors and un approved users*/}
-      {screen === 'landing' && (
+      <div className="App">
+
+        {/* for new visitors and un approved users*/}
+        {screen === 'landing' && (
           <LandingPage
             onGetStarted={() => setScreen('auth')}
             theme={theme}
@@ -149,7 +151,8 @@ function App() {
           />
         )}
 
-    </div>
+      </div>
+    </NotificationProvider>
   );
 }
 
