@@ -12,8 +12,8 @@ from rest_framework.viewsets import ModelViewSet
 from .models import (
     Student, WorkplaceSupervisor, AcademicSupervisor,
     InternshipPlacement, LogbookEntry,
-    InternshipAdministrator, Evaluation, Issue, LogStatus,
-    PlacementStatus,
+    InternshipAdministrator, Evaluation, Issue, LogStatus, IssueStatus,
+    PlacementStatus, 
 )
 from .serializers import (
     StudentSerializer, InternshipAdministratorSerializer,
@@ -22,18 +22,18 @@ from .serializers import (
     EvaluationSerializer, IssueSerializer,
     RegisterSerializer, UserSerializer,
 )
-
 from .emails import (
     send_welcome_email,
     notify_student_placement_assigned,
     notify_workplace_supervisor_placement_assigned,
     notify_academic_supervisor_placement_assigned,
+    notify_student_logbook_submitted,
     notify_supervisors_logbook_submitted,
-    notify_supervisors_issue_submitted,
-    notify_student_graded,
-    notify_user_approved,
     send_logbook_approved_email,
+    notify_student_graded,
+    notify_supervisors_issue_submitted,
     send_issue_resolved_email,
+    notify_user_approved,
 )
 User = get_user_model()
 
@@ -55,8 +55,16 @@ def register(request):
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
         user    = serializer.save()
+        # Explicitly decouple fields: Use provided values or keep defaults
+        # These lines ensure that first_name, last_name, and username are set from request data
+        # and are distinct from email, which is used as USERNAME_FIELD.
+        user.username   = request.data.get('username', user.username).strip()
+        user.first_name = request.data.get('first_name', '').strip()
+        user.last_name  = request.data.get('last_name', '').strip()
+        user.save()
+        
+        send_welcome_email(user)
         refresh = RefreshToken.for_user(user)
-        send_welcome_email(user)           # ← HTML welcome email
         return Response({
             'user':    UserSerializer(user).data,
             'access':  str(refresh.access_token),
@@ -127,11 +135,34 @@ class StudentViewSet(ModelViewSet):
         user = self.request.user
         if user.role == 'student':
             return Student.objects.filter(user=user)
+        # For admins, we want to see students who have profiles.
+        # To see students without profiles, you'd check the User model.
         return Student.objects.all()
 
     def perform_create(self, serializer):
         # Just save the student profile linked to the current user
-        serializer.save(user=self.request.user)
+        user = self.request.user
+        # Update core User fields from profile payload
+        if 'first_name' in self.request.data: user.first_name = self.request.data['first_name']
+        if 'last_name' in self.request.data:  user.last_name  = self.request.data['last_name']
+        if 'username' in self.request.data:   user.username   = self.request.data['username']
+        user.save()
+        
+        # Derive student_name for the profile table from User names
+        full_name = f"{user.first_name} {user.last_name}".strip()
+        serializer.save(user=user, student_name=full_name)
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        # Allow profile editing to update the core User entries
+        # Sync profile changes back to the main User table
+        if 'first_name' in self.request.data: user.first_name = self.request.data['first_name']
+        if 'last_name' in self.request.data:  user.last_name  = self.request.data['last_name']
+        if 'username' in self.request.data:   user.username   = self.request.data['username']
+        user.save()
+        
+        full_name = f"{user.first_name} {user.last_name}".strip()
+        serializer.save(student_name=full_name or self.request.user.username)
 
 
 # ── PLACEMENTS (ViewSet) ──────────────────────────────────────────────────────
@@ -148,7 +179,7 @@ class PlacementViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         placement = serializer.save()
-        # Trigger notifications on placement creation
+        # Notify student and both supervisors about the new placement
         notify_student_placement_assigned(placement.student, placement)
         notify_workplace_supervisor_placement_assigned(placement)
         notify_academic_supervisor_placement_assigned(placement)
@@ -232,15 +263,12 @@ def logbook_detail(request, pk):
     s = LogbookEntrySerializer(obj, data=request.data, partial=True)
     if s.is_valid():
         if new_status == LogStatus.SUBMITTED and not obj.submitted_at:
-            logbook = s.save(submitted_at=timezone.now())
-
-        # sending emails to supervisors
-            # Send notification to supervisors
-            notify_supervisors_logbook_submitted(logbook)
+            obj = s.save(submitted_at=timezone.now())
+            notify_student_logbook_submitted(obj)
+            notify_supervisors_logbook_submitted(obj)
         elif new_status == LogStatus.APPROVED:
-            logbook = s.save()
-            # Send notification to student
-            send_logbook_approved_email(logbook)
+            obj = s.save()
+            send_logbook_approved_email(obj)
         else:
             s.save()
         return Response(s.data)
@@ -267,8 +295,7 @@ def evaluation_list(request):
         )
     s = EvaluationSerializer(data=request.data)
     if s.is_valid():
-        evaluation =s.save(supervisor=request.user)
-#sending email to students about evaluation    
+        evaluation = s.save(supervisor=request.user)
         notify_student_graded(evaluation)
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -302,7 +329,6 @@ def issue_list(request):
     s = IssueSerializer(data=request.data)
     if s.is_valid():
         issue = s.save(student=request.user)
-    # sending email to supervisors
         notify_supervisors_issue_submitted(issue)
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -336,10 +362,11 @@ def issue_detail(request, pk):
 
     s = IssueSerializer(obj, data=request.data, partial=True)
     if s.is_valid():
-        s.save()
-        # Send resolved email when admin/supervisor marks as Resolved
-        if request.data.get('status') == 'Resolved':
-            send_issue_resolved_email(obj)       # ← HTML email to student
+        prev_status = obj.status
+        obj = s.save()
+        # Notify student if the issue has been marked as Resolved
+        if obj.status == IssueStatus.RESOLVED and prev_status != IssueStatus.RESOLVED:
+            send_issue_resolved_email(obj)
         return Response(s.data)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -358,10 +385,10 @@ def approve_user(request, pk):
         target = User.objects.get(pk=pk)
     except User.DoesNotExist:
         return Response({'error': 'User not found.'}, status=404)
-    was_approved = target.is_approved    
+    
+    was_approved = target.is_approved
     target.is_approved = request.data.get('is_approved', True)
     target.save()
-#sending email to user when approved
     if target.is_approved and not was_approved:
         notify_user_approved(target)
     return Response(UserSerializer(target).data)

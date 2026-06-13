@@ -1,13 +1,3 @@
-/* 
-rendered as a modal overlay inside Dashboard on first login.
-Non-student roles skip this entirely (gated in App.js... Dashboard).
-
-CONDITION: needsProfile === true ..........  in app.js        
-
-
-BUG FIXED: Original sent year_of_study and semester as strings;
-the API expected integers. Now explicitly parsed.
- */
 
 import React, { useState } from 'react';
 import { studentsAPI } from '../../services/api';
@@ -20,7 +10,8 @@ const COURSES = [
 
 export default function ProfileForm({ currentUser, onSaved }) {
   const [form, setForm] = useState({
-    student_name:  currentUser?.username || '',
+    first_name:    currentUser?.first_name || '',
+    last_name:     currentUser?.last_name  || '',
     student_id:    '',
     course:        '',
     year_of_study: '',
@@ -36,8 +27,13 @@ export default function ProfileForm({ currentUser, onSaved }) {
     setError('');
     setSaving(true);
     try {
-      await studentsAPI.create({
+      await studentsAPI.update(form.student_id,{
         ...form,
+        first_name:    form.first_name,
+        last_name:     form.last_name,
+        student_id:    form.student_id,
+        course:        form.course,
+        username:      currentUser.username, // Ensure username is sent if needed by backend
         user:          currentUser.id,
         year_of_study: parseInt(form.year_of_study, 10),
         semester:      parseInt(form.semester, 10),
@@ -70,9 +66,19 @@ export default function ProfileForm({ currentUser, onSaved }) {
 
           <form onSubmit={handleSave}>
             <div className="form-group">
-              <label className="form-label">Full name</label>
+              <label className="form-label">First Name</label>
               <input className="form-input" type="text"
-                value={form.student_name} onChange={set('student_name')} required />
+                value={form.first_name} onChange={set('first_name')} required />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Last Name</label>
+              <input className="form-input" type="text"
+                value={form.last_name} onChange={set('last_name')} required />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Username (read-only)</label>
+              <input className="form-input" type="text"
+                value={currentUser?.username || ''} readOnly style={{ opacity: .6, cursor: 'not-allowed' }} />
             </div>
 
             <div className="form-group">

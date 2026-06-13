@@ -438,7 +438,7 @@ button {
   border-radius: var(--r-md);
   font-size: 13.5px;
   margin-bottom: 16px;
-  border-left: 3px solid;
+  border-left: none;
 }
 
 .alert-success {

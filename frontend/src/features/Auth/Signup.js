@@ -14,7 +14,7 @@ const GATED_ROLES = ['administrator', 'workplace_supervisor', 'academic_supervis
 
 export default function Signup({ onAuthSuccess, goToLogin }) {
   const [form, setForm] = useState({
-    email: '', username: '', university_id: '',
+    email: '', first_name: '', last_name: '', username: '', university_id: '',
     role: 'student', password: '', confirmPassword: '',
   });
   const [error, setError] = useState('');
@@ -36,6 +36,8 @@ export default function Signup({ onAuthSuccess, goToLogin }) {
     setLoading(true);
     try {
       const res = await authAPI.register({
+        first_name:    form.first_name,
+        last_name:     form.last_name,
         email: form.email,
         username: form.username,
         university_id: form.university_id,
@@ -90,10 +92,21 @@ export default function Signup({ onAuthSuccess, goToLogin }) {
 
 
         <div className="form-group">
-          <label className="form-label">Full name / username</label>
+          <label className="form-label">First Name</label>
           <input className="form-input" type="text"
-            placeholder="e.g. John Doe" value={form.username}
-            onChange={set('username')} required />
+            placeholder="e.g. John" value={form.first_name}
+            onChange={set('first_name')} required />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Last Name</label>
+          <input className="form-input" type="text"
+            placeholder="e.g. Doe" value={form.last_name}
+            onChange={set('last_name')} required />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Username (one word handle)</label>
+          <input className="form-input" type="text"
+            placeholder="e.g. johndoe123" value={form.username} onChange={set('username')} required />
         </div>
 
         <div className="form-group">

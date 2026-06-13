@@ -33,7 +33,7 @@ class User(AbstractUser):
         ('administrator',        'Administrator'),
     )
     email         = models.EmailField(unique=True)
-    username      = models.CharField(max_length=50)
+    username      = models.CharField(max_length=50, unique=True)
     role          = models.CharField(max_length=30, choices=ROLE_CHOICES)
     university_id = models.CharField(max_length=50, unique=True)
     groups        = models.ManyToManyField('auth.Group',      related_name='iles_users', blank=True)

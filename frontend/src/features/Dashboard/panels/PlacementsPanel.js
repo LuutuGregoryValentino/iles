@@ -38,11 +38,11 @@ const STATUS_BADGE = {
   Pending:  'badge-warn',
   Complete: 'badge-neutral',
 };
-const STATUS_BORDER = {
-  Active:   'var(--brand-green-light)',
-  Pending:  'var(--brand-gold)',
-  Complete: 'var(--border-strong)',
-};
+// const STATUS_BORDER = {
+//   Active:   'var(--brand-green-light)',
+//   Pending:  'var(--brand-gold)',
+//   Complete: 'var(--border-strong)',
+// };
 
 export default function PlacementsPanel({ isActive }) {
   const [placements,  setPlacements]  = useState([]);
@@ -190,7 +190,7 @@ export default function PlacementsPanel({ isActive }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {filtered.map(p => (
                 <div key={p.id} className="card" style={{
-                  borderLeft: `4px solid ${STATUS_BORDER[p.placement_status] || 'var(--border-strong)'}`,
+                  // borderLeft: `4px solid ${STATUS_BORDER[p.placement_status] || 'var(--border-strong)'}`,
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                     <div>
@@ -212,7 +212,7 @@ export default function PlacementsPanel({ isActive }) {
                   {/* Action bar */}
                   <div style={{
                     marginTop: 12, paddingTop: 12,
-                    borderTop: '1px solid var(--border-subtle)',
+                    borderTop: '1px dashed var(--border-subtle)',
                     display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center',
                   }}>
                     {/* Edit */}

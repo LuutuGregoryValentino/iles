@@ -11,7 +11,7 @@ User = get_user_model()
 
 
 
-# ── AUTH ──────────────────────────────────────────────────────────────────────
+#  AUTH 
 """
 Handles user registration and includes customized validation methods for unique feilds and password strength
 """
@@ -21,7 +21,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = User
-        fields = ['id', 'email', 'username', 'university_id', 'role', 'password']
+        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'university_id', 'role', 'password']
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
@@ -56,7 +56,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model  = User
-        fields = ['id', 'email', 'username', 'university_id', 'role', 'is_approved']
+        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'university_id', 'role', 'is_approved']
 
 
 # PROFILES
@@ -86,7 +86,7 @@ class AcademicSupervisorSerializer(serializers.ModelSerializer):
 
 
 
-# ── PLACEMENT ─────────────────────────────────────────────────────────────────
+#  PLACEMENT 
 """
 This serializer ensures the logical consistency for dates of the beginning and enfing of a placmemt
 """

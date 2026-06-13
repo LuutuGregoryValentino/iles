@@ -26,10 +26,9 @@ LOGO_TEXT = "ILES Portal"
 
 logger = logging.getLogger(__name__)
 
-# init bckgd scheduler
+# Initialize the background scheduler to handle email sending without blocking the API response
 scheduler = BackgroundScheduler()
 scheduler.start()
-
 
 def _base_template(content: str, preview: str = "") -> str:
     """Wraps any content block in the ILES branded email shell."""
@@ -149,29 +148,20 @@ def _execute_email_send(subject: str, to: str, html: str, preview: str):
             to         = [to],
         )
         msg.attach_alternative(full_html, "text/html")
-        # Send without failing silently in the background so we can log errors
         msg.send(fail_silently=False)
         logger.info(f"Email sent successfully to {to}")
     except Exception as e:
-        logger.error(f"Background email failure to {to}: {str(e)}")
         logger.error(f"Failed to send email to {to}: {str(e)}")
 
 
 def _send(subject: str, to: str, html: str, preview: str = ""):
-    """
-    Dispatches the email to the background scheduler.
-    This prevents the API from hanging while waiting for the SMTP server.
-    """
-    """Sends email synchronously to ensure completion on Render free tier."""
+    """Dispatches the email to the background scheduler for asynchronous sending."""
     if not to:
-        logger.warning(f"Skipping email send for '{subject}': No recipient address provided.")
         return
 
-    logger.info(f"Scheduling email to {to}: {subject}")
+    logger.info(f"Scheduling: [ILES] {subject} to {to}")
     # Schedule the job to run immediately
     scheduler.add_job(_execute_email_send, 'date', run_date=timezone.now(), args=[subject, to, html, preview])
-    logger.info(f"Sending: [ILES] {subject} to {to}")
-    _execute_email_send(subject, to, html, preview)
 
 
 # ── 1. WELCOME EMAIL — sent on registration ───────────────────────────────────

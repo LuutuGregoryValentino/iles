@@ -14,13 +14,9 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
 
 
   const [form, setForm] = useState({
-
-    display_name: prefillData?.student_name
-      || prefillData?.supervisor_name
-      || prefillData?.lecturer_name
-      || prefillData?.admin_name
-      || currentUser?.username
-      || '',
+    first_name: currentUser?.first_name || '',
+    last_name:  currentUser?.last_name  || '',
+    username:   currentUser?.username   || '',
 
     /* studnet */
     student_id: prefillData?.student_id || '',
@@ -53,22 +49,22 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
     try {
       if (role === 'student') {
         const payload = {
-          user: currentUser.id,
-          student_name: form.display_name || currentUser.username,
+          first_name:   form.first_name,
+          last_name:    form.last_name,
+          username:     form.username,
         };
 
         // only fields that can handel partial saves
-        if (form.student_id) payload.student_id = form.student_id;
-        if (form.course) payload.course = form.course;
+        payload.student_id = form.student_id;
+        payload.course = form.course;
         if (form.year_of_study) payload.year_of_study = parseInt(form.year_of_study, 10);
         if (form.semester) payload.semester = parseInt(form.semester, 10);
 
         if (prefillData?.id) {
-          await studentsAPI.update(prefillData.id, payload);
+          await studentsAPI.update(prefillData.id, { user: currentUser.id, ...payload });
         } else {
-          await studentsAPI.create(payload);
+          await studentsAPI.create({ user: currentUser.id, ...payload });
         }
-
       } else if (role === 'workplace_supervisor') {
         const payload = {
           user: currentUser.id,
@@ -78,8 +74,11 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
         if (form.department) payload.department = form.department;
         if (form.phone_number) payload.phone_number = form.phone_number;
 
-        // NOTE: supervisorsAPI.create always POSTs — no update endpoint exists yet.
-        // If the record already exists this will 400. Flag for back-end team.
+        // Add first_name, last_name, username to supervisor payload
+        payload.first_name = form.first_name;
+        payload.last_name  = form.last_name;
+        payload.username   = form.username;
+
         // ->>>> add PUT /supervisors/:id/ to urls.py + views.py
         if (!prefillData) await supervisorsAPI.create(payload);
 
@@ -125,10 +124,17 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
           <form onSubmit={handleSave}>
 
 
-            <div className="form-group">
-              <label className="form-label">Full name</label>
-              <input className="form-input" type="text"
-                value={form.display_name} onChange={set('display_name')} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="form-group">
+                <label className="form-label">First Name</label>
+                <input className="form-input" type="text"
+                  value={form.first_name} onChange={set('first_name')} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Last Name</label>
+                <input className="form-input" type="text"
+                  value={form.last_name} onChange={set('last_name')} required />
+              </div>
             </div>
 
             {/* read only */}
@@ -136,7 +142,8 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
               <div className="form-group">
                 <label className="form-label">Email (read-only)</label>
                 <input className="form-input" type="email"
-                  value={currentUser?.email || ''} 
+                  value={currentUser?.email || ''}
+                  readOnly
                   style={{ opacity: .6, cursor: 'not-allowed' }} />
               </div>
               <div className="form-group">
@@ -144,7 +151,7 @@ export default function ProfileModal({ currentUser, prefillData, onSaved, onClos
                 <input className="form-input" type="text"
                   value={currentUser?.username || ''} readOnly
                   style={{ opacity: .6, cursor: 'not-allowed' }} />
-              </div>
+              </div> 
             </div>
 
 

@@ -61,6 +61,10 @@ export function useProfileStatus(currentUser) {
 
         const isComplete = Boolean(
           student &&
+          currentUser?.first_name &&
+          currentUser?.last_name &&
+          currentUser?.username &&
+          // Check profile fields
           student.student_name &&
           student.student_id &&
           student.course &&

@@ -108,11 +108,11 @@ export default function IssuesPanel({ currentUser, isActive }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {issues.map(issue => (
                 <div key={issue.id} className="card" style={{
-                  borderLeft: `4px solid ${
-                    issue.status === 'Resolved'   ? 'var(--brand-green-light)' :
-                    issue.status === 'In Review'  ? 'var(--status-info)'       :
-                    'var(--brand-gold)'
-                  }`
+                  // borderLeft: `1px solid ${
+                  //   issue.status === 'Resolved'   ? 'var(--brand-green-light)' :
+                  //   issue.status === 'In Review'  ? 'var(--status-info)'       :
+                  //   'var(--brand-gold)'
+                  // }`
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                     <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>
@@ -133,7 +133,7 @@ export default function IssuesPanel({ currentUser, isActive }) {
 
                   {/* ▼ ROLE GATE: only admins/supervisors can change status */}
                   {!isStudent && (
-                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--border-subtle)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 12, color: 'var(--text-muted)', alignSelf: 'center', marginRight: 4 }}>
                         Update status:
                       </span>

@@ -212,7 +212,7 @@ export default function StudentsPanel({ isActive }) {
 /* ── Add student: register user + create profile ── */
 function AddStudentForm({ onCreated, onCancel }) {
   const [form, setForm] = useState({
-    username: '', email: '', university_id: '', password: 'Iles@2025!',
+    first_name: '', last_name: '', username: '', email: '', university_id: '', password: 'Iles@2025!',
     student_id: '', course: '', year_of_study: '', semester: '',
   });
   const [saving, setSaving] = useState(false);
@@ -225,6 +225,8 @@ function AddStudentForm({ onCreated, onCancel }) {
     try {
       /* Step 1: Register user account */
       const res = await authAPI.register({
+        first_name:    form.first_name,
+        last_name:     form.last_name,
         username:      form.username,
         email:         form.email,
         university_id: form.university_id,
@@ -258,10 +260,22 @@ function AddStudentForm({ onCreated, onCancel }) {
       </div>
       {error && <div className="alert alert-danger">{error}</div>}
 
-      <div className="form-group">
-        <label className="form-label">Full name / username</label>
-        <input className="form-input" type="text" value={form.username} onChange={set('username')} required />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="form-group">
+          <label className="form-label">First Name</label>
+          <input className="form-input" type="text" value={form.first_name} onChange={set('first_name')} required />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Last Name</label>
+          <input className="form-input" type="text" value={form.last_name} onChange={set('last_name')} required />
+        </div>
       </div>
+
+      <div className="form-group">
+        <label className="form-label">Username (handle)</label>
+        <input className="form-input" type="text" placeholder="e.g. jdoe" value={form.username} onChange={set('username')} required />
+      </div>
+
       <div className="form-group">
         <label className="form-label">Email</label>
         <input className="form-input" type="email" value={form.email} onChange={set('email')} required />
