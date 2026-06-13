@@ -12,7 +12,6 @@ from iles_models_app.models import Student
 from iles_models_app.serializers import RegisterSerializer
 from rest_framework import serializers
 from iles_models_app.validators import validate_strong_password
-
  
 from iles_models_app.models import (
     AcademicSupervisor,
