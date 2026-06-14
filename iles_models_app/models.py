@@ -4,6 +4,11 @@ from django.conf import settings
 from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 
+"""
+validator to ensure phone numbers follow the Ugandan International format .
+matches strings starting with +256 followed by exactly 9 digits
+exmaple: +256000000000
+"""
 phone_regex = RegexValidator(
     regex=r'^\+256\d{9}$',
     message="Phone must be in format: +256700000000"
@@ -11,8 +16,16 @@ phone_regex = RegexValidator(
 
 
 # ── USER ─────────────────────────────────────────────────────────────────────
+"""
+The Core User Model
+It supports role-based access control for students, supervisors and admins 
+using email as their primary log in identifier
+"""
 
 class User(AbstractUser):
+    """
+    Custom user model for handling authentication and role-based access for students, administrators and supervisors
+    """
     ROLE_CHOICES = (
         ('student',              'Student'),
         ('academic_supervisor',  'Academic Supervisor'),
@@ -20,10 +33,19 @@ class User(AbstractUser):
         ('administrator',        'Administrator'),
     )
     email         = models.EmailField(unique=True)
+    username      = models.CharField(max_length=50)
     role          = models.CharField(max_length=30, choices=ROLE_CHOICES)
     university_id = models.CharField(max_length=50, unique=True)
     groups        = models.ManyToManyField('auth.Group',      related_name='iles_users', blank=True)
     user_permissions = models.ManyToManyField('auth.Permission', related_name='iles_users_perms', blank=True)
+    is_approved = models.BooleanField(default=False)
+    #Approval flag for gated roles
+    #False by default - admins/supervisors must be approved by an existing admin
+    #Students are always approved (True by default via save override below)
+    def save(self, *args,**kwargs):
+        if self.role == 'student':
+            self.is_approved = True
+        super().save(*args, **kwargs)
 
     USERNAME_FIELD  = 'email'
     REQUIRED_FIELDS = ['username', 'role', 'university_id']
@@ -35,6 +57,9 @@ class User(AbstractUser):
 # ── PROFILES ─────────────────────────────────────────────────────────────────
 
 class Student(models.Model):
+    """
+    Profile model linking a student's academic details(course, year, semester)
+    """
     user          = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_profile')
     student_id    = models.CharField(max_length=20, unique=True)
     student_name  = models.CharField(max_length=100)
@@ -47,6 +72,9 @@ class Student(models.Model):
 
 
 class InternshipAdministrator(models.Model):
+    """
+    Profile model for university staff managing the internship program
+    """
     user       = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='admin_profile')
     admin_id   = models.CharField(max_length=20, unique=True)
     admin_name = models.CharField(max_length=100)
@@ -57,6 +85,9 @@ class InternshipAdministrator(models.Model):
 
 
 class WorkplaceSupervisor(models.Model):
+    """
+    Profile model for the workplace supervisor overseeing the student at their placement.
+    """
     user            = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='workplace_profile')
     supervisor_id   = models.CharField(max_length=20, unique=True)
     supervisor_name = models.CharField(max_length=100)
@@ -69,6 +100,9 @@ class WorkplaceSupervisor(models.Model):
 
 
 class AcademicSupervisor(models.Model):
+    """
+    Profile model for the university lecturer evaluating the student's internship
+    """
     user          = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='academic_profile')
     staff_id      = models.CharField(max_length=20, unique=True)
     lecturer_name = models.CharField(max_length=100)
@@ -81,12 +115,15 @@ class AcademicSupervisor(models.Model):
 
 # ── PLACEMENT ────────────────────────────────────────────────────────────────
 
+
 class PlacementStatus(models.TextChoices):
     PENDING  = 'Pending',  'Pending'
     ACTIVE   = 'Active',   'Active'
     COMPLETE = 'Complete', 'Complete'
 
-
+"""
+This will link students to organizations and supervisors
+"""
 class InternshipPlacement(models.Model):
     organization_name = models.CharField(max_length=100)
     position          = models.CharField(max_length=100)
@@ -122,7 +159,9 @@ class LogStatus(models.TextChoices):
     SUBMITTED = 'Submitted', 'Submitted'
     APPROVED  = 'Approved',  'Approved'
 
-
+"""
+This model ensures hours worked, days worked are realistic and also handles the submission of the logs by students
+ """
 class LogbookEntry(models.Model):
     placement         = models.ForeignKey(InternshipPlacement, on_delete=models.CASCADE, related_name='logbooks')
     week_number       = models.IntegerField(validators=[MinValueValidator(1)])
@@ -136,7 +175,6 @@ class LogbookEntry(models.Model):
 
     class Meta:
         unique_together = ('placement', 'week_number')
-        ordering        = ['week_number']
 
     def clean(self):
         if self.hours_worked and self.hours_worked > 120:
@@ -148,11 +186,15 @@ class LogbookEntry(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+
     def __str__(self):
         return f"Week {self.week_number} — {self.placement.student.student_name}"
 
 
 # ── EVALUATION ───────────────────────────────────────────────────────────────
+"""
+Documents the grading of the logbooks submitted from students
+"""
 
 class Evaluation(models.Model):
     placement       = models.OneToOneField(InternshipPlacement, on_delete=models.CASCADE, related_name='evaluation')
@@ -209,3 +251,4 @@ class Issue(models.Model):
 
     def __str__(self):
         return f"{self.get_status_display()} — {self.title} ({self.student.email})"
+    

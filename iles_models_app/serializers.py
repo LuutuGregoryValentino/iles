@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from .validators import validate_strong_password
 from django.contrib.auth import get_user_model
 from .models import (
     Student, InternshipAdministrator, WorkplaceSupervisor,
@@ -9,7 +10,11 @@ from .models import (
 User = get_user_model()
 
 
+
 # ── AUTH ──────────────────────────────────────────────────────────────────────
+"""
+Handles user registration and includes customized validation methods for unique feilds and password strength
+"""
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
@@ -28,11 +33,18 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A user with this username already exists.")
         return value
 
+    """
+    This method ensures that every student or staff member has a unique identifier for either the organization or institution
+    """
     def validate_university_id(self, value):
         if User.objects.filter(university_id=value).exists():
             raise serializers.ValidationError("A user with this university ID already exists.")
         return value
-
+    
+    def validate_passord(self,value):
+        validate_strong_password(value)
+        return value
+   
     def create(self, validated_data):
         password = validated_data.pop('password')
         user     = User(**validated_data)
@@ -44,10 +56,10 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model  = User
-        fields = ['id', 'email', 'username', 'university_id', 'role']
+        fields = ['id', 'email', 'username', 'university_id', 'role', 'is_approved']
 
 
-# ── PROFILES ──────────────────────────────────────────────────────────────────
+# PROFILES
 
 class StudentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -73,7 +85,11 @@ class AcademicSupervisorSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+
 # ── PLACEMENT ─────────────────────────────────────────────────────────────────
+"""
+This serializer ensures the logical consistency for dates of the beginning and enfing of a placmemt
+"""
 
 class InternshipPlacementSerializer(serializers.ModelSerializer):
     class Meta:
@@ -88,7 +104,7 @@ class InternshipPlacementSerializer(serializers.ModelSerializer):
         return data
 
 
-# ── LOGBOOK ───────────────────────────────────────────────────────────────────
+# LOGBOOk
 
 class LogbookEntrySerializer(serializers.ModelSerializer):
     class Meta:
@@ -97,7 +113,7 @@ class LogbookEntrySerializer(serializers.ModelSerializer):
         read_only_fields = ['submitted_at']
 
 
-# ── EVALUATION ────────────────────────────────────────────────────────────────
+# EVALUATION
 
 class EvaluationSerializer(serializers.ModelSerializer):
     total_score = serializers.ReadOnlyField()
@@ -116,7 +132,7 @@ class EvaluationSerializer(serializers.ModelSerializer):
         return data
 
 
-# ── ISSUE ─────────────────────────────────────────────────────────────────────
+# ISSUE 
 
 class IssueSerializer(serializers.ModelSerializer):
     class Meta:
