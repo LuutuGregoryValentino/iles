@@ -247,7 +247,6 @@ class Issue(models.Model):
     is_approved = models.BooleanField(default=False)
 
     def save(self, *args,**kwargs):
-        #Students are auto-approved - they dont need gating
         if self.role == 'student':
             self.is_approved = True
         super().save(*args, **kwargs)
