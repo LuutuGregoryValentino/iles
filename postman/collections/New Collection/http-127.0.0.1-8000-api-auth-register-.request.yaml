@@ -1,0 +1,20 @@
+$kind: http-request
+name: http://127.0.0.1:8000/api/auth/register/
+url: http://127.0.0.1:8000/api/auth/register/
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"email\": \"nicholas_test2@gmail.com\",\r
+
+    \    \"username\": \"nicholastest2\",\r
+
+    \    \"university_id\": \"26/U/7777\",\r
+
+    \    \"role\": \"student\",\r
+
+    \    \"password\": \"NewPass@123\"\r
+
+    }"
+order: 1781383628897

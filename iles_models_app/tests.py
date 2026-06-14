@@ -897,7 +897,7 @@ class AdminListAPITests(TestCase):
         res = self.client.get("/api/admins/")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
- SERIALIZER TESTS
+# SERIALIZER TESTS
 
 
 class PlacementSerializerTests(TestCase):
@@ -963,4 +963,3 @@ class EvaluationSerializerTests(TestCase):
         }
         s = EvaluationSerializer(data=data)
         self.assertFalse(s.is_valid())
-
