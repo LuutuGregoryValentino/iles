@@ -143,7 +143,7 @@ def _send(subject: str, to: str, html: str, preview: str = ""):
         msg.attach_alternative(full_html, "text/html")
         msg.send(fail_silently=True)
     except Exception:
-        pass   # never crash the main request because of an email
+        pass   
 
 
 # ── 1. WELCOME EMAIL — sent on registration ───────────────────────────────────
