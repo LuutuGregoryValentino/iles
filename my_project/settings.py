@@ -101,7 +101,7 @@ WSGI_APPLICATION = 'my_project.wsgi.application'
 
 # ── Database — Neon PostgreSQL ────────────────────────────────────────────────
 DATABASES = {
-    'default': dj_database_url.config(
+    'default':dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
         conn_health_checks=True,
