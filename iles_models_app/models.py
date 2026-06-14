@@ -244,9 +244,6 @@ class Issue(models.Model):
 
     def __str__(self):
         return f"{self.get_status_display()} — {self.title} ({self.student.email})"
-    
-    #False by default - admins/supervisors must be approved by an existing admin
-    #Students are always approved (True by default via save override below)
     is_approved = models.BooleanField(default=False)
 
     def save(self, *args,**kwargs):
