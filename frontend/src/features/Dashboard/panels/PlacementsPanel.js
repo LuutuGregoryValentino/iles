@@ -9,11 +9,11 @@ const STATUS_BADGE = {
   Pending:  'badge-warn',
   Complete: 'badge-neutral',
 };
-const STATUS_BORDER = {
-  Active:   'var(--brand-green-light)',
-  Pending:  'var(--brand-gold)',
-  Complete: 'var(--border-strong)',
-};
+// const STATUS_BORDER = {
+//   Active:   'var(--brand-green-light)',
+//   Pending:  'var(--brand-gold)',
+//   Complete: 'var(--border-strong)',
+// };
 
 export default function PlacementsPanel({ isActive }) {
   const [placements,  setPlacements]  = useState([]);
