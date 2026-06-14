@@ -9,7 +9,7 @@
  */
 import axios from 'axios';
 
-const BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+const BASE = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
 
 const API = axios.create({
   baseURL: BASE,
@@ -49,9 +49,9 @@ API.interceptors.response.use(
   }
 );
 
-/*
+/* 
    AUTH
-*/
+ */
 export const authAPI = {
   register: (data) => API.post('/auth/register/', data),
   login:    (data) => API.post('/auth/login/',    data),

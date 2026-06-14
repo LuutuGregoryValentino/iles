@@ -11,7 +11,7 @@ User = get_user_model()
 
 
 
-# ── AUTH ──────────────────────────────────────────────────────────────────────
+#  AUTH 
 """
 Handles user registration and includes customized validation methods for unique feilds and password strength
 """
@@ -86,7 +86,7 @@ class AcademicSupervisorSerializer(serializers.ModelSerializer):
 
 
 
-# ── PLACEMENT ─────────────────────────────────────────────────────────────────
+#  PLACEMENT 
 """
 This serializer ensures the logical consistency for dates of the beginning and enfing of a placmemt
 """

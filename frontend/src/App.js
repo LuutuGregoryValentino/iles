@@ -10,19 +10,12 @@ import Dashboard from './features/Dashboard/Dashboard';
 function initialScreen() {
   const token = localStorage.getItem('access_token');
   const sessionAlive = sessionStorage.getItem('iles_session');
-
-  if (!token || !sessionAlive) {
-    return 'auth';
-  }
-
+  if (!token || !sessionAlive) return 'auth';
   try {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (!user) return 'landing';
-
     const GATED_ROLES = ['administrator', 'workplace_supervisor', 'academic_supervisor'];
-    if (GATED_ROLES.includes(user.role) && user.is_approved === false) {
-      return 'pending';
-    }
+    if (GATED_ROLES.includes(user.role) && user.is_approved === false) return 'pending';
     return 'dashboard';
   } catch {
     return 'landing';
@@ -30,9 +23,9 @@ function initialScreen() {
 }
 
 
-// Inner component — safely uses useNotifications inside the Provider 
+// ── AppContent — safely uses useNotifications INSIDE the Provider ─────────────
 function AppContent() {
-  const { clearNotifications } = useNotifications();
+  const { clearAll: clearNotifications } = useNotifications();
 
   const [theme, setTheme] = useState(
     () => localStorage.getItem('iles_theme') || 'dark'
@@ -70,7 +63,6 @@ function AppContent() {
     localStorage.setItem('user', JSON.stringify(user));
     sessionStorage.setItem('iles_session', 'true');
     setCurrentUser(user);
-
     const GATED_ROLES = ['administrator', 'workplace_supervisor', 'academic_supervisor'];
     if (GATED_ROLES.includes(user.role) && user.is_approved === false) {
       setScreen('pending');
@@ -96,14 +88,12 @@ function AppContent() {
           onToggleTheme={toggleTheme}
         />
       )}
-
       {screen === 'auth' && (
         <AuthShell
           onAuthSuccess={handleAuthSuccess}
           onBack={() => setScreen('landing')}
         />
       )}
-
       {screen === 'pending' && currentUser && (
         <PendingApproval
           currentUser={currentUser}
@@ -115,7 +105,6 @@ function AppContent() {
           onLogout={handleLogout}
         />
       )}
-
       {screen === 'dashboard' && currentUser && (
         <Dashboard
           currentUser={currentUser}
@@ -129,7 +118,7 @@ function AppContent() {
 }
 
 
-// Outer component — provides NotificationProvider 
+// ── App — provides NotificationProvider then renders AppContent ───────────────
 function App() {
   const [currentUser] = useState(() => {
     try {
