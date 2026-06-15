@@ -16,6 +16,11 @@ phone_regex = RegexValidator(
 
 
 # ── USER ─────────────────────────────────────────────────────────────────────
+"""
+The Core User Model
+It supports role-based access control for students, supervisors and admins 
+using email as their primary log in identifier
+"""
 
 class User(AbstractUser):
     """
@@ -28,12 +33,20 @@ class User(AbstractUser):
         ('administrator',        'Administrator'),
     )
     email         = models.EmailField(unique=True)
+    username      = models.CharField(max_length=50)
     role          = models.CharField(max_length=30, choices=ROLE_CHOICES)
     university_id = models.CharField(max_length=50, unique=True)
     groups        = models.ManyToManyField('auth.Group',      related_name='iles_users', blank=True)
     user_permissions = models.ManyToManyField('auth.Permission', related_name='iles_users_perms', blank=True)
     is_approved = models.BooleanField(default=False)
-    
+    #Approval flag for gated roles
+    #False by default - admins/supervisors must be approved by an existing admin
+    #Students are always approved (True by default via save override below)
+    def save(self, *args,**kwargs):
+        if self.role == 'student':
+            self.is_approved = True
+        super().save(*args, **kwargs)
+
     USERNAME_FIELD  = 'email'
     REQUIRED_FIELDS = ['username', 'role', 'university_id']
 
@@ -102,12 +115,15 @@ class AcademicSupervisor(models.Model):
 
 # ── PLACEMENT ────────────────────────────────────────────────────────────────
 
+
 class PlacementStatus(models.TextChoices):
     PENDING  = 'Pending',  'Pending'
     ACTIVE   = 'Active',   'Active'
     COMPLETE = 'Complete', 'Complete'
 
-
+"""
+This will link students to organizations and supervisors
+"""
 class InternshipPlacement(models.Model):
     organization_name = models.CharField(max_length=100)
     position          = models.CharField(max_length=100)
@@ -143,7 +159,9 @@ class LogStatus(models.TextChoices):
     SUBMITTED = 'Submitted', 'Submitted'
     APPROVED  = 'Approved',  'Approved'
 
-
+"""
+This model ensures hours worked, days worked are realistic and also handles the submission of the logs by students
+ """
 class LogbookEntry(models.Model):
     placement         = models.ForeignKey(InternshipPlacement, on_delete=models.CASCADE, related_name='logbooks')
     week_number       = models.IntegerField(validators=[MinValueValidator(1)])
@@ -174,6 +192,9 @@ class LogbookEntry(models.Model):
 
 
 # ── EVALUATION ───────────────────────────────────────────────────────────────
+"""
+Documents the grading of the logbooks submitted from students
+"""
 
 class Evaluation(models.Model):
     placement       = models.OneToOneField(InternshipPlacement, on_delete=models.CASCADE, related_name='evaluation')
@@ -230,13 +251,4 @@ class Issue(models.Model):
 
     def __str__(self):
         return f"{self.get_status_display()} — {self.title} ({self.student.email})"
-    #NEW: approval flag for gated roles
-    #False by default - admins/supervisors must be approved by an existing admin
-    #Students are always approved (True by default via save override below)
-    is_approved = models.BooleanField(default=False)
-
-    def save(self, *args,**kwargs):
-        #Students are auto-approved - they dont need gating
-        if self.role == 'student':
-            self.is_approved = True
-        super().save(*args, **kwargs)
+    
