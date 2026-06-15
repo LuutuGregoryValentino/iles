@@ -103,7 +103,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'my_project.wsgi.application'
 
-# ── Database — Neon PostgreSQL ────────────────────────────────────────────────
+#  Database — Neon PostgreSQL 
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
@@ -113,7 +113,7 @@ DATABASES = {
     )
 }
 
-# ── Password validation ───────────────────────────────────────────────────────
+# Password validation 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -121,13 +121,13 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ── Internationalisation ──────────────────────────────────────────────────────
+#  Internationalisation 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE     = 'Africa/Kampala'
 USE_I18N      = True
 USE_TZ        = True
 
-# ── Static & Media ────────────────────────────────────────────────────────────
+#  Static & Media 
 STATIC_URL          = 'static/'
 STATIC_ROOT         = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
