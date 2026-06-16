@@ -5,6 +5,8 @@ USAGE:
     python manage.py seed_data
 """
 
+import email
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from iles_models_app.models import (
@@ -130,6 +132,7 @@ class Command(BaseCommand):
                 job_title='Senior Software Engineer',
                 phone_number='+256700000001',
                 department='Engineering',
+                email='ojambonicholas052@gmail.com'
             )
         )
         if created:
