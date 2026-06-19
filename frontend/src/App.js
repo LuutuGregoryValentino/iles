@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './styles/global.css';
-import { NotificationProvider, useNotifications } from './context/NotificationContext';
+import { NotificationProvider } from './context/NotificationContext';
 import LandingPage from './features/Landing/LandingPage';
 import AuthShell from './features/Auth/AuthShell';
 import PendingApproval from './features/Auth/PendingApproval';
@@ -59,7 +59,7 @@ function App() {
     } catch { return null; }
   });
 
-  const { clearNotifications } = useNotifications();
+  // const { clearNotifications } = useNotifications();
 
 
 
@@ -93,16 +93,19 @@ function App() {
     }
   };
 
+  
+
   const handleLogout = () => {
     localStorage.clear();
     sessionStorage.removeItem('iles_session'); // dletes the session
     setCurrentUser(null);
     setScreen('auth'); 
-    clearNotifications();
+    // clearNotifications();
   };
 
   return (
-    <NotificationProvider>
+    <NotificationProvider userId={currentUser?.id} >
+
       <div className="App">
 
         {/* for new visitors and un approved users*/}

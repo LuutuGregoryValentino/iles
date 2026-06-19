@@ -33,7 +33,7 @@ export default function Sidebar({ sections, activeSection, onNav, currentUser, i
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
-      {/* ── Logo ── */}
+      {/*Logo*/}
       <div className="sb-logo">
         <div className="sb-logo-mark"><span>IL</span></div>
         <div className="sb-logo-text">
@@ -42,7 +42,7 @@ export default function Sidebar({ sections, activeSection, onNav, currentUser, i
         </div>
       </div>
 
-      {/* ── User badge ── */}
+      {/*User badge*/}
       <div className="sb-user">
         <div className="sb-avatar">
           {(currentUser?.username || 'U').slice(0, 2).toUpperCase()}
@@ -55,7 +55,7 @@ export default function Sidebar({ sections, activeSection, onNav, currentUser, i
 
       <div className="sb-divider" />
 
-      {/* ── Navigation ── */}
+      {/*Navigation*/}
       <nav className="sb-nav">
         <p className="sb-nav-label">Navigation</p>
         {sections.map(section => (
@@ -71,7 +71,7 @@ export default function Sidebar({ sections, activeSection, onNav, currentUser, i
         ))}
       </nav>
 
-      {/* ── Team credits footer ── */}
+      {/*Team credits footer*/}
       <div className="sb-footer">
         <button className="sb-footer-toggle" onClick={() => setShowTeam(t => !t)}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"

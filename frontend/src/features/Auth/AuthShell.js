@@ -17,7 +17,7 @@ export default function AuthShell({ onAuthSuccess, onBack }) {
             stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
-          Back to home
+          Home
         </button>
       )}
 

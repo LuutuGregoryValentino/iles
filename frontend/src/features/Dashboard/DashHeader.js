@@ -1,11 +1,4 @@
-/**
- * DashHeader.js — Persistent top bar (v2)
- *
- * CHANGES FROM v1:
- * - Replaced user pill + standalone logout with UserMenu dropdown
- * - Added NotificationBell (navigates to section on action click)
- * - Receives profileComplete + onOpenProfile from Dashboard
- */
+
 import React from 'react';
 import NotificationBell from './NotificationBell';
 import UserMenu         from './UserMenu';
@@ -78,7 +71,7 @@ export default function DashHeader({
           )}
         </button>
 
-        {/* Notification bell — navigates to section on action click */}
+        {/* Notification bell ; navigates to section on action click */}
         <NotificationBell onNavigate={onNavigate} />
 
         {/* User avatar dropdown (profile + logout) */}

@@ -174,3 +174,12 @@ def notify_user_approved(user):
         <p><a href="http://your-frontend-url/login">Click here to log in</a></p>
         """
     )
+def send_welcome_email(user_email, username):
+    subject = "Welcome to ILES!"
+    message_html = f"<h1>Hello {username}</h1><p>Your account has been successfully created on the Internship Logging and Evaluation System.</p>"
+    send_email(subject, user_email, message_html)
+
+def send_issue_resolved_email(user_email, issue_title):
+    subject = "Issue Resolved - ILES"
+    message_html = f"<p>Your reported issue regarding <strong>{issue_title}</strong> has been marked as resolved.</p>"
+    send_email(subject, user_email, message_html)

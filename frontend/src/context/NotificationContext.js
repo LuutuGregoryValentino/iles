@@ -1,178 +1,59 @@
-/**
- * NotificationContext.js
- *
- * Global notification system for the entire app.
- * Any component can push notifications that appear
- * in the dashboard bell/header.
- *
- * Notification shape:
- * {
- *   id: string,
- *   type: 'info' | 'success' | 'warn' | 'danger',
- *   title: string,
- *   body?: string,
- *   read: boolean,
- *   ts: string,
- *   action?: {
- *      label: string,
- *      sectionId: string
- *   }
- * }
- *
- * Usage:
- * const { push } = useNotifications();
- *
- * push({
- *   type: 'warn',
- *   title: 'Pending Reviews',
- *   body: '3 logbooks need review.'
- * });
- */
+/*
+NotificationContext.js
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  useMemo,
-} from 'react';
+any componet can use this to push a notification 
 
-const NotificationContext = createContext(null);
+notigfication shape 
+ id:       string   (auto gen)
+ type:     'info' | 'success' | 'warn' | 'danger'
+body:     string   (optional)
+  title:    string
+ read:     boolean
+ ts:       Date
+ action?:  { label: string, sectionId: string }  — nav shortcut
+ }
 
-const STORAGE_KEY = 'iles_notifications';
+usage
+  const { push } = useNotifications()
+  push({ type: 'warn', title: 'Logbook pending', body: '3 logbooks need review.' })
+*/
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
-/* ─────────────────────────────────────────────
-   Generate Unique Notification ID
-───────────────────────────────────────────── */
-const generateId = () =>
-  `notif_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+const NotifCtx = createContext(null);
 
-/* ─────────────────────────────────────────────
-   Provider
-───────────────────────────────────────────── */
-export function NotificationProvider({ children }) {
-  const [notifications, setNotifications] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch (error) {
-      console.error('Failed to load notifications:', error);
-      return [];
-    }
-  });
+let _id = 0;
+const uid = () => `n_${++_id}_${Date.now()}`;
 
-  /* ──────────────────────────────────────────
-     Persist notifications to localStorage
-  ─────────────────────────────────────────── */
+export function NotificationProvider({ children, userId }) {
+  const [notifications, setNotifications] = useState([]);
+
   useEffect(() => {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(notifications)
-      );
-    } catch (error) {
-      console.error('Failed to save notifications:', error);
-    }
-  }, [notifications]);
-
-  /* ──────────────────────────────────────────
-     Push Notification
-  ─────────────────────────────────────────── */
-  const push = useCallback((notif) => {
-    const newNotification = {
-      id: generateId(),
-      type: 'info',
-      read: false,
-      ts: new Date().toISOString(),
-      ...notif,
-    };
-
-    setNotifications(prev => [
-      newNotification,
-      ...prev,
-    ].slice(0, 50)); // Keep latest 50
-  }, []);
-
-  /* ──────────────────────────────────────────
-     Mark One As Read
-  ─────────────────────────────────────────── */
-  const markRead = useCallback((id) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === id
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
-  }, []);
-
-  /* ──────────────────────────────────────────
-     Mark All As Read
-  ─────────────────────────────────────────── */
-  const markAllRead = useCallback(() => {
-    setNotifications(prev =>
-      prev.map(notification => ({
-        ...notification,
-        read: true,
-      }))
-    );
-  }, []);
-
-  /* ──────────────────────────────────────────
-     Remove Notification
-  ─────────────────────────────────────────── */
-  const dismiss = useCallback((id) => {
-    setNotifications(prev =>
-      prev.filter(notification => notification.id !== id)
-    );
-  }, []);
-
-  /* ──────────────────────────────────────────
-     Clear Everything
-  ─────────────────────────────────────────── */
-  const clearNotifications = useCallback(() => {
     setNotifications([]);
+  }, [userId]);
+
+  const push = useCallback((notif) => {
+    setNotifications(prev => [
+      { id: uid(), read: false, ts: new Date(), ...notif },
+      ...prev,
+    ].slice(0, 50));// cap at 50
   }, []);
 
-  /* ──────────────────────────────────────────
-     Unread Count
-  ─────────────────────────────────────────── */
-  const unreadCount = useMemo(() => {
-    return notifications.filter(n => !n.read).length;
-  }, [notifications]);
+  const markRead = useCallback((id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n)), []);
+  const markAllRead = useCallback(() => setNotifications(prev => prev.map(n => ({ ...n, read: true }))), []);
+  const dismiss = useCallback((id) => setNotifications(prev => prev.filter(n => n.id !== id)), []);
+  const clearAll = useCallback(() => setNotifications([]), []);
 
-  /* ──────────────────────────────────────────
-     Context Value
-  ─────────────────────────────────────────── */
-  const value = {
-    notifications,
-    unreadCount,
-    push,
-    markRead,
-    markAllRead,
-    dismiss,
-    clearNotifications,
-  };
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <NotificationContext.Provider value={value}>
+    <NotifCtx.Provider value={{ notifications, push, markRead, markAllRead, dismiss, clearAll, unreadCount }}>
       {children}
-    </NotificationContext.Provider>
+    </NotifCtx.Provider>
   );
 }
 
-/* ─────────────────────────────────────────────
-   Custom Hook
-───────────────────────────────────────────── */
 export function useNotifications() {
-  const context = useContext(NotificationContext);
-
-  if (!context) {
-    throw new Error(
-      'useNotifications must be used inside NotificationProvider'
-    );
-  }
-
-  return context;
+  const ctx = useContext(NotifCtx);
+  if (!ctx) throw new Error('useNotifications must be inside NotificationProvider');
+  return ctx;
 }

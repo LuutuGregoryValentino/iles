@@ -1,9 +1,4 @@
-/**
- * NotificationBell.js
- *
- * Dropdown bell icon in the header showing unread notifications.
- * Clicking a notification with an action prop calls onNavigate(sectionId).
- */
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useNotifications } from '../../context/NotificationContext';
 import './NotificationBell.css';

@@ -2,6 +2,7 @@ from pathlib import Path
 from datetime import timedelta
 import os
 import dj_database_url
+import sys
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -108,6 +109,11 @@ DATABASES = {
         ssl_require=True,
     )
 }
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE':'django.db.backends.sqlite3',
+        'NAME':'test_db.sqlite3',
+    }
 
 # ── Password validation ───────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
@@ -133,6 +139,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST    = 'smtp.gmail.com'
 EMAIL_PORT    =  587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your-email@gmail.com' #this has to be changed
-EMAIL_HOST_PASSWORD = 'your-app-password-here' #Fill in your Gmail app password
+EMAIL_USE_SSL = False
+
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL  = 'ILES Portal <your-email@gmail.com>'
