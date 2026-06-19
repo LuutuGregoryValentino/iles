@@ -98,7 +98,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'my_project.wsgi.application'
+WSGI_APPLICATION = 'my_project.wsgi.application' #This is used for deployment on platforms like Render or Heroku. For local development, you can use the default runserver command.
 
 # ── Database — Neon PostgreSQL ────────────────────────────────────────────────
 DATABASES = {
