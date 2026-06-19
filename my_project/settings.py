@@ -2,6 +2,7 @@ from pathlib import Path
 from datetime import timedelta
 import os
 import dj_database_url
+import sys
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -108,6 +109,11 @@ DATABASES = {
         ssl_require=True,
     )
 }
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE':'django.db.backends.sqlite3',
+        'NAME':'test_db.sqlite3',
+    }
 
 # ── Password validation ───────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
