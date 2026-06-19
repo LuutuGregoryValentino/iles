@@ -4,9 +4,11 @@ All emails are sent as HTML with a plain text fallback.
 Triggered from views.py on key events.
 """
 
-from django.core.mail import EmailMultiAlternatives
+from django.contrib.auth import get_user_model
 from django.conf import settings
-
+from django.utils import timezone
+import requests
+import logging
 # ── Brand colours ─────────────────────────────────────────────────────────────
 RED       = "#990000"  # Makerere Red
 BLACK     = "#000000"
@@ -20,6 +22,7 @@ CARD_BG   = "#ffffff"
 APP_URL   = "https://iles-nine.vercel.app"
 LOGO_TEXT = "ILES Portal"
 
+logger = logging.getLogger(__name__)
 
 def _base_template(content: str, preview: str = "") -> str:
     """Wraps any content block in the ILES branded email shell."""
@@ -128,25 +131,43 @@ def _badge(text: str, color: str) -> str:
 
 
 def _send(subject: str, to: str, html: str, preview: str = ""):
-    """Helper that sends the HTML email with a plain text fallback."""
+    """
+    Utility to sanitize recipients and dispatch email via Resend API.
+    """
     if not to:
+        logger.warning(f"Skipping email '{subject}': No recipient provided.")
         return
-    try:
-        full_html = _base_template(html, preview)
-        plain     = f"{subject}\n\nLog in at {APP_URL}"
-        msg = EmailMultiAlternatives(
-            subject    = f"[ILES] {subject}",
-            body       = plain,
-            #  get from_email without crashing if settings missing
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', getattr(settings, 'EMAIL_HOST_USER', 'webmaster@localhost')),
-            to         = [to],
-        )
-        msg.attach_alternative(full_html, "text/html")
-        # fail_silently = False so  try/except block can catch and log SMTP errors
-        msg.send(fail_silently=False)
-    except Exception as e:
-        print(f"Email failure to {to}: {str(e)}") # Log error for debugging
 
+    # Sanitize: Convert to list if string, remove duplicates and empty strings
+    recipient_list = [to] if isinstance(to, str) else list(to)
+    recipient_list = list(set(filter(None, recipient_list)))
+    
+    if not recipient_list:
+        logger.warning(f"Skipping email '{subject}': Recipient list is empty after sanitization.")
+        return
+
+    # Brevo expects recipients as a list of dicts: [{"email": "..."}]
+    brevo_recipients = [{"email": email} for email in recipient_list]
+
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "api-key": settings.BREVO_API_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    payload = {
+        "sender": {"email": settings.DEFAULT_FROM_EMAIL, "name": "Intership Logging and Evaluation System"},
+        "to": brevo_recipients,
+        "subject": f"[ILES] {subject}",
+        "htmlContent": _base_template(html, preview) # Brevo uses 'htmlContent'
+    }
+
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status() # Raises error for 4xx/5xx responses
+        logger.info(f"Brevo API Success: Sent '{subject}' to {recipient_list}")
+    except Exception as e:
+        logger.error(f"Brevo API Error for {recipient_list}: {str(e)}")
 
 # ── 1. WELCOME EMAIL — sent on registration ───────────────────────────────────
 
@@ -159,6 +180,12 @@ def send_welcome_email(user):
       Hi <strong style="color:{BLACK};">{user.username}</strong>, welcome to the Internship
       Logging &amp; Evaluation System at Makerere University. Your account is ready and
       you can now log in to get started.
+    </p>
+
+    <p style="font-size:14px;line-height:1.7;color:{RED};font-weight:700;margin:0 0 20px;">
+      ⚠️ ACTION REQUIRED: To be assigned an internship placement, you must first 
+      complete your Student Profile. Log in now and fill in your details to be 
+      eligible for placement.
     </p>
 
     {_info_table([
@@ -212,11 +239,11 @@ def notify_supervisors_logbook_submitted(logbook):
     
     recipients = []
     if placement.workplace_supervisor:
-        recipients.append((placement.workplace_supervisor.user.email, placement.workplace_supervisor.supervisor_name))
+        recipients.append(placement.workplace_supervisor.user.email)
     if placement.academic_supervisor:
-        recipients.append((placement.academic_supervisor.user.email, placement.academic_supervisor.lecturer_name))
+        recipients.append(placement.academic_supervisor.user.email)
 
-    for email, name in recipients:
+    if recipients:
         content = f"""
     {_heading("New Logbook Submission", BLACK)}
     {_subheading(f"Student {student.student_name} has submitted their Week {logbook.week_number} logbook.")}
@@ -238,15 +265,33 @@ def notify_supervisors_logbook_submitted(logbook):
     """
         _send(
             subject = f"Logbook Submitted: Week {logbook.week_number} — {student.student_name}",
-            to      = email,
+            to      = recipients,
             html    = content,
-            preview = f"{student.student_name} submitted Week {logbook.week_number} for review.",
+            preview = f"{student.student_name} submitted Week {logbook.week_number} for review."
         )
 
 
 def send_logbook_submitted_email(logbook):
     """Wrapper for backward compatibility in views."""
     notify_supervisors_logbook_submitted(logbook)
+
+
+def notify_student_logbook_submitted(logbook):
+    student = logbook.placement.student
+    content = f"""
+    {_heading("Logbook Received", BLACK)}
+    {_subheading(f"Your logbook for Week {logbook.week_number} has been submitted.")}
+    <p style="font-size:14px;line-height:1.7;color:{MUTED};margin:0 0 20px;">
+      Hi <strong style="color:{BLACK};">{student.student_name}</strong>, your logbook for Week {logbook.week_number} has been received and sent to your supervisors for review.
+    </p>
+    {_cta_button("View My Logbooks", APP_URL, BLACK)}
+    """
+    _send(
+        subject = f"Logbook Submitted: Week {logbook.week_number}",
+        to      = student.user.email,
+        html    = content,
+        preview = f"Week {logbook.week_number} logbook has been submitted."
+    )
 
 
 # ── 4. LOGBOOK APPROVED — sent to student ────────────────────────────────────
@@ -346,16 +391,41 @@ def send_evaluation_email(evaluation):
 
 def notify_supervisors_issue_submitted(issue):
     placement = issue.placement
-    student_name = getattr(issue.student, 'username', issue.student.email)
+    student_user = issue.student
+    student_name = getattr(student_user, 'username', student_user.email)
+
+    # 1. Notify the student confirming receipt of the issue
+    student_content = f"""
+    {_heading("Issue Received", BLACK)}
+    {_subheading("We have received your report and are looking into it.")}
+    <p style="font-size:14px;line-height:1.7;color:{MUTED};margin:0 0 20px;">
+      Hi <strong style="color:{BLACK};">{student_name}</strong>, thank you for reporting the issue: 
+      <strong>{issue.title}</strong>. Our team will review it and get back to you shortly.
+    </p>
+    {_cta_button("View My Issues", APP_URL, BLACK)}
+    """
+    _send(
+        subject = f"Issue Received: {issue.title}",
+        to      = student_user.email,
+        html    = student_content,
+        preview = f"We have received your report: {issue.title}"
+    )
 
     recipients = []
     if placement:
         if placement.workplace_supervisor:
-            recipients.append((placement.workplace_supervisor.user.email, placement.workplace_supervisor.supervisor_name))
+            recipients.append(placement.workplace_supervisor.user.email)
         if placement.academic_supervisor:
-            recipients.append((placement.academic_supervisor.user.email, placement.academic_supervisor.lecturer_name))
+            recipients.append(placement.academic_supervisor.user.email)
+    
+    # 2. Fallback to Administrators if no placement exists (student not yet assigned)
+    if not recipients:
+        User = get_user_model()
+        admins = User.objects.filter(role='administrator', is_approved=True)
+        for admin in admins:
+            recipients.append(admin.email)
 
-    for email, name in recipients:
+    if recipients:
         content = f"""
     {_heading("Attention: Issue Reported", RED)}
     {_subheading(f"A student has reported a problem via the ILES portal.")}
@@ -376,9 +446,9 @@ def notify_supervisors_issue_submitted(issue):
     """
         _send(
             subject = f"Alert: Issue Reported by {student_name}",
-            to      = email,
+            to      = recipients,
             html    = content,
-            preview = f"New issue reported: {issue.title}",
+            preview = f"New issue reported: {issue.title}"
         )
 
 

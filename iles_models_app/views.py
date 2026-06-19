@@ -173,6 +173,19 @@ def supervisor_list(request):
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
+def academic_supervisor_list(request):
+    if request.method == 'GET':
+        return Response(AcademicSupervisorSerializer(
+            AcademicSupervisor.objects.all(), many=True).data)
+    s = AcademicSupervisorSerializer(data=request.data)
+    if s.is_valid():
+        s.save()
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def admin_list(request):
     if request.method == 'GET':
         return Response(InternshipAdministratorSerializer(
@@ -234,14 +247,9 @@ def logbook_detail(request, pk):
     s = LogbookEntrySerializer(obj, data=request.data, partial=True)
     if s.is_valid():
         if new_status == LogStatus.SUBMITTED and not obj.submitted_at:
-            logbook = s.save(submitted_at=timezone.now())
-
-        # sending emails to supervisors
-            # Send notification to supervisors
-            notify_supervisors_logbook_submitted(logbook)
+            s.save(submitted_at=timezone.now())  # Signal handles email
         elif new_status == LogStatus.APPROVED:
-            logbook = s.save()
-            # Send notification to student
+            logbook = s.save() 
             send_logbook_approved_email(logbook)
         else:
             s.save()
