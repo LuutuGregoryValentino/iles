@@ -76,11 +76,11 @@ export default function LogbookPanel({ currentUser, isActive }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {logbooks.map(lb => (
                 <div key={lb.id} className="card" style={{
-                  borderLeft: `4px solid ${
-                    lb.submission_status === 'Approved'  ? 'var(--brand-green-light)' :
-                    lb.submission_status === 'Submitted' ? 'var(--brand-gold)'        :
-                    'var(--border-strong)'
-                  }`
+                  // borderLeft: `4px solid ${
+                  //   lb.submission_status === 'Approved'  ? 'var(--brand-green-light)' :
+                  //   lb.submission_status === 'Submitted' ? 'var(--brand-gold)'        :
+                  //   'var(--border-strong)'
+                  // }`
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>

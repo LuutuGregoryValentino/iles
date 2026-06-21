@@ -22,17 +22,21 @@ from .serializers import (
     EvaluationSerializer, IssueSerializer,
     RegisterSerializer, UserSerializer,
 )
+
 from .emails import (
     send_welcome_email,
-    send_logbook_submitted_email,
+    notify_student_placement_assigned,
+    notify_workplace_supervisor_placement_assigned,
+    notify_academic_supervisor_placement_assigned,
+    notify_supervisors_logbook_submitted,
+    notify_supervisors_issue_submitted,
+    notify_student_graded,
+    notify_user_approved,
     send_logbook_approved_email,
-    send_evaluation_email,
-    send_issue_reported_email,
     send_issue_resolved_email,
 )
-from .validators import validate_strong_password
-
-
+from iles_models_app.emails_utils import send_welcome_email,send_issue_resolved_email
+from iles_models_app.validators import validate_strong_password
 User = get_user_model()
 
 
@@ -54,7 +58,7 @@ def register(request):
     if serializer.is_valid():
         user    = serializer.save()
         refresh = RefreshToken.for_user(user)
-        send_welcome_email(user)           # ← HTML welcome email
+        send_welcome_email(user.email,user.username)           # ← HTML welcome email
         return Response({
             'user':    UserSerializer(user).data,
             'access':  str(refresh.access_token),
@@ -79,9 +83,13 @@ def login_api(request):
         )
     user = authenticate(request, username=email, password=password)
     if user is None:
+        return Response({'error': 'Invalid email or password.'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    # Blocking unapproved supervisors and administrators
+    if user.role in ('academic_supervisor', 'workplace_supervisor','administrator') and not user.is_approved:
         return Response(
-            {'error': 'Invalid email or password.'},
-            status=status.HTTP_401_UNAUTHORIZED
+            {'error' : 'Your account is pending admin approval.You will receive an email once approved.'},
+            status=status.HTTP_403_FORBIDDEN
         )
     refresh = RefreshToken.for_user(user)
     return Response({
@@ -124,6 +132,7 @@ class StudentViewSet(ModelViewSet):
         return Student.objects.all()
 
     def perform_create(self, serializer):
+        # Just save the student profile linked to the current user
         serializer.save(user=self.request.user)
 
 
@@ -139,6 +148,13 @@ class PlacementViewSet(ModelViewSet):
             return InternshipPlacement.objects.filter(student__user=user)
         return InternshipPlacement.objects.all()
 
+    def perform_create(self, serializer):
+        placement = serializer.save()
+        # Trigger notifications on placement creation
+        notify_student_placement_assigned(placement.student, placement)
+        notify_workplace_supervisor_placement_assigned(placement)
+        notify_academic_supervisor_placement_assigned(placement)
+
 
 # ── SUPERVISORS & ADMINS ──────────────────────────────────────────────────────
 
@@ -149,6 +165,19 @@ def supervisor_list(request):
         return Response(WorkplaceSupervisorSerializer(
             WorkplaceSupervisor.objects.all(), many=True).data)
     s = WorkplaceSupervisorSerializer(data=request.data)
+    if s.is_valid():
+        s.save()
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def academic_supervisor_list(request):
+    if request.method == 'GET':
+        return Response(AcademicSupervisorSerializer(
+            AcademicSupervisor.objects.all(), many=True).data)
+    s = AcademicSupervisorSerializer(data=request.data)
     if s.is_valid():
         s.save()
         return Response(s.data, status=status.HTTP_201_CREATED)
@@ -218,13 +247,10 @@ def logbook_detail(request, pk):
     s = LogbookEntrySerializer(obj, data=request.data, partial=True)
     if s.is_valid():
         if new_status == LogStatus.SUBMITTED and not obj.submitted_at:
-            s.save(submitted_at=timezone.now())
-            send_logbook_submitted_email(obj)    # ← HTML email to supervisor
-
+            s.save(submitted_at=timezone.now())  # Signal handles email
         elif new_status == LogStatus.APPROVED:
-            s.save()
-            send_logbook_approved_email(obj)     # ← HTML email to student
-
+            logbook = s.save() 
+            send_logbook_approved_email(logbook)
         else:
             s.save()
         return Response(s.data)
@@ -251,8 +277,9 @@ def evaluation_list(request):
         )
     s = EvaluationSerializer(data=request.data)
     if s.is_valid():
-        instance = s.save(supervisor=request.user)
-        send_evaluation_email(instance)          # ← HTML email to student
+        evaluation =s.save(supervisor=request.user)
+#sending email to students about evaluation    
+        notify_student_graded(evaluation)
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -284,8 +311,9 @@ def issue_list(request):
 
     s = IssueSerializer(data=request.data)
     if s.is_valid():
-        instance = s.save(student=request.user)
-        send_issue_reported_email(instance)      # ← HTML email to academic supervisor
+        issue = s.save(student=request.user)
+    # sending email to supervisors
+        notify_supervisors_issue_submitted(issue)
         return Response(s.data, status=status.HTTP_201_CREATED)
     return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -340,12 +368,15 @@ def approve_user(request, pk):
         target = User.objects.get(pk=pk)
     except User.DoesNotExist:
         return Response({'error': 'User not found.'}, status=404)
-    
+    was_approved = target.is_approved    
     target.is_approved = request.data.get('is_approved', True)
     target.save()
+#sending email to user when approved
+    if target.is_approved and not was_approved:
+        notify_user_approved(target)
     return Response(UserSerializer(target).data)
 
-@api_view
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def pending_users(request):
     """
@@ -357,6 +388,6 @@ def pending_users(request):
     
     pending = User.objects.filter(
         is_approved=False,
-        role_in=['administrator', 'workplace_supervisor', 'academic_supervisor']
+        role__in=['administrator', 'workplace_supervisor', 'academic_supervisor']
     )
     return Response(UserSerializer(pending, many=True).data)

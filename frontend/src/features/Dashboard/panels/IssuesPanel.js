@@ -108,11 +108,11 @@ export default function IssuesPanel({ currentUser, isActive }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {issues.map(issue => (
                 <div key={issue.id} className="card" style={{
-                  borderLeft: `4px solid ${
-                    issue.status === 'Resolved'   ? 'var(--brand-green-light)' :
-                    issue.status === 'In Review'  ? 'var(--status-info)'       :
-                    'var(--brand-gold)'
-                  }`
+                  // borderLeft: `4px solid ${
+                  //   issue.status === 'Resolved'   ? 'var(--brand-green-light)' :
+                  //   issue.status === 'In Review'  ? 'var(--status-info)'       :
+                  //   'var(--brand-gold)'
+                  // }`
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                     <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>

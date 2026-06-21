@@ -2,13 +2,14 @@ from pathlib import Path
 from datetime import timedelta
 import os
 import dj_database_url
+import sys
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv()
 
-# ── Security ──────────────────────────────────────────────────────────────────
+#   Security  
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     'django-insecure-z@$_&)_fq^v9ck6n3nett7_a2nccc=b5q5m!yrdc-8sidi46eq'
@@ -21,7 +22,7 @@ ALLOWED_HOSTS = os.environ.get(
     'localhost,127.0.0.1,.onrender.com'
 ).split(',')
 
-# ── Apps ──────────────────────────────────────────────────────────────────────
+#   Apps  
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -39,7 +40,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL      = 'iles_models_app.User'
 DEFAULT_AUTO_FIELD   = 'django.db.models.BigAutoField'
 
-# ── Middleware ─────────────────────────────────────────────────────────────────
+#   Middleware    
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -52,7 +53,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# ── CORS ──────────────────────────────────────────────────────────────────────
+#   CORS  
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -60,7 +61,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
-# ── REST Framework & JWT ──────────────────────────────────────────────────────
+#   REST Framework & JWT  
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -79,7 +80,7 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-# ── URLs & Templates ──────────────────────────────────────────────────────────
+#   URLs & Templates  
 ROOT_URLCONF = 'my_project.urls'
 
 TEMPLATES = [
@@ -97,9 +98,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'my_project.wsgi.application'
+WSGI_APPLICATION = 'my_project.wsgi.application' #This is used for deployment on platforms like Render or Heroku. For local development, you can use the default runserver command.
 
-# ── Database — Neon PostgreSQL ────────────────────────────────────────────────
+#   Database,  Neon PostgreSQL  
 DATABASES = {
     'default':dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
@@ -108,8 +109,13 @@ DATABASES = {
         ssl_require=True,
     )
 }
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE':'django.db.backends.sqlite3',
+        'NAME':'test_db.sqlite3',
+    }
 
-# ── Password validation ───────────────────────────────────────────────────────
+#   Password validation  
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -117,27 +123,17 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ── Internationalisation ──────────────────────────────────────────────────────
+#   Internationalisation  
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE     = 'Africa/Kampala'
 USE_I18N      = True
 USE_TZ        = True
 
-# ── Static & Media ────────────────────────────────────────────────────────────
+#   Static & Media  
 STATIC_URL          = 'static/'
 STATIC_ROOT         = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-MEDIA_URL           = '/media/'
-MEDIA_ROOT          = BASE_DIR / 'media'
 
-# ── Email — Gmail SMTP ─────────────────────────────────────────
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+BREVO_API_KEY = os.getenv('BREVO_API_KEY')
 
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-
-DEFAULT_FROM_EMAIL  = f'ILES Makerere <{os.environ.get("EMAIL_HOST_USER", "noreply@iles.mak.ac.ug")}>'
-
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'iles-portal@university.edu')
