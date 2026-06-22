@@ -18,6 +18,8 @@ def validate_strong_password(password):
 
     if not re.search(r'[0-9]',password):
         errors.append("must have atleast one number 0-9")
-
+        
     if errors:
         raise serializers.ValidationError(errors)
+    
+    return password

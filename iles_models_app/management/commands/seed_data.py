@@ -5,14 +5,19 @@ USAGE:
     python manage.py seed_data
 """
 
+<<<<<<< HEAD
 import email
 
+=======
+from datetime import date, timedelta
+>>>>>>> 405477c94f96c3d117348d0361e3c2d909fb2e6f
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from iles_models_app.models import (
     Student, InternshipAdministrator,
     WorkplaceSupervisor, AcademicSupervisor,
-    InternshipPlacement, PlacementStatus,
+    InternshipPlacement, PlacementStatus, LogbookEntry, 
+    LogStatus, Evaluation, Issue, IssueStatus
 )
 
 User = get_user_model()
@@ -26,103 +31,118 @@ class Command(BaseCommand):
 
         # ── 1. USERS ──────────────────────────────────────────────────────────
 
-        student_user, created = User.objects.get_or_create(
+        greg_user, created = User.objects.get_or_create(
             email='luutugregory@gmail.com',
             defaults=dict(
-                username='gregory',
+                username='luutugreg',
                 university_id='467389',
                 role='student',
-                first_name='Gregory',
+                first_name='Greg',
                 last_name='Luutu',
             )
         )
         if created:
-            student_user.set_password('Pass1234!')
-            student_user.save()
-            self.stdout.write(self.style.SUCCESS('  Created student user: gregory@iles.ac.ug'))
+            greg_user.set_password('Pass1234!')
+            greg_user.save()
+            self.stdout.write(self.style.SUCCESS('  Created student user: Greg'))
         else:
             self.stdout.write('  Student user already exists — skipping.')
+
+        rahma_user, created = User.objects.get_or_create(
+            email='rahmaluutun@gmail.com',
+            defaults=dict(
+                username='luuturahma',
+                university_id='467390',
+                role='student',
+                first_name='Rahma',
+                last_name='Luutu',
+            )
+        )
+        if created:
+            rahma_user.set_password('Pass1234!')
+            rahma_user.save()
+            self.stdout.write(self.style.SUCCESS('  Created student user: Rahma'))
 
         admin_user, created = User.objects.get_or_create(
             email='snowchildwolf@gmail.com',
             defaults=dict(
-                username='snowchildwolf',
+                username='snowchild',
                 university_id='ADM001',
                 role='administrator',
-                first_name='Admin',
-                last_name='ILES',
+                first_name='Snowchild',
+                last_name='Wolf',
+                is_approved=True,
             )
         )
         if created:
             admin_user.set_password('Pass1234!')
             admin_user.save()
-            self.stdout.write(self.style.SUCCESS('  Created admin user: admin@iles.ac.ug'))
-        else:
-            self.stdout.write('  Admin user already exists — skipping.')
-
-        wp_user, created = User.objects.get_or_create(
-            email='raur734@gmail.com',
-            defaults=dict(
-                username='raudha',
-                university_id='WP001',
-                role='workplace_supervisor',
-                first_name='raudha',
-                last_name='N',
-            )
-        )
-        if created:
-            wp_user.set_password('Pass1234!')
-            wp_user.save()
-            self.stdout.write(self.style.SUCCESS('  Created workplace supervisor user'))
-        else:
-            self.stdout.write('  Workplace supervisor user already exists — skipping.')
+            self.stdout.write(self.style.SUCCESS('  Created admin user: Snowchild'))
 
         ac_user, created = User.objects.get_or_create(
-            email='rahmaluutun@gmail.com',
+            email='raur743@gmail.com',
             defaults=dict(
-                username='Rahma',
+                username='ac_supervisor',
                 university_id='STAFF001',
                 role='academic_supervisor',
-                first_name='Rahma',
-                last_name='Luutu',
+                first_name='Academic',
+                last_name='Supervisor',
+                is_approved=True,
             )
         )
         if created:
             ac_user.set_password('Pass1234!')
             ac_user.save()
             self.stdout.write(self.style.SUCCESS('  Created academic supervisor user'))
-        else:
-            self.stdout.write('  Academic supervisor user already exists — skipping.')
+
+        wp_user, created = User.objects.get_or_create(
+            email='ojambonicholas052@gmail.com',
+            defaults=dict(
+                username='workplacesupervisor',
+                university_id='WP001',
+                role='workplace_supervisor',
+                first_name='Nicholas',
+                last_name='Ojambo',
+                is_approved=True,
+            )
+        )
+        if created:
+            wp_user.set_password('Pass1234!')
+            wp_user.save()
+            self.stdout.write(self.style.SUCCESS('  Created workplace supervisor user'))
 
         # ── 2. PROFILES ───────────────────────────────────────────────────────
 
-        student, created = Student.objects.get_or_create(
-            user=student_user,
+        greg_profile, _ = Student.objects.get_or_create(
+            user=greg_user,
             defaults=dict(
                 student_id='4677889',
-                student_name='Gregory Luutu',
-                course='Bachelor of Science in Information Systems',
+                student_name='Luutu Greg',
+                course='Bachelor of Science in Software Engineering',
                 year_of_study=3,
                 semester=1,
             )
         )
-        if created:
-            self.stdout.write(self.style.SUCCESS('  Created Student profile'))
-        else:
-            self.stdout.write('  Student profile already exists — skipping.')
+
+        rahma_profile, _ = Student.objects.get_or_create(
+            user=rahma_user,
+            defaults=dict(
+                student_id='4677890',
+                student_name='Luutu Rahma',
+                course='Bachelor of Science in Computer Science',
+                year_of_study=3,
+                semester=1,
+            )
+        )
 
         admin_profile, created = InternshipAdministrator.objects.get_or_create(
             user=admin_user,
             defaults=dict(
                 admin_id='ADM001',
-                admin_name='ILES Administrator',
+                admin_name='Snowchild Wolf',
                 department='School of Computing and Informatics Technology',
             )
         )
-        if created:
-            self.stdout.write(self.style.SUCCESS('  Created Administrator profile'))
-        else:
-            self.stdout.write('  Administrator profile already exists — skipping.')
 
         wp_supervisor, created = WorkplaceSupervisor.objects.get_or_create(
             user=wp_user,
@@ -135,51 +155,109 @@ class Command(BaseCommand):
                 email='ojambonicholas052@gmail.com'
             )
         )
-        if created:
-            self.stdout.write(self.style.SUCCESS('  Created Workplace Supervisor profile'))
-        else:
-            self.stdout.write('  Workplace Supervisor profile already exists — skipping.')
 
         ac_supervisor, created = AcademicSupervisor.objects.get_or_create(
             user=ac_user,
             defaults=dict(
                 staff_id='STAFF001',
-                lecturer_name='Dr. James Ssekibuule',
+                lecturer_name='Dr. Academic Supervisor',
                 college_dept='Department of Information Systems',
                 phone_number='+256700000002',
             )
         )
-        if created:
-            self.stdout.write(self.style.SUCCESS('  Created Academic Supervisor profile'))
-        else:
-            self.stdout.write('  Academic Supervisor profile already exists — skipping.')
 
         # ── 3. PLACEMENT ──────────────────────────────────────────────────────
 
-        placement, created = InternshipPlacement.objects.get_or_create(
-            student=student,
-            organization_name='Andela Uganda',
+        # Greg's Placement at Google
+        greg_placement, _ = InternshipPlacement.objects.get_or_create(
+            student=greg_profile,
+            organization_name='Google Uganda',
             defaults=dict(
-                position='Junior Software Developer Intern',
-                start_date='2025-01-20',
-                end_date='2025-05-20',
+                position='Cloud Engineering Intern',
+                start_date=date(2025, 1, 20),
+                end_date=date(2025, 5, 20),
                 placement_status=PlacementStatus.ACTIVE,
                 administrator=admin_profile,
                 workplace_supervisor=wp_supervisor,
                 academic_supervisor=ac_supervisor,
             )
         )
-        if created:
-            self.stdout.write(self.style.SUCCESS('  Created Internship Placement'))
-        else:
-            self.stdout.write('  Placement already exists — skipping.')
+
+        # Rahma's Placement at Microsoft
+        rahma_placement, _ = InternshipPlacement.objects.get_or_create(
+            student=rahma_profile,
+            organization_name='Microsoft ADC',
+            defaults=dict(
+                position='Frontend Development Intern',
+                start_date=date(2025, 1, 25),
+                end_date=date(2025, 5, 25),
+                placement_status=PlacementStatus.ACTIVE,
+                administrator=admin_profile,
+                workplace_supervisor=wp_supervisor,
+                academic_supervisor=ac_supervisor,
+            )
+        )
+
+        # ── 4. LOGBOOKS ───────────────────────────────────────────────────────
+
+        # Greg: 2 Approved weeks, 1 Submitted
+        for wk in [1, 2]:
+            LogbookEntry.objects.get_or_create(
+                placement=greg_placement, week_number=wk,
+                defaults=dict(
+                    start_date=date(2025, 1, 20) + timedelta(weeks=wk-1),
+                    end_date=date(2025, 1, 24) + timedelta(weeks=wk-1),
+                    tasks_done=f"Completed modules for week {wk} and fixed bugs.",
+                    hours_worked=40,
+                    submission_status=LogStatus.APPROVED
+                )
+            )
+        
+        # Rahma: 1 Submitted, 1 Draft
+        LogbookEntry.objects.get_or_create(
+            placement=rahma_placement, week_number=1,
+            defaults=dict(
+                start_date=date(2025, 1, 25),
+                end_date=date(2025, 1, 30),
+                tasks_done="Setting up React components for the dashboard.",
+                hours_worked=35,
+                submission_status=LogStatus.SUBMITTED
+            )
+        )
+
+        # ── 5. EVALUATIONS ────────────────────────────────────────────────────
+
+        # Final evaluation for Greg
+        Evaluation.objects.get_or_create(
+            placement=greg_placement,
+            defaults=dict(
+                supervisor=wp_user,
+                workplace_score=90,
+                academic_score=85,
+                logbook_score=95,
+                feedback="Excellent performance and timely logbook submissions."
+            )
+        )
+
+        # ── 6. ISSUES ─────────────────────────────────────────────────────────
+
+        # Rahma reports an issue
+        Issue.objects.get_or_create(
+            student=rahma_user,
+            placement=rahma_placement,
+            title="Access to internal tools",
+            defaults=dict(
+                description="I haven't been granted access to the Azure DevOps environment yet.",
+                status=IssueStatus.PENDING
+            )
+        )
 
         # ── DONE ──────────────────────────────────────────────────────────────
 
-        self.stdout.write(self.style.SUCCESS('\n Seed complete!\n'))
+        self.stdout.write(self.style.SUCCESS('\n Full Scenario Seed complete!\n'))
         self.stdout.write(self.style.WARNING(
-            '\nStudent login:      gregory@iles.ac.ug        /  Pass1234!\n'
-            'Admin login:        admin@iles.ac.ug          /  Pass1234!\n'
-            'WP Supervisor:      wp.supervisor@company.com /  Pass1234!\n'
-            'AC Supervisor:      ac.supervisor@mak.ac.ug   /  Pass1234!\n'
+            f'\nStudents:   {greg_user.email}, {rahma_user.email} / Pass1234!\n'
+            f'Admin:      {admin_user.email} / Pass1234!\n'
+            f'WP Super:   {wp_user.email} / Pass1234!\n'
+            f'AC Super:   {ac_user.email} / Pass1234!\n'
         ))

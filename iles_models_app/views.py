@@ -35,9 +35,8 @@ from .emails import (
     notify_supervisors_issue_submitted,
     send_issue_resolved_email,
 )
-from .validators import validate_strong_password
-
-
+from iles_models_app.emails_utils import send_welcome_email,send_issue_resolved_email
+from iles_models_app.validators import validate_strong_password
 User = get_user_model()
 
 
@@ -59,7 +58,7 @@ def register(request):
     if serializer.is_valid():
         user    = serializer.save()
         refresh = RefreshToken.for_user(user)
-        send_welcome_email(user)
+        send_welcome_email(user.email,user.username)           # ← HTML welcome email
         return Response({
             'user':    UserSerializer(user).data,
             'access':  str(refresh.access_token),
@@ -162,6 +161,19 @@ def supervisor_list(request):
         return Response(WorkplaceSupervisorSerializer(
             WorkplaceSupervisor.objects.all(), many=True).data)
     s = WorkplaceSupervisorSerializer(data=request.data)
+    if s.is_valid():
+        s.save()
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def academic_supervisor_list(request):
+    if request.method == 'GET':
+        return Response(AcademicSupervisorSerializer(
+            AcademicSupervisor.objects.all(), many=True).data)
+    s = AcademicSupervisorSerializer(data=request.data)
     if s.is_valid():
         s.save()
         return Response(s.data, status=status.HTTP_201_CREATED)
@@ -284,13 +296,10 @@ def logbook_detail(request, pk):
     s = LogbookEntrySerializer(obj, data=request.data, partial=True)
     if s.is_valid():
         if new_status == LogStatus.SUBMITTED and not obj.submitted_at:
-            s.save(submitted_at=timezone.now())
-            send_logbook_submitted_email(obj)    # ← HTML email to supervisor
-
+            s.save(submitted_at=timezone.now())  # Signal handles email
         elif new_status == LogStatus.APPROVED:
-            s.save()
-            send_logbook_approved_email(obj)     # ← HTML email to student
-
+            logbook = s.save() 
+            send_logbook_approved_email(logbook)
         else:
             s.save()
         return Response(s.data)

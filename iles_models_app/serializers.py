@@ -41,7 +41,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A user with this university ID already exists.")
         return value
     
-    def validate_password(self,value):
+    def validate_password(self, value):
         validate_strong_password(value)
         return value
    

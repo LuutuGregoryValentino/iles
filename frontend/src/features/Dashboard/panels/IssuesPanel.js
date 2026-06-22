@@ -100,14 +100,62 @@ export default function IssuesPanel({ currentUser, isActive }) {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {issues.map(issue => (
-                <IssueCard
-                  key={issue.id}
-                  issue={issue}
-                  isStudent={isStudent}
-                  onUpdated={(updated) =>
-                    setIssues(prev => prev.map(i => i.id === updated.id ? updated : i))
-                  }
-                />
+                <div key={issue.id} className="card" style={{
+                  // borderLeft: `4px solid ${
+                  //   issue.status === 'Resolved'   ? 'var(--brand-green-light)' :
+                  //   issue.status === 'In Review'  ? 'var(--status-info)'       :
+                  //   'var(--brand-gold)'
+                  // }`
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                    <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>
+                      {issue.title}
+                    </div>
+                    <span className={`badge ${STATUS_COLORS[issue.status] || 'badge-neutral'}`}>
+                      {issue.status}
+                    </span>
+                  </div>
+
+                  <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: '0 0 10px', lineHeight: 1.6 }}>
+                    {issue.description}
+                  </p>
+
+                  <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                    Reported: {new Date(issue.created_at).toLocaleDateString()}
+                  </div>
+
+                  {/* ▼ ROLE GATE: only admins/supervisors can change status */}
+                  {!isStudent && (
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', alignSelf: 'center', marginRight: 4 }}>
+                        Update status:
+                      </span>
+                      {STATUS_OPTIONS.filter(s => s !== issue.status).map(s => (
+                        <button key={s}
+                          className="btn btn-ghost"
+                          style={{ padding: '4px 12px', fontSize: 12 }}
+                          onClick={() => updateStatus(issue.id, s)}>
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Supervisor feedback if any */}
+                  {issue.supervisor_feedback && (
+                    <div style={{
+                      marginTop: 10, background: 'var(--bg-raised)',
+                      borderRadius: 'var(--r-sm)', padding: '10px 14px'
+                    }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 4, letterSpacing: '.05em', textTransform: 'uppercase' }}>
+                        Supervisor Response
+                      </div>
+                      <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0 }}>
+                        {issue.supervisor_feedback}
+                      </p>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}

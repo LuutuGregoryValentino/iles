@@ -7,8 +7,13 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
+from rest_framework import status
+from iles_models_app.models import Student
+from iles_models_app.serializers import RegisterSerializer
+from rest_framework import serializers
+from iles_models_app.validators import validate_strong_password
  
-from .models import (
+from iles_models_app.models import (
     AcademicSupervisor,
     Evaluation,
     InternshipAdministrator,
@@ -897,7 +902,7 @@ class AdminListAPITests(TestCase):
         res = self.client.get("/api/admins/")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-# SERIALIZER TESTS
+ SERIALIZER TESTS
 
 
 class PlacementSerializerTests(TestCase):
@@ -963,3 +968,4 @@ class EvaluationSerializerTests(TestCase):
         }
         s = EvaluationSerializer(data=data)
         self.assertFalse(s.is_valid())
+

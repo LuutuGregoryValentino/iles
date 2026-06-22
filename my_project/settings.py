@@ -2,13 +2,14 @@ from pathlib import Path
 from datetime import timedelta
 import os
 import dj_database_url
+import sys
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv()
 
-# ── Security ──────────────────────────────────────────────────────────────────
+#   Security  
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     'django-insecure-z@$_&)_fq^v9ck6n3nett7_a2nccc=b5q5m!yrdc-8sidi46eq'
@@ -41,7 +42,7 @@ AUTH_USER_MODEL      = 'iles_models_app.User'
 AUTHENTICATION_BACKENDS = ['iles_models_app.backends.EmailBackend']
 DEFAULT_AUTO_FIELD   = 'django.db.models.BigAutoField'
 
-# ── Middleware ─────────────────────────────────────────────────────────────────
+#   Middleware    
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -65,7 +66,7 @@ _cors_env = os.environ.get(
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_env.split(',')]
 CORS_ALLOW_CREDENTIALS = True
 
-# ── REST Framework & JWT ──────────────────────────────────────────────────────
+#   REST Framework & JWT  
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -84,7 +85,7 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-# ── URLs & Templates ──────────────────────────────────────────────────────────
+#   URLs & Templates  
 ROOT_URLCONF = 'my_project.urls'
 
 TEMPLATES = [
@@ -102,9 +103,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'my_project.wsgi.application'
+WSGI_APPLICATION = 'my_project.wsgi.application' #This is used for deployment on platforms like Render or Heroku. For local development, you can use the default runserver command.
 
-#  Database — Neon PostgreSQL 
+#   Database,  Neon PostgreSQL  
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
@@ -113,8 +114,13 @@ DATABASES = {
         ssl_require=True,
     )
 }
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE':'django.db.backends.sqlite3',
+        'NAME':'test_db.sqlite3',
+    }
 
-# Password validation 
+#   Password validation  
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -122,22 +128,17 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-#  Internationalisation 
+#   Internationalisation  
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE     = 'Africa/Kampala'
 USE_I18N      = True
 USE_TZ        = True
 
-#  Static & Media 
+#   Static & Media  
 STATIC_URL          = 'static/'
 STATIC_ROOT         = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-#Email notifications settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST    = 'smtp.gmail.com'
-EMAIL_PORT    =  587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your-email@gmail.com' #this has to be changed
-EMAIL_HOST_PASSWORD = 'your-app-password-here' #Fill in your Gmail app password
-DEFAULT_FROM_EMAIL  = 'ILES Portal <your-email@gmail.com>'
+BREVO_API_KEY = os.getenv('BREVO_API_KEY')
+
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'iles-portal@university.edu')

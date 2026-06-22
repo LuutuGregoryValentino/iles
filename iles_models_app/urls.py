@@ -19,6 +19,7 @@ urlpatterns = [
     path('auth/approve/<int:pk>/', views.approve_user, name='approve-user'),
     path('auth/pending/',          views.pending_users, name='pending-users'),
     path('supervisors/', views.supervisor_list, name='supervisor-list'),
+    path('academic-supervisors/', views.academic_supervisor_list, name='academic-supervisor-list'),
     path('admins/',      views.admin_list,      name='admin-list'),
     path('logbooks/',          views.logbook_list,   name='logbook-list'),
     path('logbooks/<int:pk>/', views.logbook_detail, name='logbook-detail'),

@@ -1,35 +1,6 @@
-/**
- * PlacementsPanel.js (v2) — Admin only
- *
- * ┌─────────────────────────────────────────────────────┐
- * │ WHO SEES THIS: administrator only                    │
- * │ CONDITION: SECTIONS roles: ['administrator']          │
- * └─────────────────────────────────────────────────────┘
- *
- * Admin can:
- *   ✓ View all placements (list + status)
- *   ✓ Create new placement (assigns student to organisation)
- *   ✓ Edit placement details inline
- *   ✓ Update placement status (Pending → Active → Complete)
- *   ✓ Delete placement (with confirmation, cascades on server)
- *
- * API endpoints used:
- *   GET    /placements/       → list
- *   POST   /placements/       → create  (admin only, server-enforced)
- *   PUT    /placements/:id/   → full update
- *   DELETE /placements/:id/   → delete  (admin only, server-enforced)
- *
- * NOTE: placementsAPI.delete() does not exist yet in api.js.
- * It is added below as a local call using the default API instance.
- * Ask your back-end team to verify the DELETE handler in views.py
- * (placement_detail view already has the DELETE branch).
- *
- * NOTE: academic_supervisor assignment has no dedicated list endpoint.
- * TODO: Add GET /academic-supervisors/ to urls.py → views.py and
- *       an academicSupervisorsAPI helper in api.js.
- */
+
 import React, { useState, useEffect } from 'react';
-import { placementsAPI, studentsAPI, supervisorsAPI } from '../../../services/api';
+import { placementsAPI, studentsAPI, supervisorsAPI, academicSupervisorsAPI } from '../../../services/api';
 import API from '../../../services/api';
 
 const STATUS_OPTIONS = ['Pending', 'Active', 'Complete'];
@@ -38,16 +9,17 @@ const STATUS_BADGE = {
   Pending:  'badge-warn',
   Complete: 'badge-neutral',
 };
-const STATUS_BORDER = {
-  Active:   'var(--brand-green-light)',
-  Pending:  'var(--brand-gold)',
-  Complete: 'var(--border-strong)',
-};
+// const STATUS_BORDER = {
+//   Active:   'var(--brand-green-light)',
+//   Pending:  'var(--brand-gold)',
+//   Complete: 'var(--border-strong)',
+// };
 
 export default function PlacementsPanel({ isActive }) {
   const [placements,  setPlacements]  = useState([]);
   const [students,    setStudents]    = useState([]);
   const [supervisors, setSupervisors] = useState([]);
+  const [academicSupervisors, setAcademicSupervisors] = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState('');
   const [success,     setSuccess]     = useState('');
@@ -63,14 +35,16 @@ export default function PlacementsPanel({ isActive }) {
   const load = async () => {
     setLoading(true);
     try {
-      const [p, s, sv] = await Promise.all([
+      const [p, s, sv, as] = await Promise.all([
         placementsAPI.list(),
         studentsAPI.list(),
         supervisorsAPI.list(),
+        academicSupervisorsAPI.list(),
       ]);
       setPlacements(p.data);
       setStudents(s.data);
       setSupervisors(sv.data);
+      setAcademicSupervisors(as.data);
     } catch {
       setError('Failed to load data.');
     } finally {
@@ -190,7 +164,7 @@ export default function PlacementsPanel({ isActive }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {filtered.map(p => (
                 <div key={p.id} className="card" style={{
-                  borderLeft: `4px solid ${STATUS_BORDER[p.placement_status] || 'var(--border-strong)'}`,
+                  // borderLeft: `4px solid ${STATUS_BORDER[p.placement_status] || 'var(--border-strong)'}`,
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                     <div>
@@ -276,6 +250,7 @@ export default function PlacementsPanel({ isActive }) {
               <PlacementForm
                 students={students}
                 supervisors={supervisors}
+                academicSupervisors={academicSupervisors}
                 onCreated={() => { setShowCreate(false); load(); setSuccess('Placement created.'); }}
                 onCancel={() => setShowCreate(false)}
               />
@@ -285,6 +260,7 @@ export default function PlacementsPanel({ isActive }) {
                 placement={editTarget}
                 students={students}
                 supervisors={supervisors}
+                academicSupervisors={academicSupervisors}
                 onSaved={() => { setEditTarget(null); load(); setSuccess('Placement updated.'); }}
                 onCancel={() => setEditTarget(null)}
               />
@@ -297,11 +273,12 @@ export default function PlacementsPanel({ isActive }) {
 }
 
 /* ── Create placement ── */
-function PlacementForm({ students, supervisors, onCreated, onCancel }) {
+function PlacementForm({ students, supervisors, academicSupervisors, onCreated, onCancel }) {
   const [form, setForm] = useState({
     student: '', organization_name: '', position: '',
     start_date: '', end_date: '',
-    workplace_supervisor: '', placement_status: 'Pending',
+    workplace_supervisor: '', academic_supervisor: '',
+    placement_status: 'Pending',
   });
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
@@ -315,6 +292,7 @@ function PlacementForm({ students, supervisors, onCreated, onCancel }) {
         ...form,
         student:              parseInt(form.student, 10),
         workplace_supervisor: form.workplace_supervisor ? parseInt(form.workplace_supervisor, 10) : null,
+        academic_supervisor:  form.academic_supervisor ? parseInt(form.academic_supervisor, 10) : null,
       });
       onCreated();
     } catch (err) {
@@ -369,12 +347,24 @@ function PlacementForm({ students, supervisors, onCreated, onCancel }) {
 
       <div className="form-group">
         <label className="form-label">
-          Workplace supervisor <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span>
+          Workplace Supervisor <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span>
         </label>
         <select className="form-select" value={form.workplace_supervisor} onChange={set('workplace_supervisor')}>
           <option value="">None assigned</option>
           {supervisors.map(s => (
             <option key={s.id} value={s.id}>{s.supervisor_name} — {s.job_title}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">
+          Academic Supervisor <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span>
+        </label>
+        <select className="form-select" value={form.academic_supervisor} onChange={set('academic_supervisor')}>
+          <option value="">None assigned</option>
+          {academicSupervisors.map(s => (
+            <option key={s.id} value={s.id}>{s.lecturer_name} ({s.college_dept})</option>
           ))}
         </select>
       </div>
@@ -398,7 +388,7 @@ function PlacementForm({ students, supervisors, onCreated, onCancel }) {
 }
 
 /* ── Edit placement ── */
-function EditPlacementForm({ placement, students, supervisors, onSaved, onCancel }) {
+function EditPlacementForm({ placement, students, supervisors, academicSupervisors, onSaved, onCancel }) {
   const [form, setForm] = useState({
     student:              placement.student?.toString()              || '',
     organization_name:    placement.organization_name               || '',
@@ -406,6 +396,7 @@ function EditPlacementForm({ placement, students, supervisors, onSaved, onCancel
     start_date:           placement.start_date                      || '',
     end_date:             placement.end_date                        || '',
     workplace_supervisor: placement.workplace_supervisor?.toString() || '',
+    academic_supervisor:  placement.academic_supervisor?.toString()  || '',
     placement_status:     placement.placement_status                || 'Pending',
   });
   const [saving, setSaving] = useState(false);
@@ -420,6 +411,7 @@ function EditPlacementForm({ placement, students, supervisors, onSaved, onCancel
         ...form,
         student:              parseInt(form.student, 10),
         workplace_supervisor: form.workplace_supervisor ? parseInt(form.workplace_supervisor, 10) : null,
+        academic_supervisor:  form.academic_supervisor ? parseInt(form.academic_supervisor, 10) : null,
       });
       onSaved();
     } catch (err) {
@@ -472,11 +464,21 @@ function EditPlacementForm({ placement, students, supervisors, onSaved, onCancel
       </div>
 
       <div className="form-group">
-        <label className="form-label">Workplace supervisor</label>
+        <label className="form-label">Workplace Supervisor</label>
         <select className="form-select" value={form.workplace_supervisor} onChange={set('workplace_supervisor')}>
           <option value="">None assigned</option>
           {supervisors.map(s => (
             <option key={s.id} value={s.id}>{s.supervisor_name} — {s.job_title}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Academic Supervisor</label>
+        <select className="form-select" value={form.academic_supervisor} onChange={set('academic_supervisor')}>
+          <option value="">None assigned</option>
+          {academicSupervisors.map(s => (
+            <option key={s.id} value={s.id}>{s.lecturer_name} ({s.college_dept})</option>
           ))}
         </select>
       </div>
