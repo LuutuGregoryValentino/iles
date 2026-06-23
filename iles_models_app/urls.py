@@ -11,8 +11,7 @@ router.register(r'placements',PlacementViewSet, basename ='placement')
 app_name = 'iles_models_app'
 
 urlpatterns = [
-    #__Authentication and JWT token management
-    # ── Auth ──────────────────────────────────────────────────────────────────
+    #__Authentication and JWT token management______
     path('auth/register/', views.register,     name='register'),
     path('auth/login/',    views.login_api,     name='login'),
     path('auth/logout/',   views.logout_api,    name='logout'),

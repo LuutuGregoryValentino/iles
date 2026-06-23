@@ -33,7 +33,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',   # ← enables logout blacklisting
+    'rest_framework_simplejwt.token_blacklist',   
     'iles_models_app',
 ]
 
@@ -102,7 +102,7 @@ WSGI_APPLICATION = 'my_project.wsgi.application' #This is used for deployment on
 
 #   Database,  Neon PostgreSQL  
 DATABASES = {
-    'default': dj_database_url.config(
+    'default':dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
         conn_health_checks=True,
