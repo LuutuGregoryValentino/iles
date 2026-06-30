@@ -19,11 +19,10 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get(
     'ALLOWED_HOSTS',
-    'localhost,127.0.0.1,.onrender.com,.vercel.app'
+    'localhost,127.0.0.1,.onrender.com'
 ).split(',')
 
-
-# ── Apps ──────────────────────────────────────────────────────────────────────
+#   Apps  
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -55,15 +54,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# ── CORS ──────────────────────────────────────────────────────────────────────
-# CORS_ALLOWED_ORIGINS env var: comma-separated list of allowed frontend origins.
-# Set this in your Render dashboard so it doesn't need a code change when the
-# frontend URL changes.
-_cors_env = os.environ.get(
-    'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,http://127.0.0.1:3000,https://iles-nine.vercel.app'
-)
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_env.split(',')]
+#   CORS  
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://iles-nine.vercel.app',
+]
 CORS_ALLOW_CREDENTIALS = True
 
 #   REST Framework & JWT  
