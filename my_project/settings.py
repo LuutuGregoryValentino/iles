@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv()
 
-#   Security  
+# ── Security ──────────────────────────────────────────────────────────────────
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     'django-insecure-z@$_&)_fq^v9ck6n3nett7_a2nccc=b5q5m!yrdc-8sidi46eq'
@@ -19,10 +19,10 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get(
     'ALLOWED_HOSTS',
-    'localhost,127.0.0.1,.onrender.com'
+    'localhost,127.0.0.1,.onrender.com,.vercel.app'
 ).split(',')
 
-#   Apps  
+# ── Apps ──────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -33,15 +33,21 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',   # ← enables logout blacklisting
+    'rest_framework_simplejwt.token_blacklist',
     'iles_models_app',
 ]
 
-AUTH_USER_MODEL      = 'iles_models_app.User'
-AUTHENTICATION_BACKENDS = ['iles_models_app.backends.EmailBackend']
-DEFAULT_AUTO_FIELD   = 'django.db.models.BigAutoField'
+AUTH_USER_MODEL = 'iles_models_app.User'
 
-#   Middleware    
+# Both backends — EmailBackend first, then Django default as fallback
+AUTHENTICATION_BACKENDS = [
+    'iles_models_app.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ── Middleware ────────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -54,15 +60,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-#   CORS  
+# ── CORS ──────────────────────────────────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'https://iles-nine.vercel.app',
 ]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
 CORS_ALLOW_CREDENTIALS = True
 
-#   REST Framework & JWT  
+# ── REST Framework & JWT ──────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -81,7 +90,7 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-#   URLs & Templates  
+# ── URLs & Templates ──────────────────────────────────────────────────────────
 ROOT_URLCONF = 'my_project.urls'
 
 TEMPLATES = [
@@ -99,24 +108,38 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'my_project.wsgi.application' #This is used for deployment on platforms like Render or Heroku. For local development, you can use the default runserver command.
+WSGI_APPLICATION = 'my_project.wsgi.application'
 
-#   Database,  Neon PostgreSQL  
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        conn_health_checks=True,
-        ssl_require=True,
-    )
-}
+# ── Database ──────────────────────────────────────────────────────────────────
+# Use SQLite for tests, Neon PostgreSQL for everything else
 if 'test' in sys.argv:
-    DATABASES['default'] = {
-        'ENGINE':'django.db.backends.sqlite3',
-        'NAME':'test_db.sqlite3',
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'test_db.sqlite3',
+        }
     }
+else:
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    if DATABASE_URL:
+        DATABASES = {
+            'default': dj_database_url.config(
+                default=DATABASE_URL,
+                conn_max_age=600,
+                conn_health_checks=True,
+                ssl_require=True,
+            )
+        }
+    else:
+        # Fallback to local SQLite if DATABASE_URL is not set
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 
-#   Password validation  
+# ── Password validation ───────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -124,17 +147,17 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-#   Internationalisation  
+# ── Internationalisation ──────────────────────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE     = 'Africa/Kampala'
 USE_I18N      = True
 USE_TZ        = True
 
-#   Static & Media  
+# ── Static & Media ────────────────────────────────────────────────────────────
 STATIC_URL          = 'static/'
 STATIC_ROOT         = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-BREVO_API_KEY = os.getenv('BREVO_API_KEY')
-
+# ── Email ─────────────────────────────────────────────────────────────────────
+BREVO_API_KEY  = os.getenv('BREVO_API_KEY')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'iles-portal@university.edu')
