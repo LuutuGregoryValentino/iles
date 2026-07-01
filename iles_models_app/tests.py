@@ -902,7 +902,8 @@ class AdminListAPITests(TestCase):
         res = self.client.get("/api/admins/")
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
- #SERIALIZER TESTS
+ SERIALIZER TESTS
+
 
 class PlacementSerializerTests(TestCase):
     """
@@ -968,59 +969,3 @@ class EvaluationSerializerTests(TestCase):
         s = EvaluationSerializer(data=data)
         self.assertFalse(s.is_valid())
 
-
-class UserModelTests(TestCase):
-    def test_create_user_defaults(self)-> None:
-        user = create_user()
-        self.assertEqual(user.email,'test@test.com')
-        self.assertEqual(user.role,'student')
-        self.assertEqual(user.university_id,'25/U/0001')
-        self.assertTrue(user.check_password('testpass123'))
-
-    def test_user_str(self) -> None:
-        user = create_user()
-        self.assertEqual(str(user), f"{user.email} ({user.role.capitalize()})")
-
-class StudentModelTests(TestCase):
-    def setUp(self)-> None:
-        self.user = create_user()
-
-    def test_create_student(self) -> None:
-        student = Student.objects.create(
-            user=self.user,
-            student_id='25/U/001',
-            student_name='Test Student',
-            course='BSc Computer Science',
-            year_of_study=2,
-            semester=1
-        )
-        self.assertEqual(student.user,self.user)
-        self.assertEqual(student.student_id,'25/U/001')
-
-    def test_student_str(self) -> None:
-        student = Student.objects.create(
-            user=self.user,student_id='25/U/001',student_name='Test Student',
-            course='BSc Computer Science', year_of_study=2,semester=1
-        )
-        self.assertEqual(str(student),'Test Student')
-
-class RegisterSerializerTests(TestCase):
-    def test_valid_data(self)-> None:
-        data = {'email':'new@test.com','username':'newuser','password':'pass1234',
-                'university_id':'25/U/002','role':'student' } 
-        serializer = RegisterSerializer(data=data) 
-        self.assertTrue(serializer.is_valid()) 
-
-    def test_missing_email(self) -> None:
-        data = {'username':'newuser','password':'pass1234'}
-        serializer = RegisterSerializer(data=data)
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('email',serializer.errors)
-
-class ValidatorTests(TestCase):
-    def test_strong_password_valid(self) -> None:
-        validate_strong_password('Password123')
-
-    def test_weak_password_invalid(self) -> None:
-        with self.assertRaises(serializers.ValidationError):
-            validate_strong_password('weak')

@@ -5,7 +5,12 @@ USAGE:
     python manage.py seed_data
 """
 
+<<<<<<< HEAD
+import email
+
+=======
 from datetime import date, timedelta
+>>>>>>> 405477c94f96c3d117348d0361e3c2d909fb2e6f
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from iles_models_app.models import (
@@ -147,6 +152,7 @@ class Command(BaseCommand):
                 job_title='Senior Software Engineer',
                 phone_number='+256700000001',
                 department='Engineering',
+                email='ojambonicholas052@gmail.com'
             )
         )
 

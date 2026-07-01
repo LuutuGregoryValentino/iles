@@ -12,23 +12,26 @@
  * │ CONDITION: role check below at ▼ ROLE GATE                    │
  * └──────────────────────────────────────────────────────────────┘
  *
- * BUG FIXED: Original IssueForm called onSubmitted immediately after
- * a 2s timeout but did NOT re-fetch the issues list from the server.
- * Now issues list re-fetches after every submission.
+ * FIXES:
+ *   - Submit Issue button used btn-danger (red) — changed to btn-primary.
+ *   - Supervisors/admins had no way to write supervisor_feedback.
+ *     Status buttons now open an inline confirm panel with a feedback
+ *     textarea. Both status + feedback are sent in a single PATCH.
+ *   - Issues list re-fetches after every submission.
  */
 import React, { useState, useEffect } from 'react';
 import { issuesAPI } from '../../../services/api';
 
 const STATUS_COLORS = {
-  Pending:   'badge-warn',
+  Pending:     'badge-warn',
   'In Review': 'badge-info',
-  Resolved:  'badge-success',
+  Resolved:    'badge-success',
 };
 
 const STATUS_OPTIONS = ['Pending', 'In Review', 'Resolved'];
 
 export default function IssuesPanel({ currentUser, isActive }) {
-  const role = currentUser?.role;
+  const role      = currentUser?.role;
   const isStudent = role === 'student';
 
   const [issues,   setIssues]   = useState([]);
@@ -49,16 +52,6 @@ export default function IssuesPanel({ currentUser, isActive }) {
   };
 
   useEffect(() => { if (isActive) load(); }, [isActive]); // eslint-disable-line
-
-  /* ── Admin/supervisor: update issue status inline ── */
-  const updateStatus = async (id, newStatus) => {
-    try {
-      await issuesAPI.updateStatus(id, { status: newStatus });
-      setIssues(prev => prev.map(i => i.id === id ? { ...i, status: newStatus } : i));
-    } catch {
-      setError('Could not update issue status.');
-    }
-  };
 
   const openCount = issues.filter(i => i.status !== 'Resolved').length;
 
@@ -182,6 +175,123 @@ export default function IssuesPanel({ currentUser, isActive }) {
   );
 }
 
+/* ── Single issue card (extracted so it can hold its own update state) ── */
+function IssueCard({ issue, isStudent, onUpdated }) {
+  // pending status: which new status the supervisor clicked (awaiting confirm)
+  const [pendingStatus, setPendingStatus] = useState(null);
+  const [feedback,      setFeedback]      = useState('');
+  const [saving,        setSaving]        = useState(false);
+  const [error,         setError]         = useState('');
+
+  const confirmUpdate = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      const payload = { status: pendingStatus };
+      if (feedback.trim()) payload.supervisor_feedback = feedback.trim();
+      const res = await issuesAPI.updateStatus(issue.id, payload);
+      onUpdated(res.data);
+      setPendingStatus(null);
+      setFeedback('');
+    } catch {
+      setError('Could not update issue status.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const cancel = () => { setPendingStatus(null); setFeedback(''); setError(''); };
+
+  return (
+    <div className="card" style={{
+      borderLeft: `4px solid ${
+        issue.status === 'Resolved'   ? 'var(--brand-green-light)' :
+        issue.status === 'In Review'  ? 'var(--status-info)'       :
+        'var(--brand-gold)'
+      }`
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+        <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>
+          {issue.title}
+        </div>
+        <span className={`badge ${STATUS_COLORS[issue.status] || 'badge-neutral'}`}>
+          {issue.status}
+        </span>
+      </div>
+
+      <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: '0 0 10px', lineHeight: 1.6 }}>
+        {issue.description}
+      </p>
+
+      <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+        Reported: {new Date(issue.created_at).toLocaleDateString()}
+      </div>
+
+      {/* ▼ ROLE GATE: only admins/supervisors can change status */}
+      {!isStudent && !pendingStatus && (
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', marginRight: 4 }}>
+            Update status:
+          </span>
+          {STATUS_OPTIONS.filter(s => s !== issue.status).map(s => (
+            <button key={s}
+              className="btn btn-ghost"
+              style={{ padding: '4px 12px', fontSize: 12 }}
+              onClick={() => setPendingStatus(s)}>
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Inline confirm panel — appears after supervisor picks a new status */}
+      {!isStudent && pendingStatus && (
+        <div style={{
+          marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-subtle)',
+        }}>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
+            Mark as <strong style={{ color: 'var(--text-primary)' }}>{pendingStatus}</strong> — add feedback (optional):
+          </div>
+          <textarea
+            className="form-textarea"
+            rows={3}
+            value={feedback}
+            placeholder="Leave feedback for the student…"
+            onChange={e => setFeedback(e.target.value)}
+            style={{ marginBottom: 10, minHeight: 'unset' }}
+          />
+          {error && <div className="alert alert-danger" style={{ marginBottom: 8 }}>{error}</div>}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-primary" style={{ padding: '6px 16px', fontSize: 13 }}
+              onClick={confirmUpdate} disabled={saving}>
+              {saving ? 'Saving…' : 'Confirm'}
+            </button>
+            <button className="btn btn-ghost" style={{ padding: '6px 16px', fontSize: 13 }}
+              onClick={cancel} disabled={saving}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Supervisor feedback if any */}
+      {issue.supervisor_feedback && (
+        <div style={{
+          marginTop: 10, background: 'var(--bg-raised)',
+          borderRadius: 'var(--r-sm)', padding: '10px 14px'
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 4, letterSpacing: '.05em', textTransform: 'uppercase' }}>
+            Supervisor Response
+          </div>
+          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0 }}>
+            {issue.supervisor_feedback}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Issue report form ── */
 function IssueForm({ onSubmitted, onCancel }) {
   const [form,    setForm]    = useState({ title: '', description: '' });
@@ -232,7 +342,8 @@ function IssueForm({ onSubmitted, onCancel }) {
       </div>
 
       <div style={{ display: 'flex', gap: 10 }}>
-        <button className="btn btn-danger" type="submit" disabled={saving}>
+        {/* FIX: was btn-danger (red) — submit is a positive action, use btn-primary */}
+        <button className="btn btn-primary" type="submit" disabled={saving}>
           {saving ? 'Submitting…' : 'Submit Issue'}
         </button>
         <button className="btn btn-ghost" type="button" onClick={onCancel}>

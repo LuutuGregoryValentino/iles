@@ -11,12 +11,12 @@
  *   1. "Submit" — evaluation form
  *   2. "History" — list of submitted evaluations
  *
- * BUG FIXED: Original EvaluationForm had a math error in the live
- * preview formula:
- *   Math.round((w * 0.4) + (a * 0.3) + (l * 0.3) * 100) / 100
- *   ← this applies *100/100 only to logbook_score due to operator
- *      precedence. Fixed to:
- *   Math.round(((w * 0.4) + (a * 0.3) + (l * 0.3)) * 100) / 100
+ * FIXES:
+ *   - EvalList: grade color used broken string comparison (D/F showed amber).
+ *     Replaced with a proper lookup object matching EvalForm's gradeColor().
+ *   - EvalList: showed raw "Placement #3" IDs. Now fetches placements in
+ *     parallel and cross-references the org name.
+ *   - EvalForm formula bug fixed: operator precedence on *100/100.
  */
 import React, { useState, useEffect } from 'react';
 import { evaluationsAPI, placementsAPI } from '../../../services/api';
@@ -45,6 +45,16 @@ export default function EvaluationPanel({ isActive }) {
   );
 }
 
+/* ── Grade helpers (shared between form preview and history list) ── */
+const GRADE_COLOR = {
+  A: 'var(--brand-green-light)',
+  B: 'var(--status-info)',
+  C: 'var(--status-warn)',
+  D: 'var(--brand-red-light)',
+  F: 'var(--brand-red-light)',
+};
+const gradeColor = (g) => GRADE_COLOR[g] || 'var(--text-primary)';
+
 /* ── Evaluation form ── */
 function EvalForm({ isActive }) {
   const [placements, setPlacements] = useState([]);
@@ -67,7 +77,6 @@ function EvalForm({ isActive }) {
     const val = e.target.value;
     const updated = { ...form, [field]: val };
     setForm(updated);
-    // BUG FIX: corrected formula (parentheses around entire sum before *100)
     const w = parseFloat(updated.workplace_score) || 0;
     const a = parseFloat(updated.academic_score)  || 0;
     const l = parseFloat(updated.logbook_score)   || 0;
@@ -113,14 +122,6 @@ function EvalForm({ isActive }) {
       setSaving(false);
     }
   };
-
-  const gradeColor = (g) => ({
-    A: 'var(--brand-green-light)',
-    B: 'var(--status-info)',
-    C: 'var(--status-warn)',
-    D: 'var(--brand-red-light)',
-    F: 'var(--brand-red-light)',
-  }[g] || 'var(--text-primary)');
 
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: 600 }}>
@@ -201,14 +202,22 @@ function EvalForm({ isActive }) {
 
 /* ── Evaluation history ── */
 function EvalList({ isActive }) {
-  const [evals,   setEvals]   = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
+  const [evals,      setEvals]      = useState([]);
+  const [placements, setPlacements] = useState({});   // id → placement object
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState('');
 
   useEffect(() => {
     if (!isActive) return;
-    evaluationsAPI.list()
-      .then(r => setEvals(r.data))
+    // Fetch evaluations and placements in parallel so we can show org names
+    Promise.all([evaluationsAPI.list(), placementsAPI.list()])
+      .then(([eRes, pRes]) => {
+        setEvals(eRes.data);
+        // Build a lookup map: placement id → placement object
+        const map = {};
+        pRes.data.forEach(p => { map[p.id] = p; });
+        setPlacements(map);
+      })
       .catch(() => setError('Could not load evaluations.'))
       .finally(() => setLoading(false));
   }, [isActive]);
@@ -226,30 +235,49 @@ function EvalList({ isActive }) {
 
   return (
     <div>
-      {evals.map(ev => (
-        <div key={ev.id} className="card" style={{ marginBottom: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <div style={{ fontFamily: 'Outfit', fontWeight: 700, color: 'var(--text-primary)' }}>
-              Placement #{ev.placement}
+      {evals.map(ev => {
+        const placement = placements[ev.placement];
+        const color = gradeColor(ev.grade);
+        return (
+          <div key={ev.id} className="card" style={{ marginBottom: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <div>
+                <div style={{ fontFamily: 'Outfit', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {placement ? placement.organization_name : `Placement #${ev.placement}`}
+                </div>
+                {placement && (
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                    {placement.position}
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <span style={{ fontFamily: 'Outfit', fontSize: 20, fontWeight: 800, color }}>
+                  {ev.grade}
+                </span>
+                <span className="badge badge-neutral">{ev.total_score}%</span>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <span style={{ fontFamily: 'Outfit', fontSize: 20, fontWeight: 800,
-                color: ev.grade >= 'A' && ev.grade <= 'B' ? 'var(--brand-green-light)' : 'var(--status-warn)' }}>
-                {ev.grade}
-              </span>
-              <span className="badge badge-neutral">{ev.total_score}%</span>
+
+            {/* Score breakdown */}
+            <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
+              <span>Workplace: <strong style={{ color: 'var(--text-secondary)' }}>{ev.workplace_score}</strong></span>
+              <span>Academic: <strong style={{ color: 'var(--text-secondary)' }}>{ev.academic_score}</strong></span>
+              <span>Logbook: <strong style={{ color: 'var(--text-secondary)' }}>{ev.logbook_score}</strong></span>
             </div>
+
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: ev.feedback ? 8 : 0 }}>
+              Submitted: {ev.submission_date}
+            </div>
+
+            {ev.feedback && (
+              <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
+                {ev.feedback}
+              </p>
+            )}
           </div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 8 }}>
-            Submitted: {ev.submission_date}
-          </div>
-          {ev.feedback && (
-            <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0 }}>
-              {ev.feedback}
-            </p>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

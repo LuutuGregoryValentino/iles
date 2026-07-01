@@ -35,7 +35,6 @@ from .emails import (
     send_logbook_approved_email,
     send_issue_resolved_email,
 )
-from iles_models_app.emails_utils import send_welcome_email,send_issue_resolved_email
 from iles_models_app.validators import validate_strong_password
 User = get_user_model()
 
@@ -58,17 +57,13 @@ def register(request):
     if serializer.is_valid():
         user    = serializer.save()
         refresh = RefreshToken.for_user(user)
-        send_welcome_email(user.email,user.username)           # ← HTML welcome email
+        send_welcome_email(user)           # ← HTML welcome email
         return Response({
             'user':    UserSerializer(user).data,
             'access':  str(refresh.access_token),
             'refresh': str(refresh),
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-def validate_password(self, value):
-    validate_strong_password(value)
-    
-    return value
 
 
 @api_view(['POST'])

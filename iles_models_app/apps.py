@@ -11,4 +11,10 @@ class IlesModelsAppConfig(AppConfig):
         This method runs when Django starts.
         Use it to import signals or run startup logic.
         """
-        import iles_models_app.signals
+        import iles_models_app.signals  
+    name               = 'iles_models_app'
+    verbose_name       = "ILES Internship Management System"
+
+    def ready(self):
+        """Runs when Django starts — import signals here."""
+        pass  # signals.py is empty for now — add signal code here when ready
